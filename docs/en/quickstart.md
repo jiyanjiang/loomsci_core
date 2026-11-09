@@ -25,7 +25,7 @@ python -m pip install -r requirements.txt
 
 The preview currently declares Flask only.
 
-## Current minimal host (S1.3)
+## Current minimal host (S1.3–S1.4)
 
 From the repository root:
 
@@ -44,7 +44,8 @@ loomsci serve [--host 127.0.0.1] [--port 8787]
 ```
 
 The host exposes `/v1/health`, `/v1/version`, `/v1/meta/features`,
-`/v1/whoami`, and `/v1/echo`. Other Core routes and the UI are still planned.
+`/v1/whoami`, `/v1/echo`, `/v1/posts`, and `/v1/tasks` (including
+`claim`/`done`). Other Core routes and the UI are still planned.
 
 ## Planned first run
 

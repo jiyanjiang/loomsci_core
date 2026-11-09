@@ -65,7 +65,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
         return 2
     from core.app import create_app
 
-    app = create_app()
+    app = create_app(home=args.home)
     app.run(
         host=args.host,
         port=args.port,

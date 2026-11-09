@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -40,7 +41,10 @@ class LocalAuthPureTest(unittest.TestCase):
 
 class AppTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.app = create_app(env={"LOOMSCI_PROFILE": "core"})
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        home = Path(self.tmp.name) / "home"
+        self.app = create_app(env={"LOOMSCI_PROFILE": "core"}, home=home)
         self.app.testing = True
         self.client = self.app.test_client()
 

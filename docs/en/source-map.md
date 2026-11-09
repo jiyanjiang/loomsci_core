@@ -1,9 +1,9 @@
 # Source map · S1 (reuse plan)
 
-> Status: S1.1–S1.3 started. `core/home.py`, `core/profile.py`,
-> `core/packs.py`, `core/local_auth.py`, `core/app.py`, and the
-> `home`/`migrate`/`features`/`serve` CLI exist; no legacy modules have been
-> copied yet.
+> Status: S1.1–S1.4 started. `core/home.py`, `core/profile.py`,
+> `core/packs.py`, `core/local_auth.py`, `core/storage.py`, `core/app.py`, and
+> the `home`/`migrate`/`features`/`serve` CLI exist; no legacy modules have
+> been copied yet.
 > Goal: extract the smallest viable Core from the existing TAA codebase into
 > this public repository, without a runtime dependency on the legacy tree.
 
