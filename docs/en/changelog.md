@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.13
+
+- Fix the packaged README still naming preview.11: the README current-version
+  text now matches the package build.
+- Make `agent prune` safe by default: it lists DB-only rows and only deletes
+  with `--yes` (or `--dry-run` to list explicitly).
+- Package verification now checks the README version before release.
+
 ## v0.1.0-preview.12
 
 - L7 real-IDE test on macOS: opencode v2.0.20 and omp 18.18.3 both discovered

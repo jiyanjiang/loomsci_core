@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.13
+
+- 修复包内 README 仍写 preview.11 的问题：README 当前版本改为随包构建。
+- `agent prune` 默认只列出 DB-only 行，实际删除需 `--yes`
+  （也可用 `--dry-run` 显式列出）。
+- 发布前增加包内 README 版本核对。
+
 ## v0.1.0-preview.12
 
 - macOS L7 真实 IDE：opencode v2.0.20 与 omp 18.18.3 均发现绝对 CLI 路径、

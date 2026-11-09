@@ -506,17 +506,25 @@ def _cmd_agent_prune(args: argparse.Namespace) -> int:
     layout = _layout(args)
     storage.init_db(layout.db)
     conn = storage.connect(layout.db)
-    removed = []
+    candidates = []
     try:
         for row in storage.list_agents(conn):
             short = str(row["handle"]).partition(".")[0]
             if not (layout.root / "agents" / short / "agent.json").is_file():
-                if storage.delete_agent(conn, str(row["handle"])):
-                    removed.append(str(row["handle"]))
+                candidates.append(str(row["handle"]))
+        removed = []
+        if args.yes:
+            for handle in candidates:
+                if storage.delete_agent(conn, handle):
+                    removed.append(handle)
     finally:
         conn.close()
+    payload = {"removed": removed, "would_remove": candidates, "dry_run": not args.yes}
     if args.json:
-        _json_print({"removed": removed})
+        _json_print(payload)
+    elif not args.yes:
+        print("would remove: " + (", ".join(candidates) or "(none)"))
+        print("no changes; re-run with --yes to delete")
     else:
         print("removed: " + (", ".join(removed) or "(none)"))
     return 0
@@ -781,6 +789,8 @@ def build_parser() -> argparse.ArgumentParser:
     agent_list.set_defaults(func=_cmd_agent_list)
 
     agent_prune = agent_sub.add_parser("prune", help="remove DB rows without an agent home")
+    agent_prune.add_argument("--dry-run", action="store_true", help="only list candidates")
+    agent_prune.add_argument("--yes", action="store_true", help="actually delete")
     agent_prune.add_argument("--json", action="store_true")
     agent_prune.set_defaults(func=_cmd_agent_prune)
 

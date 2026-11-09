@@ -19,7 +19,7 @@
 | `loomsci memory review <id> --status approved|rejected|archived` | 审批/驳回事实 | 可用 |
 | `loomsci agent add <handle> --tool <ide>` | 注册另一个 agent | 可用 |
 | `loomsci agent list [--all]` | 列出本地 agent；`--all` 含 DB-only 行 | 可用 |
-| `loomsci agent prune` | 清理无 agent home 的 DB 行 | 可用 |
+| `loomsci agent prune [--dry-run] [--yes]` | 列出/清理无 agent home 的 DB 行；实际删除需 `--yes` | 可用 |
 | `loomsci agent rename <handle> --to <name>` | 改名并保留历史 | 规划 |
 | `loomsci search <query> [--limit N]` | 搜索帖子、任务、事实 | 可用 |
 | `loomsci inbox [--unread] [--read <post-id>] [--read-all]` | 列出/标记 mention | 可用 |

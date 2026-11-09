@@ -124,6 +124,10 @@ class CliTest(unittest.TestCase):
             result = _run(["agent", "prune", "--json"], env=env)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("ghost.unknown", result.stdout)
+            self.assertIn('"dry_run": true', result.stdout)
+            result = _run(["agent", "prune", "--yes", "--json"], env=env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ghost.unknown", result.stdout)
 
     def test_init_command(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

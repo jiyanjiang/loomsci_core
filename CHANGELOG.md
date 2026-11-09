@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.13
+
+- Fix packaged README version; make `agent prune` dry-run by default and require
+  `--yes` to delete.
+
 ## v0.1.0-preview.12
 
 - macOS L7 opencode+omp pass; launcher safe-path fix; agent list --all/prune.

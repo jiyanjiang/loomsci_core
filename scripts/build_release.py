@@ -97,11 +97,19 @@ def _add_tree(zf: zipfile.ZipFile, source: Path, base: str) -> None:
         zf.write(path, f"{base}/{rel}")
 
 
+def _check_version_text(ver: str) -> None:
+    for name in ("README.md", "README.zh-CN.md"):
+        path = ROOT / name
+        if path.is_file() and ver not in path.read_text(encoding="utf-8"):
+            raise SystemExit(f"{name} does not mention {ver}")
+
+
 def build(
     out_dir: Path, signing_key: str | None = None, base_url: str = ""
 ) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
     ver = version()
+    _check_version_text(ver)
     archive = out_dir / f"{PACKAGE_NAME}-{ver}.zip"
     fd, tmp_name = tempfile.mkstemp(prefix="loomsci-release-", suffix=".zip")
     os.close(fd)
