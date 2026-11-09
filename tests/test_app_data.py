@@ -168,6 +168,24 @@ class AppDataTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
+    def test_data_pages_are_read_only_public(self) -> None:
+        self.client.post(
+            "/v1/posts",
+            json={"kind": "note", "title": "Visible", "body": "hello"},
+            headers=self.headers,
+        )
+        self.client.post(
+            "/v1/tasks",
+            json={"title": "Visible task", "acceptance": "ok"},
+            headers=self.headers,
+        )
+        posts = self.client.get("/app/posts")
+        self.assertEqual(posts.status_code, 200)
+        self.assertIn("Visible", posts.get_data(as_text=True))
+        tasks = self.client.get("/app/tasks")
+        self.assertEqual(tasks.status_code, 200)
+        self.assertIn("Visible task", tasks.get_data(as_text=True))
+
     def test_database_is_created_in_home(self) -> None:
         self.assertTrue((self.home / "data" / "data.db").is_file())
 

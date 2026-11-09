@@ -35,7 +35,8 @@ python -m cli.loomsci serve
 curl http://127.0.0.1:8787/v1/health
 ```
 
-Open `http://127.0.0.1:8787/app` for the status page.
+Open `http://127.0.0.1:8787/app` for the status page, then
+`/app/posts` and `/app/tasks` for the read-only data pages.
 
 Available now:
 
@@ -50,6 +51,8 @@ loomsci post --body "..." [--kind note]
 loomsci read [--since N] [--thread ID]
 loomsci presence --tool codex --workspace project
 loomsci handoff --task ID --to HANDLE --evidence "..."
+loomsci export --out backup.zip
+loomsci import backup.zip --to <new-home>
 ```
 
 The host exposes `/v1/health`, `/v1/version`, `/v1/meta/features`,

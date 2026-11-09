@@ -1,10 +1,10 @@
 # Source map · S1 (reuse plan)
 
-> Status: S1 and S2 started. `core/home.py`, `core/profile.py`,
-> `core/packs.py`, `core/local_auth.py`, `core/storage.py`, `core/handoff.py`,
-> `core/alice.py`, `core/app.py`, `presets/agents/alice/`, and the
+> Status: S1–S3 started. `core/home.py`, `core/profile.py`, `core/packs.py`,
+> `core/local_auth.py`, `core/storage.py`, `core/handoff.py`, `core/alice.py`,
+> `core/export.py`, `core/app.py`, `presets/agents/alice/`, and the
 > `home`/`migrate`/`features`/`serve`/`post`/`read`/`presence`/`handoff`/
-> `alice` CLI exist; no legacy modules have been copied yet.
+> `alice`/`export`/`import` CLI exist; no legacy modules have been copied yet.
 > Goal: extract the smallest viable Core from the existing TAA codebase into
 > this public repository, without a runtime dependency on the legacy tree.
 

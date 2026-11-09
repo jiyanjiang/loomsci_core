@@ -11,6 +11,7 @@ import urllib.request
 from pathlib import Path
 
 from core import alice as alice_mod
+from core import export as export_mod
 from core import storage
 from core.home import (
     HomeError,
@@ -321,6 +322,28 @@ def _cmd_alice_rename(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_export(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = export_mod.export_home(layout.root, args.out)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"exported: {result['path']}")
+        print(f"counts: {json.dumps(result['counts'], ensure_ascii=False, sort_keys=True)}")
+    return 0
+
+
+def _cmd_import(args: argparse.Namespace) -> int:
+    destination = Path(args.to).expanduser() if args.to else default_home()
+    result = export_mod.import_home(args.file, destination)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"imported: {result['path']}")
+        print(f"counts: {json.dumps(result['counts'], ensure_ascii=False, sort_keys=True)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="loomsci")
     parser.add_argument("--home", help="explicit loomsci home")
@@ -386,6 +409,17 @@ def build_parser() -> argparse.ArgumentParser:
     handoff.add_argument("--evidence", required=True)
     handoff.add_argument("--json", action="store_true")
     handoff.set_defaults(func=_cmd_handoff)
+
+    export = sub.add_parser("export", help="export the home as a zip")
+    export.add_argument("--out", required=True)
+    export.add_argument("--json", action="store_true")
+    export.set_defaults(func=_cmd_export)
+
+    import_cmd = sub.add_parser("import", help="import an export zip")
+    import_cmd.add_argument("file")
+    import_cmd.add_argument("--to")
+    import_cmd.add_argument("--json", action="store_true")
+    import_cmd.set_defaults(func=_cmd_import)
 
     alice = sub.add_parser("alice", help="manage the default agent baseline")
     alice_sub = alice.add_subparsers(dest="alice_command", required=True)

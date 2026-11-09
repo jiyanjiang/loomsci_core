@@ -37,6 +37,7 @@ CORE = PackSpec(
         "/",
         "/app",
         "/app/chats",
+        "/app/posts",
         "/app/tasks",
         "/app/memory",
         "/app/settings",

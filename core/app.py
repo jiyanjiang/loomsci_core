@@ -119,10 +119,57 @@ pre {{ padding: 12px 14px; border: 1px solid color-mix(in srgb, currentColor 20%
 <pre>loomsci serve
 loomsci post --as &lt;agent.owner&gt; --body "hello"
 loomsci read --as &lt;agent.owner&gt;</pre>
+<p><a href="/app/posts">Posts</a> · <a href="/app/tasks">Tasks</a></p>
 <p><a href="/v1/meta/features">/v1/meta/features</a> · <a href="/v1/health">/v1/health</a></p>
 </body>
 </html>"""
         return Response(page, mimetype="text/html")
+
+    def _data_shell(title: str, body: str) -> Response:
+        page = f"""<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{escape(title)} · loomsci_core</title>
+<style>
+:root {{ color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }}
+body {{ max-width: 860px; margin: 6vh auto; padding: 0 24px; line-height: 1.5; }}
+.item {{ border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 12px 0; }}
+.meta {{ opacity: .65; font-size: 13px; }}
+pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
+</style></head>
+<body><p><a href="/app">← status</a></p><h1>{escape(title)}</h1>{body}</body></html>"""
+        return Response(page, mimetype="text/html")
+
+    @app.get("/app/posts")
+    def posts_page():
+        posts = storage.list_posts(get_db(), limit=50)
+        items = []
+        for post in posts:
+            body = escape(str(post.get("body") or ""))[:400]
+            items.append(
+                '<div class="item">'
+                f'<div><b>{escape(str(post.get("title") or post.get("id") or ""))}</b></div>'
+                f'<div class="meta">#{post.get("seq")} · {escape(str(post.get("author") or ""))}'
+                f' · {escape(str(post.get("kind") or ""))}</div>'
+                f'<pre>{body}</pre></div>'
+            )
+        body = "".join(items) or '<p class="meta">No posts yet.</p>'
+        return _data_shell("Posts", body)
+
+    @app.get("/app/tasks")
+    def tasks_page():
+        tasks = storage.list_tasks(get_db(), limit=50)
+        items = []
+        for task in tasks:
+            items.append(
+                '<div class="item">'
+                f'<div><b>{escape(str(task.get("title") or task.get("id") or ""))}</b></div>'
+                f'<div class="meta">{escape(str(task.get("status") or ""))}'
+                f' · {escape(str(task.get("assigned_to") or "unassigned"))}</div>'
+                f'<pre>{escape(str(task.get("acceptance") or ""))[:400]}</pre></div>'
+            )
+        body = "".join(items) or '<p class="meta">No tasks yet.</p>'
+        return _data_shell("Tasks", body)
 
     @app.get("/v1/health")
     def health():

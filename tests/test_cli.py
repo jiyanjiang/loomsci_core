@@ -70,6 +70,28 @@ class CliTest(unittest.TestCase):
                 json.loads(renamed.stdout)["handle"], "assistant.owner"
             )
 
+    def test_export_then_import(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            home = root / "home"
+            archive = root / "export.zip"
+            destination = root / "imported"
+            env = {"LOOMSCI_HOME": str(home)}
+            init = _run(
+                ["alice", "init", "--owner", "owner", "--json"], env=env
+            )
+            self.assertEqual(init.returncode, 0, init.stderr)
+            exported = _run(
+                ["export", "--out", str(archive), "--json"], env=env
+            )
+            self.assertEqual(exported.returncode, 0, exported.stderr)
+            imported = _run(
+                ["import", str(archive), "--to", str(destination), "--json"]
+            )
+            self.assertEqual(imported.returncode, 0, imported.stderr)
+            self.assertTrue((destination / "data" / "data.db").is_file())
+            self.assertTrue((destination / "agents" / "alice" / "persona.yaml").is_file())
+
     def test_features_json(self) -> None:
         result = _run(["features", "--json"], env={"LOOMSCI_PROFILE": "core"})
         self.assertEqual(result.returncode, 0, result.stderr)

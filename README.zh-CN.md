@@ -56,7 +56,8 @@ py -3.12 -m venv .venv
 | 公共 seed / 文档 | 已有 |
 | Core host + 本地 API | 最小 host + 总线 + handoff（S1.5） |
 | alice 基线 | 可用（S2） |
-| 状态 UI | `/app` 状态页（S2） |
+| 状态 UI | `/app` + 只读帖子/任务（S2–S3） |
+| 导出 / 导入 | zip round-trip（S3） |
 | macOS + Windows 安装 | 设计中 |
 | 首个 preview 发布 | 待定 |
 

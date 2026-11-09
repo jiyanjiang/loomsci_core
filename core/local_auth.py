@@ -17,6 +17,8 @@ LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 PUBLIC_PATHS = frozenset({
     "/",
     "/app",
+    "/app/posts",
+    "/app/tasks",
     "/v1/health",
     "/v1/version",
     "/v1/meta/features",

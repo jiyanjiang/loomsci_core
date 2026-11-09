@@ -58,7 +58,8 @@ The preview currently declares Flask only. The minimal host can be run with
 | Public seed / docs | available |
 | Core host + local API | minimal host + bus + handoff (S1.5) |
 | alice baseline | available (S2) |
-| Status UI | `/app` status page (S2) |
+| Status UI | `/app` + read-only posts/tasks (S2–S3) |
+| Export / import | zip round-trip (S3) |
 | macOS + Windows installation | in design |
 | First preview release | pending |
 

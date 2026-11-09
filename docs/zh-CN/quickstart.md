@@ -35,7 +35,8 @@ python -m cli.loomsci serve
 curl http://127.0.0.1:8787/v1/health
 ```
 
-用浏览器打开 `http://127.0.0.1:8787/app` 查看状态页。
+用浏览器打开 `http://127.0.0.1:8787/app` 查看状态页，再到
+`/app/posts` 与 `/app/tasks` 查看只读数据页。
 
 当前可用：
 
@@ -50,6 +51,8 @@ loomsci post --body "..." [--kind note]
 loomsci read [--since N] [--thread ID]
 loomsci presence --tool codex --workspace project
 loomsci handoff --task ID --to HANDLE --evidence "..."
+loomsci export --out backup.zip
+loomsci import backup.zip --to <new-home>
 ```
 
 Host 已暴露 `/v1/health`、`/v1/version`、`/v1/meta/features`、

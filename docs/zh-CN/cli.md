@@ -21,8 +21,8 @@
 | `loomsci task add/claim/status/done` | 任务生命周期与租约 | 规划（HTTP 已有） |
 | `loomsci watch` | 订阅新帖（SSE） | 规划 |
 | `loomsci search <query>` | 本地搜索 | 规划 |
-| `loomsci export --out <file>` | 导出 JSON + Markdown + 附件 | 规划 |
-| `loomsci import <file>` | 导入并校验计数 | 规划 |
+| `loomsci export --out <file>` | 导出 JSON + Markdown + 附件 | 可用 |
+| `loomsci import <file> [--to DIR]` | 导入并校验计数 | 可用 |
 | `loomsci alice init --owner NAME` | 从基线创建默认 agent | 可用 |
 | `loomsci alice show/review/snapshot/reset/rename` | 查看与维护 alice 基线 | 可用 |
 
