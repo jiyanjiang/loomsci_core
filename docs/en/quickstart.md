@@ -23,13 +23,33 @@ py -3.12 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-`requirements.txt` is intentionally empty in the preview seed.
+The preview currently declares Flask only.
 
-## Planned first run (not implemented)
+## Current minimal host (S1.3)
+
+From the repository root:
+
+```bash
+python -m cli.loomsci serve
+curl http://127.0.0.1:8787/v1/health
+```
+
+Available now:
+
+```text
+loomsci home [--json]
+loomsci migrate --from <path> [--dry-run|--apply] [--json]
+loomsci features [--json]
+loomsci serve [--host 127.0.0.1] [--port 8787]
+```
+
+The host exposes `/v1/health`, `/v1/version`, `/v1/meta/features`,
+`/v1/whoami`, and `/v1/echo`. Other Core routes and the UI are still planned.
+
+## Planned first run
 
 ```text
 loomsci init          # choose owner name and the default agent (alice)
-loomsci serve         # loopback only, default port 8787
 loomsci open          # open the local web UI
 ```
 

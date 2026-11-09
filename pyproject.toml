@@ -16,7 +16,7 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python :: 3.12",
 ]
-dependencies = []
+dependencies = ["Flask>=3.0,<4"]
 
 [project.scripts]
 loomsci = "cli.loomsci:main"

@@ -49,6 +49,8 @@ CORE = PackSpec(
         "/v1/health",
         "/v1/version",
         "/v1/meta/features",
+        "/v1/whoami",
+        "/v1/echo",
         "/v1/agents*",
         "/v1/presence*",
         "/v1/posts*",

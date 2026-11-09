@@ -14,6 +14,7 @@ from core.home import (
     migration_plan,
     resolve_home,
 )
+from core.local_auth import is_loopback_host
 from core.packs import Registry
 
 
@@ -58,6 +59,23 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_serve(args: argparse.Namespace) -> int:
+    if not is_loopback_host(args.host):
+        print("error: the Core profile only binds a loopback host", file=sys.stderr)
+        return 2
+    from core.app import create_app
+
+    app = create_app()
+    app.run(
+        host=args.host,
+        port=args.port,
+        threaded=True,
+        use_reloader=False,
+        debug=False,
+    )
+    return 0
+
+
 def _cmd_features(args: argparse.Namespace) -> int:
     features = Registry.from_env().features()
     if args.json:
@@ -91,6 +109,11 @@ def build_parser() -> argparse.ArgumentParser:
     features = sub.add_parser("features", help="show active profile, routes, jobs, nav")
     features.add_argument("--json", action="store_true")
     features.set_defaults(func=_cmd_features)
+
+    serve = sub.add_parser("serve", help="run the local host")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8787)
+    serve.set_defaults(func=_cmd_serve)
     return parser
 
 

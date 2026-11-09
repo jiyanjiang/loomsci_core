@@ -23,13 +23,33 @@ py -3.12 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-预览 seed 的 `requirements.txt` 故意留空。
+预览阶段目前只声明 Flask。
 
-## 计划中的首次运行（尚未实现）
+## 当前最小 host（S1.3）
+
+在仓库根目录：
+
+```bash
+python -m cli.loomsci serve
+curl http://127.0.0.1:8787/v1/health
+```
+
+当前可用：
+
+```text
+loomsci home [--json]
+loomsci migrate --from <path> [--dry-run|--apply] [--json]
+loomsci features [--json]
+loomsci serve [--host 127.0.0.1] [--port 8787]
+```
+
+Host 已暴露 `/v1/health`、`/v1/version`、`/v1/meta/features`、
+`/v1/whoami`、`/v1/echo`；其余 Core 路由与 UI 仍在规划中。
+
+## 计划中的首次运行
 
 ```text
 loomsci init          # 设置 owner 与默认 agent（alice）
-loomsci serve         # 仅回环，默认端口 8787
 loomsci open          # 打开本地 UI
 ```
 

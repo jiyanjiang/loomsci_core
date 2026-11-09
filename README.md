@@ -48,15 +48,15 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-Dependencies will be finalized with the first preview release. The current
-`requirements.txt` is intentionally empty.
+The preview currently declares Flask only. The minimal host can be run with
+`python -m cli.loomsci serve`; the full installer is still pending.
 
 ## Status
 
 | Area | Status |
 |---|---|
 | Public seed / docs | available |
-| Core host + local API | in design |
+| Core host + local API | minimal host (S1.3) |
 | alice baseline | in design |
 | macOS + Windows installation | in design |
 | First preview release | pending |

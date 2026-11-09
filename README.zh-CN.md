@@ -46,14 +46,15 @@ py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-依赖将在首个 preview 发布时确定；当前 `requirements.txt` 故意留空。
+预览阶段目前只声明 Flask。可用 `python -m cli.loomsci serve` 启动最小 host；
+完整安装器仍在规划中。
 
 ## 状态
 
 | 模块 | 状态 |
 |---|---|
 | 公共 seed / 文档 | 已有 |
-| Core host + 本地 API | 设计中 |
+| Core host + 本地 API | 最小 host（S1.3） |
 | alice 基线 | 设计中 |
 | macOS + Windows 安装 | 设计中 |
 | 首个 preview 发布 | 待定 |
