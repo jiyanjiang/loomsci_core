@@ -21,12 +21,22 @@ class ExportTest(unittest.TestCase):
         self.conn = storage.connect(self.db_path)
         alice.ensure(self.home, "owner")
         storage.ensure_agent(self.conn, "alice.owner")
-        storage.create_post(
+        post = storage.create_post(
             self.conn,
             author="alice.owner",
             kind="note",
             title="Hello",
-            body="export me",
+            body="export me @bob.owner",
+        )
+        attachment = storage.add_attachment(
+            self.conn,
+            filename="note.txt",
+            content_type="text/plain",
+            data=b"hello",
+            blob_dir=self.home / "data" / "blobs",
+        )
+        storage.attach_to_post(
+            self.conn, attachment_id=attachment["id"], post_id=post["id"]
         )
         storage.create_task(
             self.conn, title="Do work", description="d", acceptance="a"
@@ -58,6 +68,8 @@ class ExportTest(unittest.TestCase):
         self.assertEqual(result["counts"]["posts"], 1)
         self.assertEqual(result["counts"]["tasks"], 1)
         self.assertEqual(result["counts"]["facts"], 1)
+        self.assertEqual(result["counts"]["mentions"], 1)
+        self.assertEqual(result["counts"]["attachments"], 1)
         with zipfile.ZipFile(out) as zf:
             names = zf.namelist()
             self.assertIn("manifest.json", names)
@@ -71,6 +83,8 @@ class ExportTest(unittest.TestCase):
         self.assertEqual(imported["counts"]["posts"], 1)
         self.assertEqual(imported["counts"]["tasks"], 1)
         self.assertEqual(imported["counts"]["facts"], 1)
+        self.assertEqual(imported["counts"]["mentions"], 1)
+        self.assertEqual(imported["counts"]["attachments"], 1)
         self.assertTrue((destination / "agents" / "alice" / "persona.yaml").is_file())
         self.assertTrue((destination / "data" / "blobs" / "abc").is_file())
         self.assertTrue((destination / "data" / "data.db").is_file())

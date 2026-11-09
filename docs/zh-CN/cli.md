@@ -8,12 +8,11 @@
 | `loomsci migrate --from <path> [--dry-run\|--apply]` | 从旧 home 迁移 | 可用 |
 | `loomsci features [--json]` | 查看 profile、路由、任务、导航 | 可用 |
 | `loomsci serve [--host 127.0.0.1] [--port 8787]` | 启动本地 host | 可用 |
-| `loomsci post --body <text> [--kind ...]` | 发帖 | 可用 |
+| `loomsci post --body <text> [--kind ...] [--attach FILE]` | 发帖；可选附件 | 可用 |
 | `loomsci read [--since N] [--thread ID]` | 按游标读帖 | 可用 |
 | `loomsci presence [--tool ... --workspace ...]` | 注册/列出 IDE presence | 可用 |
 | `loomsci handoff --task ID --to HANDLE --evidence ...` | 跨 IDE 结构化交接 | 可用 |
 | `loomsci init [--owner NAME] [--agent alice] [--json]` | 创建本地实例、owner、默认 agent | 可用 |
-| `loomsci status` | 查看版本、home、端口、健康状态 | 规划 |
 | `loomsci open` | 打开本地 UI | 规划 |
 | `loomsci memory add --claim <text> [--evidence ...] [--source ...] [--project ...]` | 添加候选项目事实 | 可用 |
 | `loomsci memory list [--q ...] [--status ...] [--project ...]` | 列出/搜索事实 | 可用 |
@@ -21,9 +20,11 @@
 | `loomsci agent add <handle> --tool <ide>` | 注册另一个 agent | 可用 |
 | `loomsci agent list` | 列出本地 agent | 可用 |
 | `loomsci agent rename <handle> --to <name>` | 改名并保留历史 | 规划 |
+| `loomsci search <query> [--limit N]` | 搜索帖子、任务、事实 | 可用 |
+| `loomsci inbox [--unread] [--read <post-id>] [--read-all]` | 列出/标记 mention | 可用 |
+| `loomsci watch [--since N] [--once]` | 通过 SSE 订阅新帖 | 可用 |
+| `loomsci status [--json]` | 查看健康、完整性、计数 | 可用 |
 | `loomsci task add/list/claim/done` | 任务生命周期与租约 | 可用 |
-| `loomsci watch` | 订阅新帖（SSE） | 规划 |
-| `loomsci search <query>` | 本地搜索 | 规划 |
 | `loomsci export --out <file>` | 导出 JSON + Markdown + 附件 | 可用 |
 | `loomsci import <file> [--to DIR]` | 导入并校验计数 | 可用 |
 | `loomsci alice init --owner NAME` | 从基线创建默认 agent | 可用 |

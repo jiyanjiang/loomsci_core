@@ -95,6 +95,40 @@ class CliHttpTest(unittest.TestCase):
         self.assertEqual(code, 0, output)
         self.assertIn("approved", output)
 
+    def test_search_inbox_watch_status_attachment(self) -> None:
+        code, output = self._run(
+            "post", "--body", "ping @bob.jiyanjiang", "--title", "Review", "--json"
+        )
+        self.assertEqual(code, 0, output)
+        post_id = json.loads(output)["post"]["id"]
+
+        code, output = self._run("search", "Review", "--json")
+        self.assertEqual(code, 0, output)
+        self.assertIn("Review", output)
+
+        code, output = self._run("inbox", "--json", agent=OTHER)
+        self.assertEqual(code, 0, output)
+        self.assertIn(post_id, output)
+        code, output = self._run("inbox", "--read", post_id, "--json", agent=OTHER)
+        self.assertEqual(code, 0, output)
+        self.assertIn('"changed": 1', output)
+
+        code, output = self._run("status", "--json")
+        self.assertEqual(code, 0, output)
+        self.assertIn('"integrity": "ok"', output)
+
+        code, output = self._run("watch", "--since", "0", "--once", "--json")
+        self.assertEqual(code, 0, output)
+        self.assertIn("Review", output)
+
+        attachment = Path(self.tmp.name) / "note.txt"
+        attachment.write_text("hello", encoding="utf-8")
+        code, output = self._run(
+            "post", "--body", "with file", "--attach", str(attachment), "--json"
+        )
+        self.assertEqual(code, 0, output)
+        self.assertIn("attachments", output)
+
     def test_two_agent_task_and_handoff(self) -> None:
         code, output = self._run("task", "add", "--title", "handoff work", "--json")
         self.assertEqual(code, 0, output)

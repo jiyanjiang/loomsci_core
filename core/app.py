@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
+import json
+import time
 from html import escape
 from pathlib import Path
 from typing import Mapping
@@ -31,7 +35,7 @@ def _storage_error(exc: Exception):
         return jsonify({"ok": False, "error": "conflict", "detail": str(exc)}), 409
     if isinstance(exc, storage.Forbidden):
         return jsonify({"ok": False, "error": "forbidden", "detail": str(exc)}), 403
-    if isinstance(exc, ValueError):
+    if isinstance(exc, (ValueError, binascii.Error)):
         return jsonify({"ok": False, "error": "bad_request", "detail": str(exc)}), 400
     raise exc
 
@@ -119,7 +123,7 @@ pre {{ padding: 12px 14px; border: 1px solid color-mix(in srgb, currentColor 20%
 <pre>loomsci serve
 loomsci post --as &lt;agent.owner&gt; --body "hello"
 loomsci read --as &lt;agent.owner&gt;</pre>
-<p><a href="/app/posts">Posts</a> · <a href="/app/tasks">Tasks</a> · <a href="/app/memory">Memory</a></p>
+<p><a href="/app/posts">Posts</a> · <a href="/app/tasks">Tasks</a> · <a href="/app/memory">Memory</a> · <a href="/app/inbox">Inbox</a></p>
 <p><a href="/v1/meta/features">/v1/meta/features</a> · <a href="/v1/health">/v1/health</a></p>
 </body>
 </html>"""
@@ -157,12 +161,17 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         items = []
         for post in posts:
             body = escape(str(post.get("body") or ""))[:400]
+            files = "".join(
+                f'<div class="meta"><a href="/app/attachments/{escape(str(item["id"]))}">'
+                f'{escape(str(item.get("filename") or item["id"]))}</a></div>'
+                for item in post.get("attachments") or []
+            )
             items.append(
                 '<div class="item">'
                 f'<div><b>{escape(str(post.get("title") or post.get("id") or ""))}</b></div>'
                 f'<div class="meta">#{post.get("seq")} · {escape(str(post.get("author") or ""))}'
                 f' · {escape(str(post.get("kind") or ""))}</div>'
-                f'<pre>{body}</pre></div>'
+                f'<pre>{body}</pre>{files}</div>'
             )
         author = _ui_agent()
         form = (
@@ -295,6 +304,36 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             pass
         return redirect("/app/memory")
 
+    @app.get("/app/inbox")
+    def inbox_page():
+        author = _ui_agent()
+        if not author:
+            return _data_shell("Inbox", '<p class="meta">Initialize an agent first: loomsci init</p>')
+        items = []
+        for post in storage.list_inbox(get_db(), agent=author, limit=100):
+            read = post.get("mention_read_at")
+            items.append(
+                '<div class="item">'
+                f'<div><b>{escape(str(post.get("title") or post.get("id") or ""))}</b></div>'
+                f'<div class="meta">#{post.get("seq")} · {escape(str(post.get("author") or ""))}'
+                f' · {"read" if read else "unread"}</div>'
+                f'<pre>{escape(str(post.get("body") or ""))[:400]}</pre></div>'
+            )
+        body = "".join(items) or '<p class="meta">No mentions yet.</p>'
+        return _data_shell("Inbox", body)
+
+    @app.get("/app/attachments/<attachment_id>")
+    def attachment_page(attachment_id: str):
+        item = storage.get_attachment(get_db(), attachment_id)
+        if item is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        target = layout.blobs / attachment_id
+        if not target.is_file():
+            return jsonify({"ok": False, "error": "blob_missing"}), 404
+        response = Response(target.read_bytes(), mimetype=item.get("content_type") or "application/octet-stream")
+        response.headers["Content-Disposition"] = f'attachment; filename="{item.get("filename") or "file"}"'
+        return response
+
     @app.get("/v1/health")
     def health():
         return jsonify({
@@ -359,10 +398,120 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 thread_id=body.get("thread_id"),
                 parent_id=body.get("parent_id"),
                 meta=body.get("meta") if isinstance(body.get("meta"), dict) else {},
+                attachments=[str(item) for item in body.get("attachments") or []],
             )
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "post": post}), 201
+
+    @app.get("/v1/search")
+    def search_all():
+        q = str(request.args.get("q") or "").strip()
+        try:
+            limit = int(request.args.get("limit", "50"))
+        except ValueError:
+            return jsonify({"ok": False, "error": "invalid_limit"}), 400
+        return jsonify({"ok": True, "results": storage.search(get_db(), q=q, limit=limit)})
+
+    @app.get("/v1/inbox")
+    def inbox_list():
+        try:
+            limit = int(request.args.get("limit", "50"))
+        except ValueError:
+            return jsonify({"ok": False, "error": "invalid_limit"}), 400
+        items = storage.list_inbox(
+            get_db(),
+            agent=g.loomsci_agent,
+            unread_only=request.args.get("unread") in ("1", "true", "yes"),
+            limit=limit,
+        )
+        return jsonify({"ok": True, "inbox": items})
+
+    @app.post("/v1/inbox/read")
+    def inbox_read():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            changed = storage.mark_inbox_read(
+                get_db(),
+                agent=g.loomsci_agent,
+                post_id=body.get("post_id"),
+                up_to_seq=body.get("up_to_seq"),
+            )
+        except Exception as exc:  # noqa: BLE001 - mapped below
+            return _storage_error(exc)
+        return jsonify({"ok": True, "changed": changed})
+
+    @app.post("/v1/attachments")
+    def attachments_upload():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            data = base64.b64decode(str(body.get("content_base64") or ""), validate=True)
+            attachment = storage.add_attachment(
+                get_db(),
+                filename=str(body.get("filename") or "file"),
+                content_type=str(body.get("content_type") or "application/octet-stream"),
+                data=data,
+                blob_dir=layout.blobs,
+            )
+        except Exception as exc:  # noqa: BLE001 - mapped below
+            return _storage_error(exc)
+        return jsonify({"ok": True, "attachment": attachment}), 201
+
+    @app.get("/v1/attachments/<attachment_id>")
+    def attachments_get(attachment_id: str):
+        item = storage.get_attachment(get_db(), attachment_id)
+        if item is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        target = layout.blobs / attachment_id
+        if not target.is_file():
+            return jsonify({"ok": False, "error": "blob_missing"}), 404
+        response = Response(target.read_bytes(), mimetype=item.get("content_type") or "application/octet-stream")
+        response.headers["Content-Disposition"] = f'attachment; filename="{item.get("filename") or "file"}"'
+        return response
+
+    @app.get("/v1/status")
+    def status():
+        return jsonify({"ok": True, "home": str(layout.root), **storage.stats(get_db())})
+
+    @app.get("/v1/events")
+    def events():
+        try:
+            since = int(request.args.get("since", "0"))
+        except ValueError:
+            return jsonify({"ok": False, "error": "bad_since"}), 400
+        once = request.args.get("once") in ("1", "true", "yes")
+
+        def generate():
+            conn = storage.connect(layout.db)
+            cursor = max(0, since)
+            last_ping = time.monotonic()
+            try:
+                yield "retry: 1000\n\n"
+                while True:
+                    posts = storage.list_posts(conn, since=cursor, limit=100)
+                    if posts:
+                        for post in posts:
+                            cursor = max(cursor, int(post["seq"]))
+                            yield "event: post\ndata: " + json.dumps(post, ensure_ascii=False) + "\n\n"
+                        last_ping = time.monotonic()
+                        continue
+                    if once:
+                        return
+                    if time.monotonic() - last_ping >= 15:
+                        yield ": ping\n\n"
+                        last_ping = time.monotonic()
+                    time.sleep(1)
+            finally:
+                conn.close()
+
+        response = Response(generate(), mimetype="text/event-stream")
+        response.headers["Cache-Control"] = "no-cache"
+        response.headers["X-Accel-Buffering"] = "no"
+        return response
 
     @app.get("/v1/tasks")
     def tasks_list():

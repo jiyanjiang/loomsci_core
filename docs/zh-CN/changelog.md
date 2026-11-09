@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.8
+
+- 增加帖子、任务、事实的本地搜索（`/v1/search`、`loomsci search`）。
+- 增加 mention 收件箱：`@agent.owner` 自动入箱；`/v1/inbox`、`loomsci inbox`。
+- 增加 SSE watch（`/v1/events`；脚本/测试可用 `loomsci watch --once`）。
+- 增加附件：JSON/base64 上传、关联帖子、下载、UI 链接、导出/导入。
+- 增加 `/v1/status` 与 `loomsci status`，用于完整性/计数恢复检查。
+- 本节点不做 Windows 全量回归，仍留到 N3。
+
 ## v0.1.0-preview.7
 
 - Add one-command `loomsci init` (owner + default agent).

@@ -54,8 +54,8 @@ namespace, namespaced storage, and a single event/audit path.
 | Node | Goal | Exit gate |
 |---|---|---|
 | N0 · done | Contract freeze 1 (`v0.1.0-preview.6`) | install, bus, alice, agent add, export/import, UI, release, real opencode+omp handoff |
-| **N1 · current** | Core Alpha (`v0.1.0-preview.7`) | init, post/task UI writes, memory add/review/export; Windows install spike passed |
-| N2 · Core Beta | search, watch/SSE, inbox/mentions, attachments, recovery, two-IDE replay | L1–L5 pass; restart; 409; handoff; export round-trip |
+| N1 · done | Core Alpha (`v0.1.0-preview.7`) | init, post/task UI writes, memory add/review/export; Windows install spike passed |
+| **N2 · current** | Core Beta (`v0.1.0-preview.8`) | search, watch/SSE, inbox/mentions, attachments, status recovery; restart/replay tests |
 | N3 · Core RC | Windows, signed package, GitHub Release, update/rollback, migration | clean install on macOS + Windows; rollback; `latest.json` |
 | N4 · Core 0.2.0 | soak and freeze | no new features; only bugfix; docs final |
 
@@ -66,4 +66,4 @@ sync, media/dist, social.
 
 `v0.1.0-preview.6` remains the **foundation freeze**. N1 (`preview.7`) adds
 init, facts/memory review, and minimal UI writes without changing the frozen
-protocol. Next is N2 (search, watch/SSE, attachments).
+protocol. Next is N3 (Windows full regression, signed package, update/rollback).

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import getpass
 import json
 import sys
@@ -138,6 +139,21 @@ def _cmd_features(args: argparse.Namespace) -> int:
 
 def _cmd_post(args: argparse.Namespace) -> int:
     _require_agent(args)
+    attachment_ids = []
+    for raw_path in args.attach or []:
+        path = Path(raw_path).expanduser()
+        data = path.read_bytes()
+        uploaded = _request(
+            args,
+            "POST",
+            "/v1/attachments",
+            {
+                "filename": path.name,
+                "content_type": "application/octet-stream",
+                "content_base64": base64.b64encode(data).decode("ascii"),
+            },
+        )
+        attachment_ids.append(uploaded["attachment"]["id"])
     payload = {
         "kind": args.kind,
         "title": args.title or "",
@@ -145,6 +161,7 @@ def _cmd_post(args: argparse.Namespace) -> int:
         "thread_id": args.thread,
         "parent_id": args.parent,
         "meta": {"to": args.to} if args.to else {},
+        "attachments": attachment_ids,
     }
     result = _request(args, "POST", "/v1/posts", payload)
     if args.json:
@@ -527,6 +544,79 @@ def _cmd_memory_review(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_search(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(
+        args, "GET", f"/v1/search?q={urllib.parse.quote(args.query)}&limit={args.limit}"
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        for item in result.get("results") or []:
+            print(f"[{item.get('type')}] {item.get('id')} {item.get('title')}")
+    return 0
+
+
+def _cmd_inbox(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    if args.read or args.read_all:
+        payload = {"post_id": args.read} if args.read else {"up_to_seq": 2**31 - 1}
+        result = _request(args, "POST", "/v1/inbox/read", payload)
+        if args.json:
+            _json_print(result)
+        else:
+            print(f"marked read: {result.get('changed', 0)}")
+        return 0
+    query = f"/v1/inbox?limit={args.limit}"
+    if args.unread:
+        query += "&unread=1"
+    result = _request(args, "GET", query)
+    if args.json:
+        _json_print(result)
+    else:
+        for post in result.get("inbox") or []:
+            print(f"{post.get('id')} @{post.get('author')} {post.get('title') or ''}")
+    return 0
+
+
+def _cmd_watch(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    query = f"/v1/events?since={args.since}"
+    if args.once:
+        query += "&once=1"
+    headers = {"X-Loomsci-Agent": str(args.agent)}
+    request = urllib.request.Request(args.url.rstrip("/") + query, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=args.timeout) as response:
+            for raw in response:
+                line = raw.decode("utf-8", "replace").rstrip("\n")
+                if not line.startswith("data: "):
+                    continue
+                payload = json.loads(line[6:])
+                if args.json:
+                    print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
+                else:
+                    print(f"#{payload.get('seq')} {payload.get('author')}: {payload.get('title') or payload.get('body', '')[:80]}")
+    except urllib.error.HTTPError as exc:
+        raise CliError(f"HTTP {exc.code}") from None
+    except urllib.error.URLError as exc:
+        raise CliError(f"cannot reach {args.url}: {exc.reason}") from None
+    return 0
+
+
+def _cmd_status(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(args, "GET", "/v1/status")
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"home: {result.get('home')}")
+        print(f"integrity: {result.get('integrity')}")
+        print(f"last_seq: {result.get('last_seq')}")
+        print("counts: " + json.dumps(result.get("counts") or {}, sort_keys=True))
+    return 0
+
+
 def _cmd_export(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = export_mod.export_home(layout.root, args.out)
@@ -590,6 +680,7 @@ def build_parser() -> argparse.ArgumentParser:
     post.add_argument("--thread")
     post.add_argument("--parent")
     post.add_argument("--to")
+    post.add_argument("--attach", action="append", help="attach a local file")
     post.add_argument("--json", action="store_true")
     post.set_defaults(func=_cmd_post)
 
@@ -690,6 +781,31 @@ def build_parser() -> argparse.ArgumentParser:
     memory_review.add_argument("--status", choices=["candidate", "approved", "rejected", "archived"], required=True)
     memory_review.add_argument("--json", action="store_true")
     memory_review.set_defaults(func=_cmd_memory_review)
+
+    search = sub.add_parser("search", help="search posts, tasks, and facts")
+    search.add_argument("query")
+    search.add_argument("--limit", type=int, default=50)
+    search.add_argument("--json", action="store_true")
+    search.set_defaults(func=_cmd_search)
+
+    inbox = sub.add_parser("inbox", help="list or mark mention inbox items")
+    inbox.add_argument("--unread", action="store_true")
+    inbox.add_argument("--read")
+    inbox.add_argument("--read-all", action="store_true")
+    inbox.add_argument("--limit", type=int, default=50)
+    inbox.add_argument("--json", action="store_true")
+    inbox.set_defaults(func=_cmd_inbox)
+
+    watch = sub.add_parser("watch", help="stream new posts")
+    watch.add_argument("--since", type=int, default=0)
+    watch.add_argument("--once", action="store_true")
+    watch.add_argument("--timeout", type=int, default=60)
+    watch.add_argument("--json", action="store_true")
+    watch.set_defaults(func=_cmd_watch)
+
+    status = sub.add_parser("status", help="show health, integrity, and counts")
+    status.add_argument("--json", action="store_true")
+    status.set_defaults(func=_cmd_status)
 
     export = sub.add_parser("export", help="export the home as a zip")
     export.add_argument("--out", required=True)

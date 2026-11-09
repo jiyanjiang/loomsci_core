@@ -39,6 +39,49 @@ class StorageTest(unittest.TestCase):
         self.assertEqual(posts[0]["meta"], {"tag": "test"})
         self.assertEqual(storage.list_posts(self.conn, since=post["seq"]), [])
 
+    def test_mentions_inbox_and_search(self) -> None:
+        post = storage.create_post(
+            self.conn,
+            author="alice.jiyanjiang",
+            kind="ask",
+            title="Need review",
+            body="Please check @bob.jiyanjiang and @carol.jiyanjiang",
+        )
+        self.assertEqual(
+            post["mentions"], ["bob.jiyanjiang", "carol.jiyanjiang"]
+        )
+        inbox = storage.list_inbox(self.conn, agent="bob.jiyanjiang")
+        self.assertEqual(len(inbox), 1)
+        self.assertIsNone(inbox[0]["mention_read_at"])
+        self.assertEqual(storage.mark_inbox_read(
+            self.conn, agent="bob.jiyanjiang", post_id=post["id"]
+        ), 1)
+        self.assertEqual(
+            storage.list_inbox(self.conn, agent="bob.jiyanjiang", unread_only=True),
+            [],
+        )
+        self.assertEqual(len(storage.search(self.conn, q="review")), 1)
+        self.assertEqual(storage.stats(self.conn)["integrity"], "ok")
+
+    def test_attachment_roundtrip(self) -> None:
+        post = storage.create_post(
+            self.conn, author="alice.jiyanjiang", kind="note", body="with file"
+        )
+        attachment = storage.add_attachment(
+            self.conn,
+            filename="note.txt",
+            content_type="text/plain",
+            data=b"hello",
+            blob_dir=Path(self.tmp.name) / "data" / "blobs",
+        )
+        storage.attach_to_post(
+            self.conn, attachment_id=attachment["id"], post_id=post["id"]
+        )
+        self.assertEqual(len(storage.list_attachments(self.conn, post_id=post["id"])), 1)
+        self.assertTrue(
+            (Path(self.tmp.name) / "data" / "blobs" / attachment["id"]).is_file()
+        )
+
     def test_invalid_post_kind(self) -> None:
         with self.assertRaises(ValueError):
             storage.create_post(

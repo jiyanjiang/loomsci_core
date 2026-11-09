@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import sys
 import tempfile
 import unittest
@@ -42,6 +43,81 @@ class AppDataTest(unittest.TestCase):
         self.assertEqual(listed.status_code, 200)
         self.assertEqual(len(listed.json["posts"]), 1)
         self.assertEqual(listed.json["posts"][0]["body"], "First post")
+
+    def test_search_inbox_status_and_events(self) -> None:
+        created = self.client.post(
+            "/v1/posts",
+            json={"kind": "ask", "title": "Review", "body": "ping @bob.jiyanjiang"},
+            headers=self.headers,
+        )
+        self.assertEqual(created.status_code, 201)
+        post_id = created.json["post"]["id"]
+        self.assertIn("bob.jiyanjiang", created.json["post"]["mentions"])
+
+        search = self.client.get("/v1/search?q=Review", headers=self.headers)
+        self.assertEqual(search.status_code, 200)
+        self.assertEqual(search.json["results"][0]["type"], "post")
+
+        inbox = self.client.get(
+            "/v1/inbox", headers={"X-Loomsci-Agent": OTHER}
+        )
+        self.assertEqual(inbox.status_code, 200)
+        self.assertEqual(len(inbox.json["inbox"]), 1)
+        marked = self.client.post(
+            "/v1/inbox/read",
+            json={"post_id": post_id},
+            headers={"X-Loomsci-Agent": OTHER},
+        )
+        self.assertEqual(marked.json["changed"], 1)
+
+        status = self.client.get("/v1/status", headers=self.headers)
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.json["integrity"], "ok")
+        self.assertEqual(status.json["counts"]["posts"], 1)
+
+        events = self.client.get(
+            "/v1/events?since=0&once=1", headers=self.headers
+        )
+        self.assertEqual(events.status_code, 200)
+        self.assertIn("event: post", events.get_data(as_text=True))
+
+    def test_attachment_api(self) -> None:
+        uploaded = self.client.post(
+            "/v1/attachments",
+            json={
+                "filename": "note.txt",
+                "content_type": "text/plain",
+                "content_base64": base64.b64encode(b"hello").decode("ascii"),
+            },
+            headers=self.headers,
+        )
+        self.assertEqual(uploaded.status_code, 201, uploaded.get_data(as_text=True))
+        attachment = uploaded.json["attachment"]
+        post = self.client.post(
+            "/v1/posts",
+            json={"body": "with file", "attachments": [attachment["id"]]},
+            headers=self.headers,
+        )
+        self.assertEqual(post.status_code, 201)
+        self.assertEqual(len(post.json["post"]["attachments"]), 1)
+        downloaded = self.client.get(
+            f"/v1/attachments/{attachment['id']}", headers=self.headers
+        )
+        self.assertEqual(downloaded.status_code, 200)
+        self.assertEqual(downloaded.data, b"hello")
+        ui_download = self.client.get(f"/app/attachments/{attachment['id']}")
+        self.assertEqual(ui_download.status_code, 200)
+        self.assertEqual(ui_download.data, b"hello")
+
+    def test_restart_preserves_data(self) -> None:
+        self.client.post(
+            "/v1/posts", json={"body": "survives restart"}, headers=self.headers
+        )
+        app = create_app(env={"LOOMSCI_PROFILE": "core"}, home=self.home)
+        client = app.test_client()
+        response = client.get("/v1/posts", headers=self.headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["posts"][0]["body"], "survives restart")
 
     def test_posts_require_identity(self) -> None:
         response = self.client.get("/v1/posts")

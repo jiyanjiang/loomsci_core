@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+
+MENTION_RE = re.compile(r"@([a-z0-9][a-z0-9-]{0,31}\.[a-z0-9][a-z0-9-]{0,31})")
+ATTACHMENT_MAX_BYTES = 512 * 1024
 
 POST_KINDS = frozenset(
     {"note", "ask", "status", "review", "artifact", "handoff", "decision"}
@@ -59,6 +64,26 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 CREATE INDEX IF NOT EXISTS tasks_status ON tasks(status, updated_at);
 CREATE INDEX IF NOT EXISTS tasks_assignee ON tasks(assigned_to, status);
+
+CREATE TABLE IF NOT EXISTS mentions (
+  post_seq   INTEGER NOT NULL,
+  agent      TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  read_at    TEXT,
+  PRIMARY KEY (post_seq, agent)
+);
+CREATE INDEX IF NOT EXISTS mentions_agent ON mentions(agent, read_at);
+
+CREATE TABLE IF NOT EXISTS attachments (
+  id           TEXT PRIMARY KEY,
+  post_id      TEXT,
+  filename     TEXT NOT NULL,
+  content_type TEXT,
+  bytes        INTEGER NOT NULL,
+  sha256       TEXT NOT NULL,
+  created_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS attachments_post ON attachments(post_id);
 
 CREATE TABLE IF NOT EXISTS facts (
   id          TEXT PRIMARY KEY,
@@ -173,6 +198,134 @@ def resolve_handle(conn: sqlite3.Connection, handle: str) -> str:
     return str(row["handle"]) if row else handle
 
 
+def _extract_mentions(text: str) -> list[str]:
+    return [match.group(1).lower() for match in MENTION_RE.finditer(text or "")]
+
+
+def list_mentions(conn: sqlite3.Connection, *, post_id: str) -> list[str]:
+    rows = conn.execute(
+        "SELECT m.agent FROM mentions m JOIN posts p ON p.seq=m.post_seq WHERE p.id=? ORDER BY m.agent",
+        (post_id,),
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
+def list_inbox(
+    conn: sqlite3.Connection,
+    *,
+    agent: str,
+    unread_only: bool = False,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    limit = max(1, min(int(limit), 200))
+    sql = (
+        "SELECT p.*, m.read_at AS mention_read_at FROM mentions m "
+        "JOIN posts p ON p.seq=m.post_seq WHERE m.agent=?"
+    )
+    params: list[Any] = [agent]
+    if unread_only:
+        sql += " AND m.read_at IS NULL"
+    sql += " ORDER BY p.seq DESC LIMIT ?"
+    params.append(limit)
+    items = []
+    for row in conn.execute(sql, params).fetchall():
+        item = _post_dict(row)
+        item["mention_read_at"] = item.pop("mention_read_at", None)
+        items.append(item)
+    return items
+
+
+def mark_inbox_read(
+    conn: sqlite3.Connection,
+    *,
+    agent: str,
+    post_id: str | None = None,
+    up_to_seq: int | None = None,
+) -> int:
+    if post_id:
+        row = conn.execute("SELECT seq FROM posts WHERE id=?", (post_id,)).fetchone()
+        if row is None:
+            raise NotFound("post not found")
+        cursor = conn.execute(
+            "UPDATE mentions SET read_at=? WHERE agent=? AND post_seq=? AND read_at IS NULL",
+            (now(), agent, int(row[0])),
+        )
+    elif up_to_seq is not None:
+        cursor = conn.execute(
+            "UPDATE mentions SET read_at=? WHERE agent=? AND post_seq<=? AND read_at IS NULL",
+            (now(), agent, int(up_to_seq)),
+        )
+    else:
+        cursor = conn.execute(
+            "UPDATE mentions SET read_at=? WHERE agent=? AND read_at IS NULL",
+            (now(), agent),
+        )
+    conn.commit()
+    return cursor.rowcount
+
+
+def add_attachment(
+    conn: sqlite3.Connection,
+    *,
+    filename: str,
+    content_type: str,
+    data: bytes,
+    blob_dir: Path,
+) -> dict[str, Any]:
+    if not data:
+        raise ValueError("empty attachment")
+    if len(data) > ATTACHMENT_MAX_BYTES:
+        raise ValueError("attachment too large")
+    safe_name = re.sub(r"[^A-Za-z0-9._ -]+", "_", Path(str(filename or "file")).name).strip() or "file"
+    safe_name = safe_name[:120]
+    attachment_id = "a-" + secrets.token_hex(6)
+    digest = hashlib.sha256(data).hexdigest()
+    blob_dir.mkdir(parents=True, exist_ok=True)
+    target = blob_dir / attachment_id
+    target.write_bytes(data)
+    try:
+        target.chmod(0o600)
+    except OSError:
+        pass
+    created = now()
+    conn.execute(
+        "INSERT INTO attachments(id, filename, content_type, bytes, sha256, created_at) "
+        "VALUES (?,?,?,?,?,?)",
+        (attachment_id, safe_name, content_type or "application/octet-stream",
+         len(data), digest, created),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM attachments WHERE id=?", (attachment_id,)).fetchone()
+    return dict(row)
+
+
+def get_attachment(conn: sqlite3.Connection, attachment_id: str) -> dict[str, Any] | None:
+    row = conn.execute("SELECT * FROM attachments WHERE id=?", (attachment_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def attach_to_post(
+    conn: sqlite3.Connection, *, attachment_id: str, post_id: str
+) -> dict[str, Any]:
+    row = get_attachment(conn, attachment_id)
+    if row is None:
+        raise NotFound("attachment not found")
+    if row.get("post_id") and row["post_id"] != post_id:
+        raise Conflict("attachment already linked")
+    conn.execute("UPDATE attachments SET post_id=? WHERE id=?", (post_id, attachment_id))
+    conn.commit()
+    return get_attachment(conn, attachment_id) or row
+
+
+def list_attachments(conn: sqlite3.Connection, *, post_id: str) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        "SELECT id, filename, content_type, bytes, sha256, created_at "
+        "FROM attachments WHERE post_id=? ORDER BY created_at",
+        (post_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def _post_dict(row: sqlite3.Row) -> dict[str, Any]:
     item = dict(row)
     raw = item.pop("meta_json", None)
@@ -193,6 +346,7 @@ def create_post(
     thread_id: str | None = None,
     parent_id: str | None = None,
     meta: dict | None = None,
+    attachments: list[str] | None = None,
 ) -> dict[str, Any]:
     if kind not in POST_KINDS:
         raise ValueError(f"unknown post kind: {kind}")
@@ -217,8 +371,20 @@ def create_post(
         ),
     )
     conn.commit()
+    seq = int(conn.execute("SELECT seq FROM posts WHERE id=?", (post_id,)).fetchone()[0])
+    for agent in sorted(set(_extract_mentions(f"{title} {body}"))):
+        conn.execute(
+            "INSERT OR IGNORE INTO mentions(post_seq, agent, created_at) VALUES (?,?,?)",
+            (seq, agent, created),
+        )
+    for attachment_id in attachments or []:
+        attach_to_post(conn, attachment_id=attachment_id, post_id=post_id)
+    conn.commit()
     row = conn.execute("SELECT * FROM posts WHERE id=?", (post_id,)).fetchone()
-    return _post_dict(row)
+    item = _post_dict(row)
+    item["mentions"] = list_mentions(conn, post_id=post_id)
+    item["attachments"] = list_attachments(conn, post_id=post_id)
+    return item
 
 
 def list_posts(
@@ -236,7 +402,13 @@ def list_posts(
         params.append(thread_id)
     sql += " ORDER BY seq ASC LIMIT ?"
     params.append(limit)
-    return [_post_dict(row) for row in conn.execute(sql, params).fetchall()]
+    items = []
+    for row in conn.execute(sql, params).fetchall():
+        item = _post_dict(row)
+        item["mentions"] = list_mentions(conn, post_id=item["id"])
+        item["attachments"] = list_attachments(conn, post_id=item["id"])
+        items.append(item)
+    return items
 
 
 def _task_dict(row: sqlite3.Row) -> dict[str, Any]:
@@ -486,3 +658,69 @@ def get_read_cursor(conn: sqlite3.Connection, *, agent: str, scope: str) -> int:
         "SELECT last_seq FROM reads WHERE agent=? AND scope=?", (agent, scope)
     ).fetchone()
     return int(row["last_seq"]) if row else 0
+
+
+def search(
+    conn: sqlite3.Connection, *, q: str, limit: int = 50
+) -> list[dict[str, Any]]:
+    text = str(q or "").strip()
+    if not text:
+        return []
+    limit = max(1, min(int(limit), 100))
+    like = f"%{text}%"
+    results: list[dict[str, Any]] = []
+    for row in conn.execute(
+        "SELECT * FROM posts WHERE title LIKE ? OR body LIKE ? ORDER BY seq DESC LIMIT ?",
+        (like, like, limit),
+    ).fetchall():
+        post = _post_dict(row)
+        results.append({
+            "type": "post",
+            "id": post["id"],
+            "title": post.get("title") or post["id"],
+            "snippet": str(post.get("body") or "")[:240],
+            "created_at": post.get("created_at"),
+        })
+    for row in conn.execute(
+        "SELECT * FROM tasks WHERE title LIKE ? OR description LIKE ? OR acceptance LIKE ? "
+        "ORDER BY updated_at DESC LIMIT ?",
+        (like, like, like, limit),
+    ).fetchall():
+        task = _task_dict(row)
+        results.append({
+            "type": "task",
+            "id": task["id"],
+            "title": task.get("title") or task["id"],
+            "snippet": str(task.get("acceptance") or task.get("description") or "")[:240],
+            "created_at": task.get("updated_at"),
+        })
+    for row in conn.execute(
+        "SELECT * FROM facts WHERE claim LIKE ? OR evidence LIKE ? OR source LIKE ? "
+        "ORDER BY updated_at DESC LIMIT ?",
+        (like, like, like, limit),
+    ).fetchall():
+        fact = dict(row)
+        results.append({
+            "type": "fact",
+            "id": fact["id"],
+            "title": fact.get("claim") or fact["id"],
+            "snippet": str(fact.get("evidence") or fact.get("source") or "")[:240],
+            "created_at": fact.get("updated_at"),
+        })
+    results.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+    return results[:limit]
+
+
+def stats(conn: sqlite3.Connection) -> dict[str, Any]:
+    counts = {
+        table: int(conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+        for table in (
+            "agents", "posts", "tasks", "facts", "mentions", "attachments",
+        )
+    }
+    last_seq = int(conn.execute("SELECT COALESCE(MAX(seq), 0) FROM posts").fetchone()[0])
+    try:
+        integrity = str(conn.execute("PRAGMA quick_check").fetchone()[0])
+    except sqlite3.DatabaseError as exc:
+        integrity = f"error: {exc}"
+    return {"counts": counts, "last_seq": last_seq, "integrity": integrity}

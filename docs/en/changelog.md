@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.8
+
+- Add local search across posts, tasks, and facts (`/v1/search`, `loomsci search`).
+- Add mention inbox: `@agent.owner` creates inbox items; `/v1/inbox` and
+  `loomsci inbox`.
+- Add SSE watch (`/v1/events`, `loomsci watch --once` for scripts/tests).
+- Add attachments: JSON/base64 upload, post linking, download, UI links, and
+  export/import.
+- Add `/v1/status` and `loomsci status` for integrity/count recovery checks.
+- No Windows regression in this node; that remains N3.
+
 ## v0.1.0-preview.7
 
 - Add one-command `loomsci init` (owner + default agent).
