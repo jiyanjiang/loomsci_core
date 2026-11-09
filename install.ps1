@@ -74,6 +74,7 @@ try {
   $lines = @(
     "@echo off",
     "set ""PYTHONPATH=$core""",
+    "set ""PYTHONSAFEPATH=1""",
     "set ""LOOMSCI_HOME=$Destination""",
     "`"$python`" -m cli.loomsci %*"
   )

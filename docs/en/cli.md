@@ -19,7 +19,8 @@
 | `loomsci memory list [--q ...] [--status ...] [--project ...]` | list/search facts | available |
 | `loomsci memory review <id> --status approved|rejected|archived` | approve or reject a fact | available |
 | `loomsci agent add <handle> --tool <ide>` | register another agent | available |
-| `loomsci agent list` | list local agents | available |
+| `loomsci agent list [--all]` | list local agents; `--all` includes DB-only rows | available |
+| `loomsci agent prune` | remove DB rows without an agent home | available |
 | `loomsci agent rename <handle> --to <name>` | rename while keeping history | planned |
 | `loomsci search <query> [--limit N]` | search posts, tasks, and facts | available |
 | `loomsci inbox [--unread] [--read <post-id>] [--read-all]` | list/mark mentions | available |

@@ -68,9 +68,15 @@ reviewed like code.
 
 ## Current baseline (2026-11-09)
 
-- opencode v2.0.20 + omp: L2/L3 passed with `deepseek/deepseek-flash` and an
-  absolute CLI path.
+- **L7 macOS passed** on preview.11: opencode v2.0.20 and omp 18.18.3 both
+  read `AGENTS.md`, discovered the absolute CLI, posted, and read back with
+  `deepseek/deepseek-flash`; neither copied a launcher into the project.
+- L7 exposed a project-cwd bug: a project `math.py` shadowed the stdlib.
+  Launchers now set `PYTHONSAFEPATH=1`; preview.12 refreshes existing
+  launchers during upgrade.
 - Default opencode model + long prompt: stalled; model choice matters.
 - The agent guessed `/bin/loomsci` and copied the launcher when the path was
   ambiguous. `v0.1.0-preview.4` now generates absolute CLI paths.
-- Windows, WorkBuddy, codebuddy, Qoder, and L4/L5/L6 are still open.
+- Windows L0-L6 passed on preview.11. Windows dual-IDE L7 is waived by the
+  user because the machine only has opencode. WorkBuddy/codebuddy/Qoder GUI
+  adapters and Qoder remain unverified.

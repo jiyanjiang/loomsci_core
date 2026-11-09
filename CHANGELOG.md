@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.12
+
+- macOS L7 opencode+omp pass; launcher safe-path fix; agent list --all/prune.
+
 ## v0.1.0-preview.11
 
 - Fix cross-drive export temp path, add serve port preflight, and enforce the

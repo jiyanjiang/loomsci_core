@@ -152,6 +152,13 @@ class StorageTest(unittest.TestCase):
             len(storage.list_facts(self.conn, status="approved")), 1
         )
 
+    def test_agent_list_and_delete(self) -> None:
+        storage.ensure_agent(self.conn, "ghost.unknown")
+        self.conn.commit()
+        self.assertIn("ghost.unknown", [row["handle"] for row in storage.list_agents(self.conn)])
+        self.assertTrue(storage.delete_agent(self.conn, "ghost.unknown"))
+        self.assertFalse(storage.agent_exists(self.conn, "ghost.unknown"))
+
     def test_presence_and_read_cursor(self) -> None:
         storage.upsert_presence(
             self.conn,

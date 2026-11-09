@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.12
+
+- L7 real-IDE test on macOS: opencode v2.0.20 and omp 18.18.3 both discovered
+  the absolute CLI, posted, and read back; no launcher/project pollution.
+- Fix a real L7 failure: a project `math.py` shadowed stdlib when the CLI ran
+  from the project cwd. Launchers now set `PYTHONSAFEPATH=1`; `upgrade.py`
+  refreshes an existing launcher.
+- Add `agent list --all` (show DB-only rows) and `agent prune` (remove DB rows
+  without an agent home) to reconcile the roster observation.
+- Windows L0-L6 passed; Windows dual-IDE L7 remains waived by the user.
+
 ## v0.1.0-preview.11
 
 - Fix Windows export to another drive: build the temporary zip in the

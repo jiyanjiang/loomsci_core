@@ -92,6 +92,30 @@ def _verify_signature(package: Path, signature: Path, public_key: Path) -> None:
         raise UpgradeError("signature verification failed") from exc
 
 
+def _refresh_launcher(home: Path) -> None:
+    """Keep the installed launcher in sync with the safe-path fix."""
+    bin_dir = home / "bin"
+    launcher = bin_dir / "loomsci"
+    if launcher.is_file():
+        launcher.write_text(
+            "#!/usr/bin/env sh\n"
+            f'exec env PYTHONPATH="{home}/core" PYTHONSAFEPATH=1 '
+            f'LOOMSCI_HOME="{home}" "{home}/venv/bin/python" -m cli.loomsci "$@"\n',
+            encoding="utf-8",
+        )
+        launcher.chmod(0o755)
+    cmd = bin_dir / "loomsci.cmd"
+    if cmd.is_file():
+        lines = [
+            "@echo off",
+            f'set "PYTHONPATH={home}\\core"',
+            'set "PYTHONSAFEPATH=1"',
+            f'set "LOOMSCI_HOME={home}"',
+            f'"{home}\\venv\\Scripts\\python.exe" -m cli.loomsci %*',
+        ]
+        cmd.write_text("\r\n".join(lines) + "\r\n", encoding="ascii")
+
+
 def _state(home: Path, phase: str, **extra) -> None:
     path = home / "upgrade.state.json"
     payload = {"phase": phase, "at": _now(), **extra}
@@ -132,6 +156,7 @@ def apply(
             shutil.rmtree(previous, ignore_errors=True)
             core.rename(previous)
         shutil.move(str(new_core), str(core))
+        _refresh_launcher(home)
         _state(home, "SWAPPED", package=str(package))
         _state(home, "COMMITTED", package=str(package))
         return {"ok": True, "home": str(home), "manifest": manifest}

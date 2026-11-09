@@ -21,6 +21,9 @@ class UpgradeTest(unittest.TestCase):
         (self.home / "core" / "old.txt").write_text("old", encoding="utf-8")
         (self.home / "data").mkdir()
         (self.home / "data" / "data.db").write_bytes(b"db")
+        (self.home / "bin").mkdir()
+        (self.home / "bin" / "loomsci").write_text("#!/usr/bin/env sh\nold\n")
+        (self.home / "bin" / "loomsci.cmd").write_text("@echo off\nold\n")
         self.out = Path(self.tmp.name) / "out"
 
     def tearDown(self) -> None:
@@ -36,6 +39,10 @@ class UpgradeTest(unittest.TestCase):
         self.assertTrue((self.home / "core" / "pyproject.toml").is_file())
         self.assertEqual((self.home / "data" / "data.db").read_bytes(), b"db")
         self.assertTrue((self.home / "core.prev" / "old.txt").is_file())
+        launcher = (self.home / "bin" / "loomsci").read_text()
+        self.assertIn("PYTHONSAFEPATH=1", launcher)
+        self.assertIn('"$@"', launcher)
+        self.assertIn("PYTHONSAFEPATH=1", (self.home / "bin" / "loomsci.cmd").read_text())
         restored = upgrade.rollback(self.home)
         self.assertTrue(restored["ok"])
         self.assertEqual((self.home / "core" / "old.txt").read_text(), "old")

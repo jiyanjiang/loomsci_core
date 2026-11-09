@@ -191,6 +191,22 @@ def record_alias(conn: sqlite3.Connection, alias: str, handle: str) -> None:
     conn.commit()
 
 
+def list_agents(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    return [
+        dict(row)
+        for row in conn.execute(
+            "SELECT handle, kind, created_at FROM agents ORDER BY handle"
+        ).fetchall()
+    ]
+
+
+def delete_agent(conn: sqlite3.Connection, handle: str) -> bool:
+    conn.execute("DELETE FROM agent_aliases WHERE handle=? OR alias=?", (handle, handle))
+    cursor = conn.execute("DELETE FROM agents WHERE handle=?", (handle,))
+    conn.commit()
+    return cursor.rowcount > 0
+
+
 def agent_exists(conn: sqlite3.Connection, handle: str) -> bool:
     row = conn.execute("SELECT 1 FROM agents WHERE handle=?", (handle,)).fetchone()
     return row is not None

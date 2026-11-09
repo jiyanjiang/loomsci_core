@@ -74,6 +74,27 @@ class CliTest(unittest.TestCase):
                 json.loads(renamed.stdout)["handle"], "assistant.owner"
             )
 
+    def test_launcher_safe_path_ignores_project_math(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            (project / "math.py").write_text("def add(a, b):\n    return a + b\n")
+            env = dict(os.environ)
+            env.update(
+                PYTHONPATH=str(ROOT),
+                PYTHONSAFEPATH="1",
+                LOOMSCI_HOME=str(Path(tmp) / "home"),
+            )
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.loomsci", "home", "--json"],
+                cwd=project,
+                env=env,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("source", result.stdout)
+
     def test_port_preflight_detects_listener(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(("127.0.0.1", 0))
@@ -84,6 +105,25 @@ class CliTest(unittest.TestCase):
         finally:
             sock.close()
         self.assertTrue(loomsci._port_available("127.0.0.1", port))
+
+    def test_agent_list_all_and_prune(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            env = {"LOOMSCI_HOME": str(home)}
+            self.assertEqual(_run(["init", "--owner", "owner"], env=env).returncode, 0)
+            from core import storage
+
+            storage.init_db(home / "data" / "data.db")
+            conn = storage.connect(home / "data" / "data.db")
+            storage.ensure_agent(conn, "ghost.unknown")
+            conn.commit()
+            conn.close()
+            result = _run(["agent", "list", "--all", "--json"], env=env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ghost.unknown", result.stdout)
+            result = _run(["agent", "prune", "--json"], env=env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ghost.unknown", result.stdout)
 
     def test_init_command(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

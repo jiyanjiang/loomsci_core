@@ -3,6 +3,16 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.12
+
+- macOS L7 真实 IDE：opencode v2.0.20 与 omp 18.18.3 均发现绝对 CLI 路径、
+  发帖并读回，未复制 launcher、未污染项目。
+- 修复 L7 实测问题：项目内 `math.py` 在项目 cwd 下遮蔽标准库。launcher
+  现在设置 `PYTHONSAFEPATH=1`；`upgrade.py` 会刷新已有 launcher。
+- 增加 `agent list --all`（显示 DB-only 行）与 `agent prune`（清理无 agent
+  home 的 DB 行），处理名册不一致观察。
+- Windows L0–L6 已通过；Windows 双 IDE L7 按用户要求暂缓。
+
 ## v0.1.0-preview.11
 
 - 修复 Windows 跨盘导出：临时 zip 改写到目标目录，避免 `os.replace`

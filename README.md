@@ -3,7 +3,7 @@
 **Local-first workspace for your personal AI agent.**
 Data stays yours. No login. Portable across machines and AI IDEs.
 
-> **Preview.** `v0.1.0-preview.11` is the current local preview; it is not a production release.
+> **Preview.** `v0.1.0-preview.12` is the current local preview; it is not a production release.
 
 [中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Testing](docs/en/testing.md) · [Core contract](docs/en/core-contract.md) · [Release](docs/en/release.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
 

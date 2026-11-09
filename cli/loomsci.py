@@ -470,7 +470,7 @@ def _cmd_agent_add(args: argparse.Namespace) -> int:
 def _cmd_agent_list(args: argparse.Namespace) -> int:
     layout = _layout(args)
     alice_mod = _alice_module()
-    entries = []
+    by_handle: dict[str, dict] = {}
     agents_dir = layout.root / "agents"
     if agents_dir.is_dir():
         for path in sorted(agents_dir.iterdir()):
@@ -478,15 +478,47 @@ def _cmd_agent_list(args: argparse.Namespace) -> int:
                 continue
             record = alice_mod.read_agent(layout.root, path.name)
             if record:
-                entries.append(record)
+                record["source"] = "home"
+                by_handle[str(record.get("handle"))] = record
+    if getattr(args, "all", False):
+        storage.init_db(layout.db)
+        conn = storage.connect(layout.db)
+        try:
+            for row in storage.list_agents(conn):
+                handle = str(row["handle"])
+                by_handle.setdefault(handle, {"handle": handle, "source": "db"})
+        finally:
+            conn.close()
+    entries = [by_handle[key] for key in sorted(by_handle)]
     if args.json:
         _json_print({"agents": entries})
     else:
         for record in entries:
             print(
-                f"{record.get('handle')} role={record.get('role')} "
-                f"tool={record.get('default_tool') or '-'}"
+                f"{record.get('handle')} role={record.get('role') or '-'} "
+                f"tool={record.get('default_tool') or '-'} "
+                f"source={record.get('source', 'home')}"
             )
+    return 0
+
+
+def _cmd_agent_prune(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    storage.init_db(layout.db)
+    conn = storage.connect(layout.db)
+    removed = []
+    try:
+        for row in storage.list_agents(conn):
+            short = str(row["handle"]).partition(".")[0]
+            if not (layout.root / "agents" / short / "agent.json").is_file():
+                if storage.delete_agent(conn, str(row["handle"])):
+                    removed.append(str(row["handle"]))
+    finally:
+        conn.close()
+    if args.json:
+        _json_print({"removed": removed})
+    else:
+        print("removed: " + (", ".join(removed) or "(none)"))
     return 0
 
 
@@ -744,8 +776,13 @@ def build_parser() -> argparse.ArgumentParser:
     agent_add.set_defaults(func=_cmd_agent_add)
 
     agent_list = agent_sub.add_parser("list", help="list local agents")
+    agent_list.add_argument("--all", action="store_true", help="include DB-only rows")
     agent_list.add_argument("--json", action="store_true")
     agent_list.set_defaults(func=_cmd_agent_list)
+
+    agent_prune = agent_sub.add_parser("prune", help="remove DB rows without an agent home")
+    agent_prune.add_argument("--json", action="store_true")
+    agent_prune.set_defaults(func=_cmd_agent_prune)
 
     task = sub.add_parser("task", help="task lifecycle and leases")
     task_sub = task.add_subparsers(dest="task_command", required=True)

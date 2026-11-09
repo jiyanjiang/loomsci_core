@@ -63,7 +63,7 @@ mv "$HOME_DIR/core.new" "$HOME_DIR/core"
 
 cat > "$HOME_DIR/bin/loomsci" <<EOF
 #!/usr/bin/env sh
-exec env PYTHONPATH="$HOME_DIR/core" LOOMSCI_HOME="$HOME_DIR" "$VENV/bin/python" -m cli.loomsci "\$@"
+exec env PYTHONPATH="$HOME_DIR/core" PYTHONSAFEPATH=1 LOOMSCI_HOME="$HOME_DIR" "$VENV/bin/python" -m cli.loomsci "\$@"
 EOF
 chmod +x "$HOME_DIR/bin/loomsci"
 
