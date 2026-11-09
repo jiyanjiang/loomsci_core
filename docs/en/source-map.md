@@ -1,6 +1,7 @@
 # Source map · S1 (reuse plan)
 
-> Status: planning only. No code has been copied yet.
+> Status: S1.1 started. `core/home.py` and the `migrate`/`home` CLI exist;
+> no legacy modules have been copied yet.
 > Goal: extract the smallest viable Core from the existing TAA codebase into
 > this public repository, without a runtime dependency on the legacy tree.
 

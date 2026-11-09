@@ -18,6 +18,9 @@ classifiers = [
 ]
 dependencies = []
 
+[project.scripts]
+loomsci = "cli.loomsci:main"
+
 [project.optional-dependencies]
 dev = []
 
@@ -27,4 +30,4 @@ Issues = "https://github.com/jiyanjiang/loomsci_core/issues"
 Security = "https://github.com/jiyanjiang/loomsci_core/security"
 
 [tool.setuptools]
-packages = []
+packages = ["core", "cli"]
