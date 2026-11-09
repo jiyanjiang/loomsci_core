@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from html import escape
 from pathlib import Path
 from typing import Mapping
 
-from flask import Flask, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request
 
-from core import handoff, storage
+from core import alice, handoff, storage
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -86,6 +87,42 @@ def create_app(
     def _headers(response):
         response.headers.setdefault("X-Loomsci-Protocol", "1.0")
         return response
+
+    @app.get("/")
+    @app.get("/app")
+    def index():
+        record = alice.read_agent(layout.root)
+        agent_handle = escape(str((record or {}).get("handle") or "not initialized"))
+        page = f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loomsci_core</title>
+<style>
+:root {{ color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }}
+body {{ max-width: 720px; margin: 8vh auto; padding: 0 24px; line-height: 1.55; }}
+code, pre {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }}
+pre {{ padding: 12px 14px; border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 8px; overflow: auto; }}
+.muted {{ opacity: .7; }}
+</style>
+</head>
+<body>
+<h1>loomsci_core</h1>
+<p>Local host is running. This is a status page, not a data view.</p>
+<ul>
+<li>profile: <code>{escape(registry.profile)}</code></li>
+<li>routes: <code>{len(registry.routes())}</code></li>
+<li>agent: <code>{agent_handle}</code></li>
+</ul>
+<p class="muted">CLI examples</p>
+<pre>loomsci serve
+loomsci post --as &lt;agent.owner&gt; --body "hello"
+loomsci read --as &lt;agent.owner&gt;</pre>
+<p><a href="/v1/meta/features">/v1/meta/features</a> · <a href="/v1/health">/v1/health</a></p>
+</body>
+</html>"""
+        return Response(page, mimetype="text/html")
 
     @app.get("/v1/health")
     def health():

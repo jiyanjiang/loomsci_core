@@ -14,7 +14,13 @@ from urllib.parse import urlsplit
 from core.packs import Registry
 
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
-PUBLIC_PATHS = frozenset({"/v1/health", "/v1/version", "/v1/meta/features"})
+PUBLIC_PATHS = frozenset({
+    "/",
+    "/app",
+    "/v1/health",
+    "/v1/version",
+    "/v1/meta/features",
+})
 PUBLIC_PREFIXES = ("/static/", "/thumb", "/avatar/", "/favicon.ico")
 HANDLE_RE = re.compile(
     r"^[a-z0-9][a-z0-9-]{0,31}\.[a-z0-9][a-z0-9-]{0,31}$"

@@ -53,6 +53,13 @@ class AppTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["service"], "loomsci_core")
 
+    def test_status_page_public(self) -> None:
+        response = self.client.get("/app")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("loomsci_core", response.get_data(as_text=True))
+        root = self.client.get("/")
+        self.assertEqual(root.status_code, 200)
+
     def test_features_public_and_budgeted(self) -> None:
         response = self.client.get("/v1/meta/features")
         self.assertEqual(response.status_code, 200)

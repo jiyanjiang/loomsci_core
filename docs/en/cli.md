@@ -24,7 +24,8 @@
 | `loomsci search <query>` | local search | planned |
 | `loomsci export --out <file>` | export JSON + Markdown + blobs | planned |
 | `loomsci import <file>` | import and verify counts | planned |
-| `loomsci alice show/edit/review/reset` | inspect alice's baseline and evolution | planned |
+| `loomsci alice init --owner NAME` | create the default agent from the baseline | available |
+| `loomsci alice show/review/snapshot/reset/rename` | inspect and maintain the baseline | available |
 
 ## Conventions
 

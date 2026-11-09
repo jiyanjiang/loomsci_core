@@ -10,10 +10,13 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from core import alice as alice_mod
+from core import storage
 from core.home import (
     HomeError,
     apply_migration,
     default_home,
+    ensure_layout,
     migration_plan,
     resolve_home,
 )
@@ -228,6 +231,96 @@ def _cmd_handoff(args: argparse.Namespace) -> int:
     return 0
 
 
+def _layout(args: argparse.Namespace):
+    resolution = resolve_home(explicit=args.home)
+    if resolution.needs_migration:
+        raise CliError("legacy home detected; run `loomsci migrate` first")
+    return ensure_layout(resolution.path)
+
+
+def _cmd_alice_init(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    record = alice_mod.ensure(layout.root, args.owner, args.short)
+    storage.init_db(layout.db)
+    conn = storage.connect(layout.db)
+    try:
+        storage.ensure_agent(conn, record["handle"])
+        conn.commit()
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(record)
+    else:
+        print(f"alice: {record['handle']}")
+    return 0
+
+
+def _cmd_alice_show(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    record = alice_mod.read_agent(layout.root, args.short)
+    if not record:
+        raise CliError(f"agent not initialized: {args.short}")
+    if args.json:
+        _json_print(record)
+    else:
+        print(f"agent: {record.get('handle')}")
+        print(f"role: {record.get('role')}")
+    return 0
+
+
+def _cmd_alice_review(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = alice_mod.review(layout.root, args.short)
+    if args.json:
+        _json_print(result)
+    else:
+        agent = result.get("agent") or {}
+        print(f"agent: {agent.get('handle')}")
+        print(f"versions: {len(result.get('versions') or [])}")
+        for item in result.get("versions") or []:
+            print(f"- {item['name']}")
+    return 0
+
+
+def _cmd_alice_snapshot(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    path = alice_mod.snapshot(layout.root, args.short, args.reason)
+    if args.json:
+        _json_print({"ok": True, "snapshot": str(path)})
+    else:
+        print(f"snapshot: {path}")
+    return 0
+
+
+def _cmd_alice_reset(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = alice_mod.reset(
+        layout.root, args.short, keep_memory=not args.drop_memory
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        print("alice reset")
+    return 0
+
+
+def _cmd_alice_rename(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    storage.init_db(layout.db)
+    conn = storage.connect(layout.db)
+    try:
+        record = alice_mod.rename(
+            layout.root, conn, args.short, args.to, owner=args.owner
+        )
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(record)
+    else:
+        print(f"renamed: {record['handle']}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="loomsci")
     parser.add_argument("--home", help="explicit loomsci home")
@@ -293,6 +386,44 @@ def build_parser() -> argparse.ArgumentParser:
     handoff.add_argument("--evidence", required=True)
     handoff.add_argument("--json", action="store_true")
     handoff.set_defaults(func=_cmd_handoff)
+
+    alice = sub.add_parser("alice", help="manage the default agent baseline")
+    alice_sub = alice.add_subparsers(dest="alice_command", required=True)
+
+    alice_init = alice_sub.add_parser("init", help="create the default agent")
+    alice_init.add_argument("--owner", required=True)
+    alice_init.add_argument("--short", default="alice")
+    alice_init.add_argument("--json", action="store_true")
+    alice_init.set_defaults(func=_cmd_alice_init)
+
+    alice_show = alice_sub.add_parser("show", help="show the agent record")
+    alice_show.add_argument("--short", default="alice")
+    alice_show.add_argument("--json", action="store_true")
+    alice_show.set_defaults(func=_cmd_alice_show)
+
+    alice_review = alice_sub.add_parser("review", help="show persona snapshots")
+    alice_review.add_argument("--short", default="alice")
+    alice_review.add_argument("--json", action="store_true")
+    alice_review.set_defaults(func=_cmd_alice_review)
+
+    alice_snapshot = alice_sub.add_parser("snapshot", help="snapshot persona")
+    alice_snapshot.add_argument("--short", default="alice")
+    alice_snapshot.add_argument("--reason", default="manual")
+    alice_snapshot.add_argument("--json", action="store_true")
+    alice_snapshot.set_defaults(func=_cmd_alice_snapshot)
+
+    alice_reset = alice_sub.add_parser("reset", help="restore the baseline")
+    alice_reset.add_argument("--short", default="alice")
+    alice_reset.add_argument("--drop-memory", action="store_true")
+    alice_reset.add_argument("--json", action="store_true")
+    alice_reset.set_defaults(func=_cmd_alice_reset)
+
+    alice_rename = alice_sub.add_parser("rename", help="rename the agent")
+    alice_rename.add_argument("--short", default="alice")
+    alice_rename.add_argument("--to", required=True)
+    alice_rename.add_argument("--owner")
+    alice_rename.add_argument("--json", action="store_true")
+    alice_rename.set_defaults(func=_cmd_alice_rename)
     return parser
 
 

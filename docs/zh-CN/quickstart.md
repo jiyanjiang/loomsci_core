@@ -30,13 +30,18 @@ python -m pip install -r requirements.txt
 在仓库根目录：
 
 ```bash
+python -m cli.loomsci alice init --owner <owner>
 python -m cli.loomsci serve
 curl http://127.0.0.1:8787/v1/health
 ```
 
+用浏览器打开 `http://127.0.0.1:8787/app` 查看状态页。
+
 当前可用：
 
 ```text
+loomsci alice init --owner <owner>
+loomsci alice show/review/snapshot/reset/rename
 loomsci home [--json]
 loomsci migrate --from <path> [--dry-run|--apply] [--json]
 loomsci features [--json]

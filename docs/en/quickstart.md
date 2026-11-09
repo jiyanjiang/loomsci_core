@@ -30,13 +30,18 @@ The preview currently declares Flask only.
 From the repository root:
 
 ```bash
+python -m cli.loomsci alice init --owner <owner>
 python -m cli.loomsci serve
 curl http://127.0.0.1:8787/v1/health
 ```
 
+Open `http://127.0.0.1:8787/app` for the status page.
+
 Available now:
 
 ```text
+loomsci alice init --owner <owner>
+loomsci alice show/review/snapshot/reset/rename
 loomsci home [--json]
 loomsci migrate --from <path> [--dry-run|--apply] [--json]
 loomsci features [--json]

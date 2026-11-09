@@ -22,6 +22,12 @@ CREATE TABLE IF NOT EXISTS agents (
   created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS agent_aliases (
+  alias      TEXT PRIMARY KEY,
+  handle     TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS posts (
   seq        INTEGER PRIMARY KEY AUTOINCREMENT,
   id         TEXT NOT NULL UNIQUE,
@@ -120,6 +126,22 @@ def ensure_agent(conn: sqlite3.Connection, handle: str, kind: str = "ai") -> Non
         "INSERT OR IGNORE INTO agents(handle, kind, created_at) VALUES (?,?,?)",
         (handle, kind, now()),
     )
+
+
+def record_alias(conn: sqlite3.Connection, alias: str, handle: str) -> None:
+    conn.execute(
+        "INSERT INTO agent_aliases(alias, handle, created_at) VALUES (?,?,?) "
+        "ON CONFLICT(alias) DO UPDATE SET handle=excluded.handle",
+        (alias, handle, now()),
+    )
+    conn.commit()
+
+
+def resolve_handle(conn: sqlite3.Connection, handle: str) -> str:
+    row = conn.execute(
+        "SELECT handle FROM agent_aliases WHERE alias=?", (handle,)
+    ).fetchone()
+    return str(row["handle"]) if row else handle
 
 
 def _post_dict(row: sqlite3.Row) -> dict[str, Any]:

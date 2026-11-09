@@ -48,6 +48,28 @@ class CliTest(unittest.TestCase):
             self.assertEqual(payload["path"], str(home))
             self.assertEqual(payload["source"], "loomsci_home")
 
+    def test_alice_init_show_and_rename(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            env = {"LOOMSCI_HOME": str(home)}
+            created = _run(
+                ["alice", "init", "--owner", "owner", "--json"], env=env
+            )
+            self.assertEqual(created.returncode, 0, created.stderr)
+            self.assertEqual(json.loads(created.stdout)["handle"], "alice.owner")
+
+            shown = _run(["alice", "show", "--json"], env=env)
+            self.assertEqual(shown.returncode, 0, shown.stderr)
+            self.assertEqual(json.loads(shown.stdout)["handle"], "alice.owner")
+
+            renamed = _run(
+                ["alice", "rename", "--to", "assistant", "--json"], env=env
+            )
+            self.assertEqual(renamed.returncode, 0, renamed.stderr)
+            self.assertEqual(
+                json.loads(renamed.stdout)["handle"], "assistant.owner"
+            )
+
     def test_features_json(self) -> None:
         result = _run(["features", "--json"], env={"LOOMSCI_PROFILE": "core"})
         self.assertEqual(result.returncode, 0, result.stderr)
