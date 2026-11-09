@@ -7,7 +7,7 @@ Data stays yours. No login. Portable across machines and AI IDEs.
 > architecture, roadmap, and documentation skeleton. The first runnable
 > preview release is pending. Nothing here should be read as a shipped feature.
 
-[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
+[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
 
 ## Why
 

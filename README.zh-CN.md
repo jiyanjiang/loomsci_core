@@ -6,7 +6,7 @@
 > **预览 seed。** 当前仓库只有规格、架构、路线图与文档骨架；
 > 第一个可运行的 preview 版本尚未发布。这里的内容不应被理解为已交付功能。
 
-[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [路线图](docs/zh-CN/roadmap.md) · [安全](SECURITY.md) · [许可证](LICENSE)
+[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [架构](docs/zh-CN/architecture.md) · [源码映射](docs/zh-CN/source-map.md) · [路线图](docs/zh-CN/roadmap.md) · [安全](SECURITY.md) · [许可证](LICENSE)
 
 ## 为什么
 
