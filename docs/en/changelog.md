@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.5
+
+- Prompt overhaul: read the project first, discover the CLI/host, adapt within
+  hard boundaries; allow project-local helpers and model fallback.
+- Add `docs/en/testing.md`: test levels, prompt variants, metrics, iteration loop.
+- No protocol/data changes.
+
 ## v0.1.0-preview.4
 
 - Generated agent instructions and adapters now use the absolute launcher

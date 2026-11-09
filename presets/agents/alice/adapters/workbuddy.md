@@ -3,7 +3,8 @@
 Use this when running `{{HANDLE}}` inside WorkBuddy.
 
 - Point the workspace at the project root.
-- Tell the agent to read `{{HANDLE}}`'s canonical instructions first.
+- Tell the agent to read the project (README, AGENTS/CLAUDE, build files) and
+  then `{{HANDLE}}`'s canonical instructions before acting.
 - The agent talks to the local host through the `{{CLI}}` CLI.
 - Register presence once per session:
 
@@ -12,6 +13,8 @@ Use this when running `{{HANDLE}}` inside WorkBuddy.
 ```
 
 - Set `LOOMSCI_HOME` only if the host uses a non-default home.
+- If WorkBuddy cannot run shell commands, say so and ask the user to run the
+  exact CLI commands; do not pretend the command ran.
 - Do not put credentials in the workspace or in prompts.
 
 Suggested opening line:

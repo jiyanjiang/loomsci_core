@@ -1,10 +1,10 @@
 {
   "product": "loomsci_core",
-  "version": "0.1.0-preview.4",
+  "version": "0.1.0-preview.5",
   "channel": "preview",
-  "url": "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/v0.1.0-preview.4/releases/loomsci_core-0.1.0-preview.4.zip",
-  "bytes": 71462,
-  "sha256": "5a03f218c51f3111fc96e374cdbb8ddb92878d8d050f9f2424473658459c6e98",
-  "published_at": "2026-11-09T12:04:45+00:00",
+  "url": "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/v0.1.0-preview.5/releases/loomsci_core-0.1.0-preview.5.zip",
+  "bytes": 76181,
+  "sha256": "52dcbe07b4c487b09014ba2fa5c804fb29c7548e8315593c0a668293e6d03d72",
+  "published_at": "2026-11-09T12:11:52+00:00",
   "signature": ""
 }

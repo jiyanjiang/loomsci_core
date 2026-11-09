@@ -42,6 +42,10 @@ class AliceTest(unittest.TestCase):
         self.assertNotIn("{{HANDLE}}", instructions)
         self.assertIn(str(self.home / "bin" / "loomsci"), instructions)
         self.assertNotIn("{{CLI}}", instructions)
+        self.assertIn("Before acting: read the project", instructions)
+        self.assertIn("Adapt, within boundaries", instructions)
+        adapter = (directory / "adapters" / "opencode.md").read_text(encoding="utf-8")
+        self.assertIn("default model stalls", adapter)
         self.assertEqual(alice.ensure(self.home, "owner")["handle"], "alice.owner")
 
     def test_rename_records_history_and_alias(self) -> None:

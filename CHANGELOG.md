@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.5
+
+- Project-first, discovery-first prompts; testing plan and iteration loop.
+
 ## v0.1.0-preview.4
 
 - Generated instructions use the absolute `<home>/bin/loomsci` launcher path.
