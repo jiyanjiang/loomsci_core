@@ -97,7 +97,9 @@ def _add_tree(zf: zipfile.ZipFile, source: Path, base: str) -> None:
         zf.write(path, f"{base}/{rel}")
 
 
-def build(out_dir: Path, signing_key: str | None = None) -> dict:
+def build(
+    out_dir: Path, signing_key: str | None = None, base_url: str = ""
+) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
     ver = version()
     archive = out_dir / f"{PACKAGE_NAME}-{ver}.zip"
@@ -152,7 +154,7 @@ def build(out_dir: Path, signing_key: str | None = None) -> dict:
         "product": PACKAGE_NAME,
         "version": ver,
         "channel": "preview",
-        "url": archive.name,
+        "url": f"{base_url.rstrip('/')}/{archive.name}" if base_url else archive.name,
         "bytes": archive.stat().st_size,
         "sha256": digest,
         "published_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -169,8 +171,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="build_release")
     parser.add_argument("--out", default=str(ROOT / "dist"))
     parser.add_argument("--signing-key", help="raw Ed25519 private key file")
+    parser.add_argument("--base-url", default="", help="public URL prefix for the package")
     args = parser.parse_args(argv)
-    result = build(Path(args.out), args.signing_key)
+    result = build(Path(args.out), args.signing_key, args.base_url)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

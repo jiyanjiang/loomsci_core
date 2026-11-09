@@ -37,10 +37,10 @@ class CliHttpTest(unittest.TestCase):
         self.thread.join(timeout=3)
         self.tmp.cleanup()
 
-    def _run(self, *argv: str) -> tuple[int, str]:
+    def _run(self, *argv: str, agent: str = AGENT) -> tuple[int, str]:
         output = io.StringIO()
         with redirect_stdout(output):
-            code = loomsci.main(["--url", self.base, "--as", AGENT, *argv])
+            code = loomsci.main(["--url", self.base, "--as", agent, *argv])
         return code, output.getvalue()
 
     def _post_json(self, path: str, payload: dict, agent: str = AGENT) -> dict:
@@ -80,9 +80,27 @@ class CliHttpTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("codex", output)
 
-    def test_handoff_from_cli(self) -> None:
-        task = self._post_json("/v1/tasks", {"title": "handoff work"})
-        task_id = task["task"]["id"]
+    def test_two_agent_task_and_handoff(self) -> None:
+        code, output = self._run("task", "add", "--title", "handoff work", "--json")
+        self.assertEqual(code, 0, output)
+        task_id = json.loads(output)["task"]["id"]
+        self.assertEqual(self._run("task", "claim", task_id, agent=AGENT)[0], 0)
+        self.assertNotEqual(self._run("task", "claim", task_id, agent=OTHER)[0], 0)
+        self.assertEqual(
+            self._run(
+                "handoff",
+                "--task",
+                task_id,
+                "--to",
+                OTHER,
+                "--evidence",
+                "command output",
+            )[0],
+            0,
+        )
+        code, output = self._run("read", "--json", agent=OTHER)
+        self.assertEqual(code, 0)
+        self.assertIn("Handoff", output)
         code, output = self._run(
             "handoff",
             "--task",

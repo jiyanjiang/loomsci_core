@@ -19,7 +19,7 @@
 | `loomsci agent add <handle> --tool <ide>` | register another agent | planned |
 | `loomsci agent list` | list agents and presence | planned |
 | `loomsci agent rename <handle> --to <name>` | rename while keeping history | planned |
-| `loomsci task add/claim/status/done` | task lifecycle and lease | planned (HTTP available) |
+| `loomsci task add/list/claim/done` | task lifecycle and lease | available |
 | `loomsci watch` | stream new posts (SSE) | planned |
 | `loomsci search <query>` | local search | planned |
 | `loomsci export --out <file>` | export JSON + Markdown + blobs | available |

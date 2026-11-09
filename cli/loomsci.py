@@ -332,6 +332,74 @@ def _cmd_alice_rename(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_task_add(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(
+        args,
+        "POST",
+        "/v1/tasks",
+        {
+            "title": args.title,
+            "description": args.description or "",
+            "acceptance": args.acceptance or "",
+        },
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"task: {result.get('task', {}).get('id', '?')}")
+    return 0
+
+
+def _cmd_task_list(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    query = f"/v1/tasks?limit={args.limit}"
+    if args.status:
+        query += f"&status={urllib.parse.quote(args.status)}"
+    if args.mine:
+        query += f"&assigned_to={urllib.parse.quote(str(args.agent))}"
+    result = _request(args, "GET", query)
+    if args.json:
+        _json_print(result)
+    else:
+        for task in result.get("tasks") or []:
+            print(
+                f"{task.get('id')} {task.get('status')} "
+                f"{task.get('assigned_to') or '-'} {task.get('title')}"
+            )
+    return 0
+
+
+def _cmd_task_claim(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(
+        args,
+        "POST",
+        f"/v1/tasks/{args.task_id}/claim",
+        {"lease_seconds": args.lease},
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"claimed: {result.get('task', {}).get('id', '?')}")
+    return 0
+
+
+def _cmd_task_done(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(
+        args,
+        "POST",
+        f"/v1/tasks/{args.task_id}/done",
+        {"evidence": args.evidence},
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"done: {result.get('task', {}).get('id', '?')}")
+    return 0
+
+
 def _cmd_export(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = export_mod.export_home(layout.root, args.out)
@@ -419,6 +487,35 @@ def build_parser() -> argparse.ArgumentParser:
     handoff.add_argument("--evidence", required=True)
     handoff.add_argument("--json", action="store_true")
     handoff.set_defaults(func=_cmd_handoff)
+
+    task = sub.add_parser("task", help="task lifecycle and leases")
+    task_sub = task.add_subparsers(dest="task_command", required=True)
+
+    task_add = task_sub.add_parser("add", help="create a task")
+    task_add.add_argument("--title", required=True)
+    task_add.add_argument("--description")
+    task_add.add_argument("--acceptance")
+    task_add.add_argument("--json", action="store_true")
+    task_add.set_defaults(func=_cmd_task_add)
+
+    task_list = task_sub.add_parser("list", help="list tasks")
+    task_list.add_argument("--status")
+    task_list.add_argument("--mine", action="store_true")
+    task_list.add_argument("--limit", type=int, default=50)
+    task_list.add_argument("--json", action="store_true")
+    task_list.set_defaults(func=_cmd_task_list)
+
+    task_claim = task_sub.add_parser("claim", help="claim a task")
+    task_claim.add_argument("task_id")
+    task_claim.add_argument("--lease", type=int, default=3600)
+    task_claim.add_argument("--json", action="store_true")
+    task_claim.set_defaults(func=_cmd_task_claim)
+
+    task_done = task_sub.add_parser("done", help="complete a task")
+    task_done.add_argument("task_id")
+    task_done.add_argument("--evidence", required=True)
+    task_done.add_argument("--json", action="store_true")
+    task_done.set_defaults(func=_cmd_task_done)
 
     export = sub.add_parser("export", help="export the home as a zip")
     export.add_argument("--out", required=True)

@@ -5,9 +5,7 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
-## Unreleased
+## v0.1.0-preview.1
 
-- Public preview seed: bilingual documentation, architecture, CLI contract,
-  packs, roadmap, security policy, contributing guide, and a mandatory
-  sanitization check for every push.
-- No runnable host or installer yet.
+First runnable local preview: Core host, post/task bus, alice baseline, CLI,
+read-only UI, export/import, and release/install/upgrade scripts.

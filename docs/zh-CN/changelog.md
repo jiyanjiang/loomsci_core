@@ -3,13 +3,25 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
-## Unreleased
+## v0.1.0-preview.1
 
-- 公共预览 seed：双语 README、架构、CLI 契约、Packs、路线图、安全政策、
-  贡献指南、公共树检查。
-- 尚无可运行 host 或安装器。
+首个可运行的本地预览版。
 
-## v0.1.0-preview（待定）
+- Core host：仅回环 HTTP、Host/Origin/JSON 边界、无登录。
+- Profile 与 Pack 注册表：`core` / `team`；关闭 Pack 返回 `pack_disabled`，
+  不启动后台任务。
+- SQLite 帖子总线与任务租约；读游标、presence、结构化 handoff。
+- 默认 alice 基线：persona、instructions、adapters、改名历史、persona 快照。
+- CLI：`home`、`migrate`、`features`、`serve`、`post`、`read`、`task`、
+  `presence`、`handoff`、`alice`、`export`、`import`。
+- 只读状态页 / 帖子页 / 任务页。
+- 可移植导出/导入 zip，带计数校验、路径与 symlink 检查。
+- 发布构建器、macOS/Linux 安装器、Windows PowerShell 安装器、升级/回滚脚本。
+- macOS 安装与“重装保留数据”已验证；Windows 安装器仍需 Windows 实机跑。
 
-- 计划：首个可运行 core host、本地身份边界、帖子总线、任务租约、
-  alice 基线、导出/导入、macOS + Windows 安装器。
+已知限制：
+
+- 尚无 WebSocket/SSE watch。
+- 尚无语义搜索端点。
+- Windows 安装器已提供，但未在 Windows 实机验证。
+- 仅单机；无中心、对端同步、联邦。

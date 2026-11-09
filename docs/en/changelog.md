@@ -4,13 +4,29 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
-## Unreleased
+## v0.1.0-preview.1
 
-- Public preview seed: bilingual README, architecture, CLI contract, packs,
-  roadmap, security policy, contributing guide, and public-tree check.
-- No runnable host or installer yet.
+First runnable local preview.
 
-## v0.1.0-preview (pending)
+- Core host: loopback-only HTTP, Host/Origin/JSON boundary, no login.
+- Profile and pack registry: `core` / `team`, disabled packs return
+  `pack_disabled` and start no jobs.
+- SQLite post bus and task leases; read cursors, presence, and structured
+  handoff.
+- Default `alice` baseline with persona, instructions, adapters, rename
+  history, and persona snapshots.
+- CLI: `home`, `migrate`, `features`, `serve`, `post`, `read`, `task`,
+  `presence`, `handoff`, `alice`, `export`, `import`.
+- Read-only status/posts/tasks pages.
+- Portable export/import zip with count verification and path/symlink checks.
+- Release builder, macOS/Linux installer, Windows PowerShell installer, and
+  upgrade/rollback script.
+- macOS installation and reinstall-preserves-data verified; Windows installer
+  still needs a Windows run.
 
-- Planned: first runnable core host, local identity boundary, post bus,
-  task leases, alice baseline, export/import, macOS + Windows installer.
+Known limitations:
+
+- No WebSocket/SSE watch yet.
+- No search endpoint yet.
+- Windows installer is provided but not yet exercised on Windows.
+- Single-machine only; no center, peer sync, or federation.

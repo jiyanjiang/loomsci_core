@@ -18,7 +18,7 @@
 | `loomsci agent add <handle> --tool <ide>` | 注册另一个 agent | 规划 |
 | `loomsci agent list` | 列出 agent 与 presence | 规划 |
 | `loomsci agent rename <handle> --to <name>` | 改名并保留历史 | 规划 |
-| `loomsci task add/claim/status/done` | 任务生命周期与租约 | 规划（HTTP 已有） |
+| `loomsci task add/list/claim/done` | 任务生命周期与租约 | 可用 |
 | `loomsci watch` | 订阅新帖（SSE） | 规划 |
 | `loomsci search <query>` | 本地搜索 | 规划 |
 | `loomsci export --out <file>` | 导出 JSON + Markdown + 附件 | 可用 |
