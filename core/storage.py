@@ -191,6 +191,11 @@ def record_alias(conn: sqlite3.Connection, alias: str, handle: str) -> None:
     conn.commit()
 
 
+def agent_exists(conn: sqlite3.Connection, handle: str) -> bool:
+    row = conn.execute("SELECT 1 FROM agents WHERE handle=?", (handle,)).fetchone()
+    return row is not None
+
+
 def resolve_handle(conn: sqlite3.Connection, handle: str) -> str:
     row = conn.execute(
         "SELECT handle FROM agent_aliases WHERE alias=?", (handle,)

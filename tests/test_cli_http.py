@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT))
 from werkzeug.serving import make_server  # noqa: E402
 
 from cli import loomsci  # noqa: E402
+from core import storage  # noqa: E402
 from core.app import create_app  # noqa: E402
 
 AGENT = "alice.jiyanjiang"
@@ -27,6 +28,11 @@ class CliHttpTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         home = Path(self.tmp.name) / "home"
         app = create_app(env={"LOOMSCI_PROFILE": "core"}, home=home)
+        conn = storage.connect(home / "data" / "data.db")
+        storage.ensure_agent(conn, AGENT)
+        storage.ensure_agent(conn, OTHER)
+        conn.commit()
+        conn.close()
         self.server = make_server("127.0.0.1", 0, app, threaded=True)
         self.base = f"http://127.0.0.1:{self.server.server_port}"
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import socket
 import os
 import sqlite3
 import subprocess
@@ -10,6 +11,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from cli import loomsci  # noqa: E402
 
 
 def _run(args: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -69,6 +73,17 @@ class CliTest(unittest.TestCase):
             self.assertEqual(
                 json.loads(renamed.stdout)["handle"], "assistant.owner"
             )
+
+    def test_port_preflight_detects_listener(self) -> None:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(("127.0.0.1", 0))
+        sock.listen(1)
+        port = sock.getsockname()[1]
+        try:
+            self.assertFalse(loomsci._port_available("127.0.0.1", port))
+        finally:
+            sock.close()
+        self.assertTrue(loomsci._port_available("127.0.0.1", port))
 
     def test_init_command(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

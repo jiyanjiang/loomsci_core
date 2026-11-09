@@ -3,6 +3,17 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.11
+
+- 修复 Windows 跨盘导出：临时 zip 改写到目标目录，避免 `os.replace`
+  跨盘触发 WinError 17。
+- `serve` 启动前做端口探测；Windows 使用 `SO_EXCLUSIVEADDRUSE`。
+  端口占用时明确报错退出，不再静默起第二个实例。
+- 鉴权请求校验本地 agent 名册；未知句柄返回 `403 unknown_agent`，
+  与 CLI 契约一致。
+- 更新 README 当前版本号。
+- 对应 Windows 报告中的跨盘导出、端口重复绑定、未知 agent 发帖三项。
+
 ## v0.1.0-preview.10
 
 - 安装依赖加入 `cryptography`，使 Ed25519 升级签名验证在正常安装后可用；

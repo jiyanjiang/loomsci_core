@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import zipfile
 from pathlib import Path
 
@@ -88,6 +89,14 @@ class ExportTest(unittest.TestCase):
         self.assertTrue((destination / "agents" / "alice" / "persona.yaml").is_file())
         self.assertTrue((destination / "data" / "blobs" / "abc").is_file())
         self.assertTrue((destination / "data" / "data.db").is_file())
+
+    def test_export_temp_is_on_destination_drive(self) -> None:
+        out = Path(self.tmp.name) / "out" / "export.zip"
+        with mock.patch(
+            "core.export.tempfile.mkstemp", wraps=tempfile.mkstemp
+        ) as mkstemp:
+            export.export_home(self.home, out)
+        self.assertEqual(mkstemp.call_args.kwargs["dir"], out.parent)
 
     def test_unsafe_member_rejected(self) -> None:
         bad = Path(self.tmp.name) / "bad.zip"

@@ -122,7 +122,11 @@ def export_home(home: str | Path, out_path: str | Path) -> dict[str, Any]:
         conn.close()
 
     out.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(prefix="loomsci-export-", suffix=".zip")
+    # Keep the temporary archive on the destination filesystem: Windows
+    # os.replace cannot move across drives (WinError 17).
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=".loomsci-export-", suffix=".zip", dir=out.parent
+    )
     os.close(fd)
     tmp = Path(tmp_name)
     files: list[dict[str, Any]] = []

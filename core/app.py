@@ -84,6 +84,8 @@ def create_app(
         )
         if not decision.ok:
             return jsonify(decision.payload or {"ok": False}), decision.status
+        if decision.agent and not storage.agent_exists(get_db(), decision.agent):
+            return jsonify({"ok": False, "error": "unknown_agent"}), 403
         g.loomsci_agent = decision.agent
         return None
 

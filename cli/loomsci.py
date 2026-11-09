@@ -6,6 +6,8 @@ import argparse
 import base64
 import getpass
 import json
+import os
+import socket
 import sys
 import urllib.error
 import urllib.parse
@@ -107,9 +109,28 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _port_available(host: str, port: int) -> bool:
+    if port == 0:
+        return True
+    family = socket.AF_INET6 if ":" in host else socket.AF_INET
+    sock = socket.socket(family, socket.SOCK_STREAM)
+    try:
+        if os.name == "nt" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        sock.bind((host, port))
+        return True
+    except OSError:
+        return False
+    finally:
+        sock.close()
+
+
 def _cmd_serve(args: argparse.Namespace) -> int:
     if not is_loopback_host(args.host):
         print("error: the Core profile only binds a loopback host", file=sys.stderr)
+        return 2
+    if not _port_available(args.host, args.port):
+        print(f"error: port {args.port} is already in use on {args.host}", file=sys.stderr)
         return 2
     from core.app import create_app
 

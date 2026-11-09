@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from core import storage  # noqa: E402
 from core.app import create_app  # noqa: E402
 from core.local_auth import (  # noqa: E402
     is_loopback_host,
@@ -45,6 +46,10 @@ class AppTest(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         home = Path(self.tmp.name) / "home"
         self.app = create_app(env={"LOOMSCI_PROFILE": "core"}, home=home)
+        conn = storage.connect(home / "data" / "data.db")
+        storage.ensure_agent(conn, AGENT)
+        conn.commit()
+        conn.close()
         self.app.testing = True
         self.client = self.app.test_client()
 

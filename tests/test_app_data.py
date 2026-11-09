@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from core import alice  # noqa: E402
+from core import alice, storage  # noqa: E402
 from core.app import create_app  # noqa: E402
 
 AGENT = "alice.jiyanjiang"
@@ -23,6 +23,11 @@ class AppDataTest(unittest.TestCase):
         self.app = create_app(
             env={"LOOMSCI_PROFILE": "core"}, home=self.home
         )
+        conn = storage.connect(self.home / "data" / "data.db")
+        storage.ensure_agent(conn, AGENT)
+        storage.ensure_agent(conn, OTHER)
+        conn.commit()
+        conn.close()
         self.app.testing = True
         self.client = self.app.test_client()
         self.headers = {"X-Loomsci-Agent": AGENT}
@@ -118,6 +123,15 @@ class AppDataTest(unittest.TestCase):
         response = client.get("/v1/posts", headers=self.headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["posts"][0]["body"], "survives restart")
+
+    def test_unknown_agent_is_rejected(self) -> None:
+        response = self.client.post(
+            "/v1/posts",
+            json={"body": "ghost"},
+            headers={"X-Loomsci-Agent": "ghost.unknown"},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json["error"], "unknown_agent")
 
     def test_posts_require_identity(self) -> None:
         response = self.client.get("/v1/posts")

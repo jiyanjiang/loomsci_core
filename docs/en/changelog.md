@@ -4,6 +4,19 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.11
+
+- Fix Windows export to another drive: build the temporary zip in the
+  destination directory instead of `%TEMP%` so `os.replace` stays on one
+  filesystem (WinError 17).
+- Add a `serve` port preflight; on Windows use `SO_EXCLUSIVEADDRUSE`. A busy
+  port now exits with a clear error instead of a second hidden instance.
+- Enforce the local agent roster for authenticated API requests; unknown
+  handles return `403 unknown_agent` (matches the CLI contract).
+- Update README current-version text.
+- Confirms the Windows report items: export cross-drive, duplicate port bind,
+  and unknown-agent posting.
+
 ## v0.1.0-preview.10
 
 - Ship `cryptography` so Ed25519 upgrade signature verification works after a
