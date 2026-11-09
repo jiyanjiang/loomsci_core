@@ -14,6 +14,7 @@ from core.home import (
     migration_plan,
     resolve_home,
 )
+from core.packs import Registry
 
 
 def _json_print(payload: dict) -> None:
@@ -57,6 +58,19 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_features(args: argparse.Namespace) -> int:
+    features = Registry.from_env().features()
+    if args.json:
+        _json_print(features)
+    else:
+        print(f"profile: {features['profile']}")
+        print(f"packs: {', '.join(features['packs'])}")
+        print(f"routes: {features['route_count']}")
+        print(f"jobs: {', '.join(features['jobs']) or '(none)'}")
+        print(f"nav: {', '.join(features['nav'])}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="loomsci")
     parser.add_argument("--home", help="explicit loomsci home")
@@ -73,6 +87,10 @@ def build_parser() -> argparse.ArgumentParser:
     migrate.add_argument("--apply", action="store_true", help="actually copy files")
     migrate.add_argument("--json", action="store_true")
     migrate.set_defaults(func=_cmd_migrate)
+
+    features = sub.add_parser("features", help="show active profile, routes, jobs, nav")
+    features.add_argument("--json", action="store_true")
+    features.set_defaults(func=_cmd_features)
     return parser
 
 

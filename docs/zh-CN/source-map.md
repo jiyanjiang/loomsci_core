@@ -1,7 +1,7 @@
 # 源码复用映射 · S1
 
-> 状态：S1.1 已开始。已有 `core/home.py` 与 `migrate`/`home` CLI；
-> 尚未复制旧模块。
+> 状态：S1.1 与 S1.2 已开始。已有 `core/home.py`、`core/profile.py`、
+> `core/packs.py` 与 `home`/`migrate`/`features` CLI；尚未复制旧模块。
 > 目标：从现有 TAA 代码中抽出最小可用 Core 到公共仓库，运行时**不依赖**旧仓库。
 
 ## 规则

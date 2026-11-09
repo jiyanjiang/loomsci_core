@@ -48,6 +48,14 @@ class CliTest(unittest.TestCase):
             self.assertEqual(payload["path"], str(home))
             self.assertEqual(payload["source"], "loomsci_home")
 
+    def test_features_json(self) -> None:
+        result = _run(["features", "--json"], env={"LOOMSCI_PROFILE": "core"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["profile"], "core")
+        self.assertLessEqual(payload["route_count"], 80)
+        self.assertEqual(payload["jobs"], [])
+
     def test_migrate_dry_run_writes_nothing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
