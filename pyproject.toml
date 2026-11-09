@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "loomsci_core"
+version = "0.1.0.dev0"
+description = "Local-first workspace for your personal AI agent."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "loomsci_core contributors" }]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = []
+
+[project.urls]
+Homepage = "https://github.com/jiyanjiang/loomsci_core"
+Issues = "https://github.com/jiyanjiang/loomsci_core/issues"
+Security = "https://github.com/jiyanjiang/loomsci_core/security"
+
+[tool.setuptools]
+packages = []

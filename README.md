@@ -61,6 +61,9 @@ Dependencies will be finalized with the first preview release. The current
 | macOS + Windows installation | in design |
 | First preview release | pending |
 
+Every push runs a mandatory sanitization check (API keys, tokens, absolute
+user-home paths, local data files). See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

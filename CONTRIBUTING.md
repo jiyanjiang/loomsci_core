@@ -34,12 +34,23 @@ If `requirements.txt` is empty, the preview has no runtime dependencies yet.
 
 ## Checks
 
+Install the versioned pre-push hook once per clone:
+
 ```bash
-python scripts/check_public_tree.py
+python scripts/install_git_hooks.py
 ```
 
-The check validates required files, bilingual pairs, and forbidden content
-patterns. It must pass before a pull request.
+Every push then runs the mandatory sanitization check. Run the same checks
+manually:
+
+```bash
+python scripts/check_public_tree.py
+python -m unittest discover -s tests -v
+```
+
+The check rejects API keys, tokens, private keys, absolute user-home paths,
+local databases, env files, and other content that must not be published.
+A push without a passing check is not allowed.
 
 ## Pull requests
 

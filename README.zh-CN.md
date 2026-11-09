@@ -58,6 +58,9 @@ py -3.12 -m venv .venv
 | macOS + Windows 安装 | 设计中 |
 | 首个 preview 发布 | 待定 |
 
+每次推送都会强制执行脱敏自检（API key、令牌、本机绝对路径、本地数据文件）。
+见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
 ## 许可证
 
 Apache-2.0。见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
