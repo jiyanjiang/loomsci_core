@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.9
+
+- `scripts/upgrade.py` 增加 Ed25519 签名验证（`--signature` + `--public-key`）；
+  签名错误会在交换任何文件前中止。
+- 增加升级/回滚测试：代码交换、数据保留、dry-run、签名失败路径。
+- N3 仍未完成：Windows 全量回归和真实发布签名密钥仍是前置条件；本包未签名。
+
 ## v0.1.0-preview.8
 
 - 增加帖子、任务、事实的本地搜索（`/v1/search`、`loomsci search`）。

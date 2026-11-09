@@ -75,6 +75,23 @@ def _manifest(package: Path) -> dict:
     return data
 
 
+def _verify_signature(package: Path, signature: Path, public_key: Path) -> None:
+    try:
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    except ImportError as exc:
+        raise UpgradeError("cryptography is required for signature verification") from exc
+    key_bytes = public_key.expanduser().read_bytes()
+    sig_bytes = signature.expanduser().read_bytes()
+    if len(key_bytes) != 32:
+        raise UpgradeError("public key must be 32 raw bytes")
+    try:
+        Ed25519PublicKey.from_public_bytes(key_bytes).verify(
+            sig_bytes, package.read_bytes()
+        )
+    except Exception as exc:  # noqa: BLE001 - normalize crypto errors
+        raise UpgradeError("signature verification failed") from exc
+
+
 def _state(home: Path, phase: str, **extra) -> None:
     path = home / "upgrade.state.json"
     payload = {"phase": phase, "at": _now(), **extra}
@@ -83,11 +100,21 @@ def _state(home: Path, phase: str, **extra) -> None:
     os.replace(tmp, path)
 
 
-def apply(package: str | Path, home: str | Path, dry_run: bool = False) -> dict:
+def apply(
+    package: str | Path,
+    home: str | Path,
+    dry_run: bool = False,
+    signature: str | Path | None = None,
+    public_key: str | Path | None = None,
+) -> dict:
     package = Path(package).expanduser()
     home = Path(home).expanduser()
     if not package.is_file():
         raise UpgradeError("package not found")
+    if bool(signature) != bool(public_key):
+        raise UpgradeError("--signature and --public-key must be used together")
+    if signature and public_key:
+        _verify_signature(package, Path(signature), Path(public_key))
     manifest = _manifest(package)
     if dry_run:
         return {"ok": True, "dry_run": True, "manifest": manifest}
@@ -138,6 +165,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--home", default=str(Path.home() / ".loomsci"))
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--rollback", action="store_true")
+    parser.add_argument("--signature")
+    parser.add_argument("--public-key")
     args = parser.parse_args(argv)
     try:
         if args.rollback:
@@ -145,7 +174,13 @@ def main(argv: list[str] | None = None) -> int:
         else:
             if not args.package:
                 parser.error("--package is required unless --rollback is used")
-            result = apply(args.package, args.home, dry_run=args.dry_run)
+            result = apply(
+                args.package,
+                args.home,
+                dry_run=args.dry_run,
+                signature=args.signature,
+                public_key=args.public_key,
+            )
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

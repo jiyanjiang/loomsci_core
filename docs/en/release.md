@@ -50,3 +50,24 @@ python scripts/upgrade.py --home <home> --rollback
 
 The upgrade swaps only `core/`; data directories and `config.yaml` are never
 modified. A failed swap restores the previous code tree automatically.
+
+If the package is signed, verify before applying:
+
+```bash
+python scripts/upgrade.py --package loomsci_core-<version>.zip \
+  --signature loomsci_core-<version>.zip.sig \
+  --public-key /path/to/ed25519-public.raw \
+  --home <home>
+```
+
+The public key must be the raw 32-byte Ed25519 key. A bad signature aborts
+before any file is swapped.
+
+## Migration
+
+Legacy `.taa` homes migrate through the CLI:
+
+```bash
+loomsci migrate --from ~/.taa --dry-run
+loomsci migrate --from ~/.taa --apply
+```

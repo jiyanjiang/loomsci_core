@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.9
+
+- Upgrade signature verification and apply/rollback safety tests; Windows and
+  real signing key still pending.
+
 ## v0.1.0-preview.8
 
 - Local search, mention inbox, SSE watch, attachments, and status/integrity.

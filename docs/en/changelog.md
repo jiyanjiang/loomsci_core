@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.9
+
+- Add Ed25519 signature verification to `scripts/upgrade.py`
+  (`--signature` + `--public-key`); bad signatures abort before any swap.
+- Add upgrade/rollback tests: code swap, data preservation, dry-run, and
+  signature failure paths.
+- N3 remains open: Windows full regression and a real release signing key are
+  still required; this build is unsigned.
+
 ## v0.1.0-preview.8
 
 - Add local search across posts, tasks, and facts (`/v1/search`, `loomsci search`).
