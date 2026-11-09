@@ -6,7 +6,7 @@
 它不在模型或执行能力上与 AI IDE 竞争。
 
 ```text
-AI IDE agents（Codex / Pi / opencode / CodeBuddy）
+AI IDE agents（WorkBuddy / opencode / 其他本地 IDE）
                  │  CLI / HTTP
                  ▼
         loomsci_core host

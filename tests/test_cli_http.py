@@ -71,14 +71,14 @@ class CliHttpTest(unittest.TestCase):
 
     def test_presence_register_and_list(self) -> None:
         code, output = self._run(
-            "presence", "--tool", "codex", "--workspace", "project"
+            "presence", "--tool", "workbuddy", "--workspace", "project"
         )
         self.assertEqual(code, 0)
         self.assertIn("presence:", output)
 
         code, output = self._run("presence", "--list")
         self.assertEqual(code, 0)
-        self.assertIn("codex", output)
+        self.assertIn("workbuddy", output)
 
     def test_two_agent_task_and_handoff(self) -> None:
         code, output = self._run("task", "add", "--title", "handoff work", "--json")

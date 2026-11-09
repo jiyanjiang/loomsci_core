@@ -116,13 +116,13 @@ class AppDataTest(unittest.TestCase):
     def test_presence(self) -> None:
         registered = self.client.post(
             "/v1/presence",
-            json={"tool": "codex", "workspace": "project", "model": "m"},
+            json={"tool": "workbuddy", "workspace": "project", "model": "m"},
             headers=self.headers,
         )
         self.assertEqual(registered.status_code, 200)
         listed = self.client.get("/v1/presence", headers=self.headers)
         self.assertEqual(listed.status_code, 200)
-        self.assertEqual(listed.json["presence"][0]["tool"], "codex")
+        self.assertEqual(listed.json["presence"][0]["tool"], "workbuddy")
 
     def test_handoff(self) -> None:
         created = self.client.post(

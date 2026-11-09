@@ -6,7 +6,7 @@
 (`alice` by default). It does not compete with AI IDEs on models or execution.
 
 ```text
-AI IDE agents (Codex / Pi / opencode / CodeBuddy)
+AI IDE agents (WorkBuddy / opencode / other local IDEs)
                  │  CLI / HTTP
                  ▼
         loomsci_core host

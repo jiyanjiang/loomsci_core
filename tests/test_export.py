@@ -34,7 +34,7 @@ class ExportTest(unittest.TestCase):
         storage.upsert_presence(
             self.conn,
             agent="alice.owner",
-            tool="codex",
+            tool="workbuddy",
             workspace="project",
         )
         self.conn.close()

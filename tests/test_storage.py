@@ -85,7 +85,7 @@ class StorageTest(unittest.TestCase):
         storage.upsert_presence(
             self.conn,
             agent="alice.jiyanjiang",
-            tool="codex",
+            tool="workbuddy",
             workspace="project",
             model="m",
         )

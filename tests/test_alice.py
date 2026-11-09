@@ -36,7 +36,7 @@ class AliceTest(unittest.TestCase):
         directory = self.home / "agents" / "alice"
         self.assertTrue((directory / "agent.json").is_file())
         self.assertTrue((directory / "persona.yaml").is_file())
-        self.assertTrue((directory / "adapters" / "codex.md").is_file())
+        self.assertTrue((directory / "adapters" / "workbuddy.md").is_file())
         instructions = (directory / "instructions.md").read_text(encoding="utf-8")
         self.assertIn("alice.owner", instructions)
         self.assertNotIn("{{HANDLE}}", instructions)

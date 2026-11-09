@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.2
+
+- 用 WorkBuddy adapter 替换 Codex adapter。
+- 文档与示例对齐实际使用的 IDE：WorkBuddy 与 opencode。
+- 无协议或数据变化。
+
 ## v0.1.0-preview.1
 
 首个可运行的本地预览版。

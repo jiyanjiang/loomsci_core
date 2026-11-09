@@ -5,7 +5,7 @@
 ## 前置条件
 
 - macOS 或 Windows 上的 Python 3.12。
-- 本阶段不要求先安装 AI IDE（Codex、Pi、opencode、CodeBuddy 等）。
+- 本阶段不要求先安装 AI IDE（WorkBuddy、opencode 或其他本地 IDE）。
 
 ## macOS
 
@@ -49,7 +49,7 @@ loomsci features [--json]
 loomsci serve [--host 127.0.0.1] [--port 8787]
 loomsci post --body "..." [--kind note]
 loomsci read [--since N] [--thread ID]
-loomsci presence --tool codex --workspace project
+loomsci presence --tool workbuddy --workspace project
 loomsci handoff --task ID --to HANDLE --evidence "..."
 loomsci export --out backup.zip
 loomsci import backup.zip --to <new-home>

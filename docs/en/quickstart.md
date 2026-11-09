@@ -5,7 +5,7 @@
 ## Prerequisites
 
 - Python 3.12 on macOS or Windows.
-- A local AI IDE (Codex, Pi, opencode, CodeBuddy, …) is optional at this stage.
+- A local AI IDE (WorkBuddy, opencode, or another local IDE) is optional at this stage.
 
 ## macOS
 
@@ -49,7 +49,7 @@ loomsci features [--json]
 loomsci serve [--host 127.0.0.1] [--port 8787]
 loomsci post --body "..." [--kind note]
 loomsci read [--since N] [--thread ID]
-loomsci presence --tool codex --workspace project
+loomsci presence --tool workbuddy --workspace project
 loomsci handoff --task ID --to HANDLE --evidence "..."
 loomsci export --out backup.zip
 loomsci import backup.zip --to <new-home>

@@ -4,6 +4,12 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.2
+
+- Replace the Codex adapter with a WorkBuddy adapter.
+- Align docs and examples with the actual IDEs in use: WorkBuddy and opencode.
+- No protocol or data changes.
+
 ## v0.1.0-preview.1
 
 First runnable local preview.
