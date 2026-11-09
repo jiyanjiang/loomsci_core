@@ -50,7 +50,7 @@ Core 只保留这些能力的**宿主契约**：pack 注册表、`/apps/<slug>/`
 
 | 节点 | 目标 | 出口 |
 |---|---|---|
-| **N0 · 今天** | 契约冻结 1（`v0.1.0-preview.5`） | 安装、总线、alice、agent add、导出/导入、UI、发布、真实 opencode+omp 交接 |
+| **N0 · 今天** | 契约冻结 1（`v0.1.0-preview.6`） | 安装、总线、alice、agent add、导出/导入、UI、发布、真实 opencode+omp 交接 |
 | N1 · Core Alpha | `loomsci init` + memory/facts + alice review + UI 写 | 新装 → init → 发帖/任务 → 记忆召回；记忆导出；匿名不可读 |
 | N2 · Core Beta | search、watch/SSE、inbox/mention、附件、恢复、双 IDE 复测 | L1–L5 通过；重启；409；handoff；导出 round-trip |
 | N3 · Core RC | Windows、签名包、GitHub Release、更新/回滚、迁移 | macOS + Windows 干净安装；回滚；`latest.json` |
@@ -61,5 +61,5 @@ media/dist、social。
 
 ## 今天的终点
 
-`v0.1.0-preview.5` 是**基础冻结**，不是最终产品。
+`v0.1.0-preview.6` 是**基础冻结**，不是最终产品。
 今天规则：停止加基础功能，只修 bug 与文档。下一步是 N1，不是再重做地基。

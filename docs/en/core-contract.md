@@ -53,7 +53,7 @@ namespace, namespaced storage, and a single event/audit path.
 
 | Node | Goal | Exit gate |
 |---|---|---|
-| **N0 · today** | Contract freeze 1 (`v0.1.0-preview.5`) | install, bus, alice, agent add, export/import, UI, release, real opencode+omp handoff |
+| **N0 · today** | Contract freeze 1 (`v0.1.0-preview.6`) | install, bus, alice, agent add, export/import, UI, release, real opencode+omp handoff |
 | N1 · Core Alpha | `loomsci init` + memory/facts + alice review + UI write | fresh install → init → post/task → memory recall; memory export; no anonymous data |
 | N2 · Core Beta | search, watch/SSE, inbox/mentions, attachments, recovery, two-IDE replay | L1–L5 pass; restart; 409; handoff; export round-trip |
 | N3 · Core RC | Windows, signed package, GitHub Release, update/rollback, migration | clean install on macOS + Windows; rollback; `latest.json` |
@@ -64,6 +64,6 @@ sync, media/dist, social.
 
 ## Today's endpoint
 
-`v0.1.0-preview.5` is the **foundation freeze**, not the final product.
+`v0.1.0-preview.6` is the **foundation freeze**, not the final product.
 Today's rule: stop adding foundation features; only bugfixes and docs. The next
 work is N1, not another foundation redesign.
