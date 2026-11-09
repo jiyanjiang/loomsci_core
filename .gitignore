@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Local instance data and configuration
+.loomsci/
+config.yaml
+config.local.*
+.env
+.env.*
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+data/
+logs/
+runtime/
+exports/
+backups/
+
+# Secrets and local metadata
+*.key
+*.pem
+*.p12
+.teamai/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Test artifacts
+.coverage
+htmlcov/

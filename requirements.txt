@@ -1,0 +1,5 @@
+# loomsci_core preview seed
+#
+# Runtime dependencies are intentionally not pinned yet. The first runnable
+# preview will add a locked requirements file generated from pyproject.toml.
+# Do not add credentials or local paths here.
