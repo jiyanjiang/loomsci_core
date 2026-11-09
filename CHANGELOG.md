@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.14
+
+- Route registry matches served routes; task UI claim/done; attachment precheck.
+
 ## v0.1.0-preview.13
 
 - Fix packaged README version; make `agent prune` dry-run by default and require

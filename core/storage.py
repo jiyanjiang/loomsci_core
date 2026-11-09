@@ -374,6 +374,13 @@ def create_post(
     if not str(body or "").strip():
         raise ValueError("body required")
     ensure_agent(conn, author)
+    attachment_ids = list(attachments or [])
+    for attachment_id in attachment_ids:
+        attached = get_attachment(conn, attachment_id)
+        if attached is None:
+            raise NotFound("attachment not found")
+        if attached.get("post_id"):
+            raise Conflict("attachment already linked")
     post_id = "p-" + secrets.token_hex(6)
     created = now()
     conn.execute(
@@ -398,7 +405,7 @@ def create_post(
             "INSERT OR IGNORE INTO mentions(post_seq, agent, created_at) VALUES (?,?,?)",
             (seq, agent, created),
         )
-    for attachment_id in attachments or []:
+    for attachment_id in attachment_ids:
         attach_to_post(conn, attachment_id=attachment_id, post_id=post_id)
     conn.commit()
     row = conn.execute("SELECT * FROM posts WHERE id=?", (post_id,)).fetchone()

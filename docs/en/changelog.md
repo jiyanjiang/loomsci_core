@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.14
+
+- macOS convergence: the Core route registry now advertises only routes that
+  are actually served (25); navigation is `home/posts/tasks/memory/inbox`.
+- Add task claim/done actions to `/app/tasks`, so the local UI can complete the
+  basic task lifecycle.
+- Reject unknown/already-linked attachments before inserting a post, avoiding
+  an orphan post when attachment validation fails.
+- No signing, GitHub Release, or distribution ceremony in this candidate.
+
 ## v0.1.0-preview.13
 
 - Fix the packaged README still naming preview.11: the README current-version

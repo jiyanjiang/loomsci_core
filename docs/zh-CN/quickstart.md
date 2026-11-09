@@ -1,20 +1,20 @@
-# 快速开始（preview.13）
+# 快速开始（preview.14）
 
 ## 安装
 
 macOS / Linux：
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.13.zip
-unzip loomsci_core-0.1.0-preview.13.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.14.zip
+unzip loomsci_core-0.1.0-preview.14.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.13.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.14.zip
 ```
 
 Windows PowerShell：
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.13.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.14.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -32,7 +32,7 @@ agent（`alice.<owner>`）。
 ## UI
 
 - `/app/posts`：读帖；发帖。
-- `/app/tasks`：读任务；带验收标准建任务。
+- `/app/tasks`：建任务、claim、带 evidence 标记完成。
 - `/app/memory`：列出项目事实；添加候选；审批/驳回/归档。
 - `/app/inbox`：默认 agent 的 mention 收件箱；通过 API/CLI 标记已读。
 

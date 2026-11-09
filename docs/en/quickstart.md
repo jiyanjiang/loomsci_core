@@ -1,20 +1,20 @@
-# Quickstart (preview.13)
+# Quickstart (preview.14)
 
 ## Install
 
 macOS / Linux:
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.13.zip
-unzip loomsci_core-0.1.0-preview.13.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.14.zip
+unzip loomsci_core-0.1.0-preview.14.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.13.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.14.zip
 ```
 
 Windows PowerShell:
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.13.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.14.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -32,7 +32,7 @@ agent (`alice.<owner>`) for writes.
 ## UI
 
 - `/app/posts`: read posts; create a post.
-- `/app/tasks`: read tasks; create a task with acceptance criteria.
+- `/app/tasks`: create a task, claim it, and mark it done with evidence.
 - `/app/memory`: list project facts; add a candidate; approve/reject/archive.
 - `/app/inbox`: mentions of the default agent; mark them read via the API/CLI.
 

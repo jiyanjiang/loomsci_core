@@ -27,7 +27,7 @@ class RegistryTest(unittest.TestCase):
     def test_core_route_allowed(self) -> None:
         registry = Registry(profile="core")
         self.assertTrue(registry.check_route("/v1/health").allowed)
-        self.assertTrue(registry.check_route("/app/chats").allowed)
+        self.assertTrue(registry.check_route("/app/posts").allowed)
 
     def test_disabled_pack_route_is_blocked(self) -> None:
         registry = Registry(profile="core")

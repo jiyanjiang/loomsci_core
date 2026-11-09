@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.14
+
+- macOS 收敛：Core 路由注册表只保留实际提供的路由（25 条）；导航改为
+  `home/posts/tasks/memory/inbox`。
+- `/app/tasks` 增加 claim/done，本地 UI 可以走完基本任务生命周期。
+- 创建帖子前校验附件，未知/已关联附件直接拒绝，避免留下孤儿帖子。
+- 本候选不做签名、GitHub Release 或分发仪式。
+
 ## v0.1.0-preview.13
 
 - 修复包内 README 仍写 preview.11 的问题：README 当前版本改为随包构建。

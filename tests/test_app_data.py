@@ -133,6 +133,16 @@ class AppDataTest(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json["error"], "unknown_agent")
 
+    def test_post_rejects_missing_attachment(self) -> None:
+        response = self.client.post(
+            "/v1/posts",
+            json={"body": "bad attachment", "attachments": ["a-missing"]},
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 404)
+        posts = self.client.get("/v1/posts", headers=self.headers)
+        self.assertEqual(posts.json["posts"], [])
+
     def test_posts_require_identity(self) -> None:
         response = self.client.get("/v1/posts")
         self.assertEqual(response.status_code, 401)
@@ -328,6 +338,34 @@ class AppDataTest(unittest.TestCase):
         )
         self.assertEqual(review.status_code, 302)
         self.assertIn("UI fact", self.client.get("/app/memory").get_data(as_text=True))
+
+    def test_ui_task_lifecycle(self) -> None:
+        alice.ensure(self.home, "owner")
+        self.client.post(
+            "/app/tasks",
+            data={"title": "UI lifecycle", "acceptance": "done"},
+        )
+        conn = storage.connect(self.home / "data" / "data.db")
+        try:
+            task = storage.list_tasks(conn)[0]
+        finally:
+            conn.close()
+        claimed = self.client.post(f"/app/tasks/{task['id']}/claim")
+        self.assertEqual(claimed.status_code, 302)
+        conn = storage.connect(self.home / "data" / "data.db")
+        try:
+            self.assertEqual(storage.get_task(conn, task["id"])["status"], "claimed")
+        finally:
+            conn.close()
+        done = self.client.post(
+            f"/app/tasks/{task['id']}/done", data={"evidence": "ui evidence"}
+        )
+        self.assertEqual(done.status_code, 302)
+        conn = storage.connect(self.home / "data" / "data.db")
+        try:
+            self.assertEqual(storage.get_task(conn, task["id"])["status"], "done")
+        finally:
+            conn.close()
 
     def test_database_is_created_in_home(self) -> None:
         self.assertTrue((self.home / "data" / "data.db").is_file())

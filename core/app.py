@@ -147,7 +147,9 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
 .compose textarea {{ min-height: 72px; }}
 .compose button {{ justify-self: start; padding: 6px 12px; font: inherit; }}
 .fact {{ border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 12px 0; }}
-.fact form {{ display: inline; }}
+.fact form, .item form {{ display: inline; }}
+.item form input {{ width: 12em; padding: 3px 6px; font: inherit; }}
+.item form button {{ padding: 3px 8px; font: inherit; }}
 .fact button {{ margin-right: 6px; padding: 3px 8px; font: inherit; }}
 </style></head>
 <body><p><a href="/app">← status</a></p><h1>{escape(title)}</h1>{body}</body></html>"""
@@ -190,15 +192,30 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
     def tasks_page():
         tasks = storage.list_tasks(get_db(), limit=50)
         items = []
+        author = _ui_agent()
         for task in tasks:
+            actions = ""
+            status = str(task.get("status") or "")
+            assigned = task.get("assigned_to")
+            if author and status in {"backlog", "claimed"}:
+                if not assigned or assigned == author:
+                    actions += (
+                        f'<form method="post" action="/app/tasks/{escape(str(task["id"]))}/claim">'
+                        '<button type="submit">Claim</button></form>'
+                    )
+                if assigned == author:
+                    actions += (
+                        f'<form method="post" action="/app/tasks/{escape(str(task["id"]))}/done">'
+                        '<input name="evidence" placeholder="Evidence" required>'
+                        '<button type="submit">Done</button></form>'
+                    )
             items.append(
                 '<div class="item">'
                 f'<div><b>{escape(str(task.get("title") or task.get("id") or ""))}</b></div>'
-                f'<div class="meta">{escape(str(task.get("status") or ""))}'
-                f' · {escape(str(task.get("assigned_to") or "unassigned"))}</div>'
-                f'<pre>{escape(str(task.get("acceptance") or ""))[:400]}</pre></div>'
+                f'<div class="meta">{escape(status)}'
+                f' · {escape(str(assigned or "unassigned"))}</div>'
+                f'<pre>{escape(str(task.get("acceptance") or ""))[:400]}</pre>{actions}</div>'
             )
-        author = _ui_agent()
         form = (
             '<form class="compose" method="post" action="/app/tasks">'
             '<input name="title" placeholder="Task title" required maxlength="200">'
@@ -239,6 +256,32 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             )
         except ValueError:
             pass
+        return redirect("/app/tasks")
+
+    @app.post("/app/tasks/<task_id>/claim")
+    def tasks_claim_page(task_id: str):
+        author = _ui_agent()
+        if not author:
+            return redirect("/app")
+        try:
+            storage.claim_task(get_db(), task_id=task_id, agent=author)
+        except Exception:  # noqa: BLE001 - UI redirects on conflict
+            pass
+        return redirect("/app/tasks")
+
+    @app.post("/app/tasks/<task_id>/done")
+    def tasks_done_page(task_id: str):
+        author = _ui_agent()
+        if not author:
+            return redirect("/app")
+        evidence = str(request.form.get("evidence") or "").strip()
+        if evidence:
+            try:
+                storage.done_task(
+                    get_db(), task_id=task_id, agent=author, evidence=evidence
+                )
+            except Exception:  # noqa: BLE001 - UI redirects on conflict
+                pass
         return redirect("/app/tasks")
 
     @app.get("/app/memory")
