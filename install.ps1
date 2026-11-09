@@ -74,6 +74,7 @@ try {
   $lines = @(
     "@echo off",
     "set ""PYTHONPATH=$core""",
+    "set ""LOOMSCI_HOME=$Destination""",
     "`"$python`" -m cli.loomsci %*"
   )
   Set-Content -Path $launcher -Value $lines -Encoding ASCII

@@ -52,6 +52,15 @@ class InstallerTest(unittest.TestCase):
             self.assertEqual(features.returncode, 0, features.stderr)
             self.assertLessEqual(json.loads(features.stdout)["route_count"], 80)
 
+            resolved = subprocess.run(
+                [str(launcher), "home", "--json"],
+                text=True,
+                capture_output=True,
+                timeout=30,
+            )
+            self.assertEqual(resolved.returncode, 0, resolved.stderr)
+            self.assertEqual(json.loads(resolved.stdout)["path"], str(home))
+
             second = subprocess.run(
                 [
                     "bash",
