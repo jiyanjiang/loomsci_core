@@ -240,6 +240,11 @@ def list_tasks(
     return [_task_dict(row) for row in conn.execute(sql, params).fetchall()]
 
 
+def get_task(conn: sqlite3.Connection, task_id: str) -> dict[str, Any] | None:
+    row = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+    return _task_dict(row) if row else None
+
+
 def claim_task(
     conn: sqlite3.Connection,
     *,
@@ -318,6 +323,20 @@ def upsert_presence(
         (agent, tool, workspace, model, pid, timestamp, timestamp),
     )
     conn.commit()
+
+
+def list_presence(
+    conn: sqlite3.Connection, *, agent: str | None = None
+) -> list[dict[str, Any]]:
+    if agent:
+        rows = conn.execute(
+            "SELECT * FROM presence WHERE agent=? ORDER BY last_seen DESC", (agent,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM presence ORDER BY last_seen DESC"
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def set_read_cursor(

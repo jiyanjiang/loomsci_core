@@ -1,8 +1,9 @@
 # 源码复用映射 · S1
 
-> 状态：S1.1–S1.4 已开始。已有 `core/home.py`、`core/profile.py`、
-> `core/packs.py`、`core/local_auth.py`、`core/storage.py`、`core/app.py` 与
-> `home`/`migrate`/`features`/`serve` CLI；尚未复制旧模块。
+> 状态：S1.1–S1.5 已开始。已有 `core/home.py`、`core/profile.py`、
+> `core/packs.py`、`core/local_auth.py`、`core/storage.py`、`core/handoff.py`、
+> `core/app.py` 与 `home`/`migrate`/`features`/`serve`/`post`/`read`/
+> `presence`/`handoff` CLI；尚未复制旧模块。
 > 目标：从现有 TAA 代码中抽出最小可用 Core 到公共仓库，运行时**不依赖**旧仓库。
 
 ## 规则

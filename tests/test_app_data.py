@@ -102,6 +102,72 @@ class AppDataTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_read_cursor(self) -> None:
+        set_cursor = self.client.post(
+            "/v1/read",
+            json={"scope": "posts", "last_seq": 7},
+            headers=self.headers,
+        )
+        self.assertEqual(set_cursor.status_code, 200)
+        got = self.client.get("/v1/read?scope=posts", headers=self.headers)
+        self.assertEqual(got.status_code, 200)
+        self.assertEqual(got.json["cursor"], 7)
+
+    def test_presence(self) -> None:
+        registered = self.client.post(
+            "/v1/presence",
+            json={"tool": "codex", "workspace": "project", "model": "m"},
+            headers=self.headers,
+        )
+        self.assertEqual(registered.status_code, 200)
+        listed = self.client.get("/v1/presence", headers=self.headers)
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(listed.json["presence"][0]["tool"], "codex")
+
+    def test_handoff(self) -> None:
+        created = self.client.post(
+            "/v1/tasks", json={"title": "Handoff work"}, headers=self.headers
+        )
+        task_id = created.json["task"]["id"]
+        response = self.client.post(
+            "/v1/handoff",
+            json={
+                "task_id": task_id,
+                "to": OTHER,
+                "completed": ["schema"],
+                "remaining": ["tests"],
+                "next": ["run tests"],
+                "risks": ["none"],
+                "evidence": {"command": "pytest", "exit": 0},
+            },
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 201, response.get_data(as_text=True))
+        post = response.json["post"]
+        self.assertEqual(post["kind"], "handoff")
+        self.assertEqual(post["meta"]["to"], OTHER)
+        self.assertIn("Handoff", post["body"])
+
+    def test_handoff_requires_evidence(self) -> None:
+        created = self.client.post(
+            "/v1/tasks", json={"title": "Handoff work"}, headers=self.headers
+        )
+        task_id = created.json["task"]["id"]
+        response = self.client.post(
+            "/v1/handoff",
+            json={"task_id": task_id, "to": OTHER},
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_handoff_unknown_task(self) -> None:
+        response = self.client.post(
+            "/v1/handoff",
+            json={"task_id": "t-missing", "to": OTHER, "evidence": "x"},
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 404)
+
     def test_database_is_created_in_home(self) -> None:
         self.assertTrue((self.home / "data" / "data.db").is_file())
 

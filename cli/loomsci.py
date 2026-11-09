@@ -1,10 +1,13 @@
-"""Minimal loomsci CLI for the S1 home slice."""
+"""loomsci command-line interface."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 from core.home import (
@@ -17,9 +20,49 @@ from core.home import (
 from core.local_auth import is_loopback_host
 from core.packs import Registry
 
+DEFAULT_URL = "http://127.0.0.1:8787"
+
+
+class CliError(RuntimeError):
+    pass
+
 
 def _json_print(payload: dict) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+
+
+def _request(args: argparse.Namespace, method: str, path: str, body: dict | None = None) -> dict:
+    data = None
+    headers: dict[str, str] = {}
+    if body is not None:
+        data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    if getattr(args, "agent", None):
+        headers["X-Loomsci-Agent"] = str(args.agent)
+    request = urllib.request.Request(
+        args.url.rstrip("/") + path, data=data, headers=headers, method=method
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            raw = response.read().decode("utf-8", "replace")
+            return json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", "replace")
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            payload = {"error": raw[:200]}
+        raise CliError(
+            f"HTTP {exc.code}: {payload.get('error') or 'request failed'}"
+        ) from None
+    except urllib.error.URLError as exc:
+        raise CliError(f"cannot reach {args.url}: {exc.reason}") from None
+
+
+def _require_agent(args: argparse.Namespace) -> str:
+    if not getattr(args, "agent", None):
+        raise CliError("--as <agent.owner> is required for this command")
+    return str(args.agent)
 
 
 def _cmd_home(args: argparse.Namespace) -> int:
@@ -89,9 +132,107 @@ def _cmd_features(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_post(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    payload = {
+        "kind": args.kind,
+        "title": args.title or "",
+        "body": args.body,
+        "thread_id": args.thread,
+        "parent_id": args.parent,
+        "meta": {"to": args.to} if args.to else {},
+    }
+    result = _request(args, "POST", "/v1/posts", payload)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"posted: {result.get('post', {}).get('id', '?')}")
+    return 0
+
+
+def _cmd_read(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    if args.since is None:
+        cursor = int(_request(args, "GET", "/v1/read?scope=posts").get("cursor", 0))
+    else:
+        cursor = int(args.since)
+    query = f"/v1/posts?since={cursor}&limit={args.limit}"
+    if args.thread:
+        query += f"&thread={urllib.parse.quote(args.thread)}"
+    result = _request(args, "GET", query)
+    posts = result.get("posts") or []
+    if posts and not args.no_update:
+        last_seq = max(int(post.get("seq", 0)) for post in posts)
+        _request(
+            args,
+            "POST",
+            "/v1/read",
+            {"scope": "posts", "last_seq": last_seq},
+        )
+    if args.json:
+        _json_print(result)
+    else:
+        for post in posts:
+            print(
+                f"{post.get('seq')} {post.get('id')} {post.get('author')} "
+                f"{post.get('kind')} {post.get('title') or ''}".rstrip()
+            )
+        if not posts:
+            print("(no new posts)")
+    return 0
+
+
+def _cmd_presence(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    if args.list or not args.tool:
+        result = _request(args, "GET", "/v1/presence")
+        if args.json:
+            _json_print(result)
+        else:
+            for item in result.get("presence") or []:
+                print(
+                    f"{item.get('agent')} {item.get('tool')} "
+                    f"{item.get('workspace')} {item.get('last_seen')}"
+                )
+        return 0
+    payload = {
+        "tool": args.tool,
+        "workspace": args.workspace or "",
+        "model": args.model or "",
+        "pid": args.pid,
+    }
+    result = _request(args, "POST", "/v1/presence", payload)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"presence: {result.get('agent')} {result.get('tool')}")
+    return 0
+
+
+def _cmd_handoff(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    payload = {
+        "task_id": args.task,
+        "to": args.to,
+        "completed": args.completed or [],
+        "remaining": args.remaining or [],
+        "next": args.next or [],
+        "risks": args.risks or [],
+        "evidence": args.evidence,
+    }
+    result = _request(args, "POST", "/v1/handoff", payload)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"handoff posted: {result.get('post', {}).get('id', '?')}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="loomsci")
     parser.add_argument("--home", help="explicit loomsci home")
+    parser.add_argument("--url", default=DEFAULT_URL, help="local host URL")
+    parser.add_argument("--as", dest="agent", help="agent.owner identity")
     sub = parser.add_subparsers(dest="command", required=True)
 
     home = sub.add_parser("home", help="show the resolved home")
@@ -114,6 +255,44 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8787)
     serve.set_defaults(func=_cmd_serve)
+
+    post = sub.add_parser("post", help="create a post")
+    post.add_argument("--kind", default="note")
+    post.add_argument("--title", default="")
+    post.add_argument("--body", required=True)
+    post.add_argument("--thread")
+    post.add_argument("--parent")
+    post.add_argument("--to")
+    post.add_argument("--json", action="store_true")
+    post.set_defaults(func=_cmd_post)
+
+    read = sub.add_parser("read", help="read posts since the local cursor")
+    read.add_argument("--since", type=int)
+    read.add_argument("--thread")
+    read.add_argument("--limit", type=int, default=50)
+    read.add_argument("--no-update", action="store_true")
+    read.add_argument("--json", action="store_true")
+    read.set_defaults(func=_cmd_read)
+
+    presence = sub.add_parser("presence", help="register or list IDE presence")
+    presence.add_argument("--list", action="store_true")
+    presence.add_argument("--tool")
+    presence.add_argument("--workspace")
+    presence.add_argument("--model")
+    presence.add_argument("--pid", type=int)
+    presence.add_argument("--json", action="store_true")
+    presence.set_defaults(func=_cmd_presence)
+
+    handoff = sub.add_parser("handoff", help="post a structured handoff")
+    handoff.add_argument("--task", required=True)
+    handoff.add_argument("--to", required=True)
+    handoff.add_argument("--completed", action="append")
+    handoff.add_argument("--remaining", action="append")
+    handoff.add_argument("--next", action="append")
+    handoff.add_argument("--risks", action="append")
+    handoff.add_argument("--evidence", required=True)
+    handoff.add_argument("--json", action="store_true")
+    handoff.set_defaults(func=_cmd_handoff)
     return parser
 
 
@@ -124,7 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--apply and --dry-run are mutually exclusive")
     try:
         return int(args.func(args))
-    except HomeError as exc:
+    except (HomeError, CliError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

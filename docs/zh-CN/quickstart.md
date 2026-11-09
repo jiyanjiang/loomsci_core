@@ -25,7 +25,7 @@ python -m pip install -r requirements.txt
 
 预览阶段目前只声明 Flask。
 
-## 当前最小 host（S1.3–S1.4）
+## 当前最小 host（S1.3–S1.5）
 
 在仓库根目录：
 
@@ -41,11 +41,15 @@ loomsci home [--json]
 loomsci migrate --from <path> [--dry-run|--apply] [--json]
 loomsci features [--json]
 loomsci serve [--host 127.0.0.1] [--port 8787]
+loomsci post --body "..." [--kind note]
+loomsci read [--since N] [--thread ID]
+loomsci presence --tool codex --workspace project
+loomsci handoff --task ID --to HANDLE --evidence "..."
 ```
 
 Host 已暴露 `/v1/health`、`/v1/version`、`/v1/meta/features`、
-`/v1/whoami`、`/v1/echo`、`/v1/posts`、`/v1/tasks`（含 `claim`/`done`）；
-其余 Core 路由与 UI 仍在规划中。
+`/v1/whoami`、`/v1/echo`、`/v1/posts`、`/v1/tasks`（含 `claim`/`done`）、
+`/v1/read`、`/v1/presence`、`/v1/handoff`；其余 Core 路由与 UI 仍在规划中。
 
 ## 计划中的首次运行
 

@@ -56,7 +56,7 @@ The preview currently declares Flask only. The minimal host can be run with
 | Area | Status |
 |---|---|
 | Public seed / docs | available |
-| Core host + local API | minimal host + post/task bus (S1.4) |
+| Core host + local API | minimal host + bus + handoff (S1.5) |
 | alice baseline | in design |
 | macOS + Windows installation | in design |
 | First preview release | pending |

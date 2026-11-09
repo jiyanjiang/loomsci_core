@@ -54,7 +54,7 @@ py -3.12 -m venv .venv
 | 模块 | 状态 |
 |---|---|
 | 公共 seed / 文档 | 已有 |
-| Core host + 本地 API | 最小 host + 帖子/任务总线（S1.4） |
+| Core host + 本地 API | 最小 host + 总线 + handoff（S1.5） |
 | alice 基线 | 设计中 |
 | macOS + Windows 安装 | 设计中 |
 | 首个 preview 发布 | 待定 |

@@ -7,7 +7,7 @@ from typing import Mapping
 
 from flask import Flask, g, jsonify, request
 
-from core import storage
+from core import handoff, storage
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -225,6 +225,79 @@ def create_app(
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "task": task})
+
+    @app.get("/v1/read")
+    def read_get():
+        scope = str(request.args.get("scope") or "posts")
+        cursor = storage.get_read_cursor(
+            get_db(), agent=g.loomsci_agent, scope=scope
+        )
+        return jsonify({"ok": True, "scope": scope, "cursor": cursor})
+
+    @app.post("/v1/read")
+    def read_set():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            last_seq = int(body.get("last_seq", 0))
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "bad_last_seq"}), 400
+        scope = str(body.get("scope") or "posts")
+        storage.set_read_cursor(
+            get_db(), agent=g.loomsci_agent, scope=scope, last_seq=last_seq
+        )
+        return jsonify({"ok": True, "scope": scope, "cursor": last_seq})
+
+    @app.get("/v1/presence")
+    def presence_list():
+        agent = request.args.get("agent") or None
+        return jsonify({
+            "ok": True,
+            "presence": storage.list_presence(get_db(), agent=agent),
+        })
+
+    @app.post("/v1/presence")
+    def presence_set():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        tool = str(body.get("tool") or "").strip()
+        workspace = str(body.get("workspace") or "").strip()
+        if not tool or not workspace:
+            return jsonify({"ok": False, "error": "tool_and_workspace_required"}), 400
+        pid = body.get("pid")
+        try:
+            pid = int(pid) if pid is not None else None
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "bad_pid"}), 400
+        storage.upsert_presence(
+            get_db(),
+            agent=g.loomsci_agent,
+            tool=tool,
+            workspace=workspace,
+            model=str(body.get("model") or ""),
+            pid=pid,
+        )
+        return jsonify({
+            "ok": True,
+            "agent": g.loomsci_agent,
+            "tool": tool,
+            "workspace": workspace,
+        })
+
+    @app.post("/v1/handoff")
+    def handoff_create():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            post = handoff.create(
+                get_db(), author=g.loomsci_agent, payload=body
+            )
+        except Exception as exc:  # noqa: BLE001 - mapped below
+            return _storage_error(exc)
+        return jsonify({"ok": True, "post": post}), 201
 
     @app.errorhandler(404)
     def not_found(_error):
