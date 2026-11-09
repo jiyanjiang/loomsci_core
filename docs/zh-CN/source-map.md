@@ -1,10 +1,10 @@
 # 源码复用映射 · S1
 
-> 状态：S1–S3 已开始。已有 `core/home.py`、`core/profile.py`、`core/packs.py`、
+> 状态：S1–S4 已开始。已有 `core/home.py`、`core/profile.py`、`core/packs.py`、
 > `core/local_auth.py`、`core/storage.py`、`core/handoff.py`、`core/alice.py`、
-> `core/export.py`、`core/app.py`、`presets/agents/alice/` 与
+> `core/export.py`、`core/app.py`、`presets/agents/alice/`、
 > `home`/`migrate`/`features`/`serve`/`post`/`read`/`presence`/`handoff`/
-> `alice`/`export`/`import` CLI；尚未复制旧模块。
+> `alice`/`export`/`import` CLI，以及发布/安装/升级脚本；尚未复制旧模块。
 > 目标：从现有 TAA 代码中抽出最小可用 Core 到公共仓库，运行时**不依赖**旧仓库。
 
 ## 规则

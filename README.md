@@ -7,7 +7,7 @@ Data stays yours. No login. Portable across machines and AI IDEs.
 > architecture, roadmap, and documentation skeleton. The first runnable
 > preview release is pending. Nothing here should be read as a shipped feature.
 
-[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
+[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Release](docs/en/release.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
 
 ## Why
 
@@ -60,7 +60,9 @@ The preview currently declares Flask only. The minimal host can be run with
 | alice baseline | available (S2) |
 | Status UI | `/app` + read-only posts/tasks (S2–S3) |
 | Export / import | zip round-trip (S3) |
-| macOS + Windows installation | in design |
+| Release packaging | zip + manifests + SHA-256 (S4) |
+| macOS installer | available and tested |
+| Windows installer | script present; Windows CI run pending |
 | First preview release | pending |
 
 Every push runs a mandatory sanitization check (API keys, tokens, absolute

@@ -10,7 +10,6 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-from core import alice as alice_mod
 from core import export as export_mod
 from core import storage
 from core.home import (
@@ -232,6 +231,11 @@ def _cmd_handoff(args: argparse.Namespace) -> int:
     return 0
 
 
+def _alice_module():
+    from core import alice as alice_mod
+    return alice_mod
+
+
 def _layout(args: argparse.Namespace):
     resolution = resolve_home(explicit=args.home)
     if resolution.needs_migration:
@@ -241,6 +245,7 @@ def _layout(args: argparse.Namespace):
 
 def _cmd_alice_init(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    alice_mod = _alice_module()
     record = alice_mod.ensure(layout.root, args.owner, args.short)
     storage.init_db(layout.db)
     conn = storage.connect(layout.db)
@@ -258,6 +263,7 @@ def _cmd_alice_init(args: argparse.Namespace) -> int:
 
 def _cmd_alice_show(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    alice_mod = _alice_module()
     record = alice_mod.read_agent(layout.root, args.short)
     if not record:
         raise CliError(f"agent not initialized: {args.short}")
@@ -271,6 +277,7 @@ def _cmd_alice_show(args: argparse.Namespace) -> int:
 
 def _cmd_alice_review(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    alice_mod = _alice_module()
     result = alice_mod.review(layout.root, args.short)
     if args.json:
         _json_print(result)
@@ -285,6 +292,7 @@ def _cmd_alice_review(args: argparse.Namespace) -> int:
 
 def _cmd_alice_snapshot(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    alice_mod = _alice_module()
     path = alice_mod.snapshot(layout.root, args.short, args.reason)
     if args.json:
         _json_print({"ok": True, "snapshot": str(path)})
@@ -295,6 +303,7 @@ def _cmd_alice_snapshot(args: argparse.Namespace) -> int:
 
 def _cmd_alice_reset(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    alice_mod = _alice_module()
     result = alice_mod.reset(
         layout.root, args.short, keep_memory=not args.drop_memory
     )
@@ -307,6 +316,7 @@ def _cmd_alice_reset(args: argparse.Namespace) -> int:
 
 def _cmd_alice_rename(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    alice_mod = _alice_module()
     storage.init_db(layout.db)
     conn = storage.connect(layout.db)
     try:
