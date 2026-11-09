@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.10
+
+- Ship `cryptography` for signed upgrade verification; CI covers it. Still unsigned.
+
 ## v0.1.0-preview.9
 
 - Upgrade signature verification and apply/rollback safety tests; Windows and

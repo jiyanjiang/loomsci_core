@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.10
+
+- 安装依赖加入 `cryptography`，使 Ed25519 升级签名验证在正常安装后可用；
+  CI 覆盖签名升级路径。
+- 本包仍未签名；Windows 全量回归仍待完成。
+
 ## v0.1.0-preview.9
 
 - `scripts/upgrade.py` 增加 Ed25519 签名验证（`--signature` + `--public-key`）；

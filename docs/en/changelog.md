@@ -4,6 +4,12 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.10
+
+- Ship `cryptography` so Ed25519 upgrade signature verification works after a
+  normal install; CI now exercises the signed-upgrade path.
+- This build is still unsigned; Windows full regression remains open.
+
 ## v0.1.0-preview.9
 
 - Add Ed25519 signature verification to `scripts/upgrade.py`

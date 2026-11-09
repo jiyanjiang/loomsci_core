@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loomsci_core"
-version = "0.1.0-preview.9"
+version = "0.1.0-preview.10"
 description = "Local-first workspace for your personal AI agent."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -16,7 +16,7 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python :: 3.12",
 ]
-dependencies = ["Flask>=3.0,<4", "PyYAML>=6.0,<7"]
+dependencies = ["Flask>=3.0,<4", "PyYAML>=6.0,<7", "cryptography>=42,<51"]
 
 [project.scripts]
 loomsci = "cli.loomsci:main"
