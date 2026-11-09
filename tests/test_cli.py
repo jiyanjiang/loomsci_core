@@ -70,6 +70,15 @@ class CliTest(unittest.TestCase):
                 json.loads(renamed.stdout)["handle"], "assistant.owner"
             )
 
+    def test_init_command(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            env = {"LOOMSCI_HOME": str(home)}
+            result = _run(["init", "--owner", "owner", "--json"], env=env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["handle"], "alice.owner")
+            self.assertTrue((home / "agents" / "alice" / "agent.json").is_file())
+
     def test_add_second_agent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp) / "home"

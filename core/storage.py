@@ -60,6 +60,23 @@ CREATE TABLE IF NOT EXISTS tasks (
 CREATE INDEX IF NOT EXISTS tasks_status ON tasks(status, updated_at);
 CREATE INDEX IF NOT EXISTS tasks_assignee ON tasks(assigned_to, status);
 
+CREATE TABLE IF NOT EXISTS facts (
+  id          TEXT PRIMARY KEY,
+  project     TEXT,
+  claim       TEXT NOT NULL,
+  evidence    TEXT,
+  source      TEXT,
+  tags        TEXT,
+  status      TEXT NOT NULL DEFAULT 'candidate',
+  confidence  REAL,
+  created_by  TEXT,
+  reviewed_by TEXT,
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS facts_status ON facts(status, updated_at);
+CREATE INDEX IF NOT EXISTS facts_project ON facts(project, status);
+
 CREATE TABLE IF NOT EXISTS reads (
   agent      TEXT NOT NULL,
   scope      TEXT NOT NULL,
@@ -357,6 +374,85 @@ def upsert_presence(
         (agent, tool, workspace, model, pid, timestamp, timestamp),
     )
     conn.commit()
+
+
+def add_fact(
+    conn: sqlite3.Connection,
+    *,
+    claim: str,
+    evidence: str = "",
+    source: str = "",
+    project: str = "",
+    tags: str = "",
+    created_by: str = "",
+    confidence: float | None = None,
+) -> dict[str, Any]:
+    text = str(claim or "").strip()
+    if not text:
+        raise ValueError("claim required")
+    fact_id = "f-" + secrets.token_hex(6)
+    timestamp = now()
+    conn.execute(
+        "INSERT INTO facts(id, project, claim, evidence, source, tags, status, confidence, "
+        "created_by, created_at, updated_at) VALUES (?,?,?,?,?,?, 'candidate', ?,?,?,?)",
+        (fact_id, project, text, evidence, source, tags, confidence, created_by,
+         timestamp, timestamp),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM facts WHERE id=?", (fact_id,)).fetchone()
+    return dict(row)
+
+
+def list_facts(
+    conn: sqlite3.Connection,
+    *,
+    q: str = "",
+    status: str | None = None,
+    project: str | None = None,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    limit = max(1, min(int(limit), 200))
+    sql = "SELECT * FROM facts WHERE 1=1"
+    params: list[Any] = []
+    if status:
+        sql += " AND status=?"
+        params.append(status)
+    if project:
+        sql += " AND project=?"
+        params.append(project)
+    if q:
+        sql += " AND (claim LIKE ? OR evidence LIKE ? OR source LIKE ?)"
+        like = f"%{q}%"
+        params.extend([like, like, like])
+    sql += " ORDER BY updated_at DESC LIMIT ?"
+    params.append(limit)
+    return [dict(row) for row in conn.execute(sql, params).fetchall()]
+
+
+def get_fact(conn: sqlite3.Connection, fact_id: str) -> dict[str, Any] | None:
+    row = conn.execute("SELECT * FROM facts WHERE id=?", (fact_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def review_fact(
+    conn: sqlite3.Connection,
+    *,
+    fact_id: str,
+    status: str,
+    reviewer: str,
+) -> dict[str, Any]:
+    allowed = {"candidate", "approved", "rejected", "archived"}
+    if status not in allowed:
+        raise ValueError(f"status must be one of {sorted(allowed)}")
+    row = get_fact(conn, fact_id)
+    if row is None:
+        raise NotFound("fact not found")
+    conn.execute(
+        "UPDATE facts SET status=?, reviewed_by=?, updated_at=? WHERE id=?",
+        (status, reviewer, now(), fact_id),
+    )
+    conn.commit()
+    return get_fact(conn, fact_id) or row
 
 
 def list_presence(

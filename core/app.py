@@ -6,7 +6,7 @@ from html import escape
 from pathlib import Path
 from typing import Mapping
 
-from flask import Flask, Response, g, jsonify, request
+from flask import Flask, Response, g, jsonify, redirect, request
 
 from core import alice, handoff, storage
 from core.home import HomeError, ensure_layout, resolve_home
@@ -119,7 +119,7 @@ pre {{ padding: 12px 14px; border: 1px solid color-mix(in srgb, currentColor 20%
 <pre>loomsci serve
 loomsci post --as &lt;agent.owner&gt; --body "hello"
 loomsci read --as &lt;agent.owner&gt;</pre>
-<p><a href="/app/posts">Posts</a> · <a href="/app/tasks">Tasks</a></p>
+<p><a href="/app/posts">Posts</a> · <a href="/app/tasks">Tasks</a> · <a href="/app/memory">Memory</a></p>
 <p><a href="/v1/meta/features">/v1/meta/features</a> · <a href="/v1/health">/v1/health</a></p>
 </body>
 </html>"""
@@ -136,9 +136,20 @@ body {{ max-width: 860px; margin: 6vh auto; padding: 0 24px; line-height: 1.5; }
 .item {{ border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 12px 0; }}
 .meta {{ opacity: .65; font-size: 13px; }}
 pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
+.compose {{ display: grid; gap: 8px; margin: 14px 0 22px; }}
+.compose input, .compose textarea {{ width: 100%; box-sizing: border-box; padding: 8px; font: inherit; }}
+.compose textarea {{ min-height: 72px; }}
+.compose button {{ justify-self: start; padding: 6px 12px; font: inherit; }}
+.fact {{ border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 12px 0; }}
+.fact form {{ display: inline; }}
+.fact button {{ margin-right: 6px; padding: 3px 8px; font: inherit; }}
 </style></head>
 <body><p><a href="/app">← status</a></p><h1>{escape(title)}</h1>{body}</body></html>"""
         return Response(page, mimetype="text/html")
+
+    def _ui_agent():
+        record = alice.read_agent(layout.root)
+        return str((record or {}).get("handle") or "")
 
     @app.get("/app/posts")
     def posts_page():
@@ -153,7 +164,15 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 f' · {escape(str(post.get("kind") or ""))}</div>'
                 f'<pre>{body}</pre></div>'
             )
-        body = "".join(items) or '<p class="meta">No posts yet.</p>'
+        author = _ui_agent()
+        form = (
+            '<form class="compose" method="post" action="/app/posts">'
+            '<input name="title" placeholder="Title" maxlength="200">'
+            '<textarea name="body" placeholder="Post body" required></textarea>'
+            '<button type="submit">Post</button></form>'
+            if author else '<p class="meta">Initialize an agent first: loomsci init</p>'
+        )
+        body = form + ("".join(items) or '<p class="meta">No posts yet.</p>')
         return _data_shell("Posts", body)
 
     @app.get("/app/tasks")
@@ -168,8 +187,113 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 f' · {escape(str(task.get("assigned_to") or "unassigned"))}</div>'
                 f'<pre>{escape(str(task.get("acceptance") or ""))[:400]}</pre></div>'
             )
-        body = "".join(items) or '<p class="meta">No tasks yet.</p>'
+        author = _ui_agent()
+        form = (
+            '<form class="compose" method="post" action="/app/tasks">'
+            '<input name="title" placeholder="Task title" required maxlength="200">'
+            '<textarea name="acceptance" placeholder="Acceptance criteria"></textarea>'
+            '<button type="submit">Add task</button></form>'
+            if author else '<p class="meta">Initialize an agent first: loomsci init</p>'
+        )
+        body = form + ("".join(items) or '<p class="meta">No tasks yet.</p>')
         return _data_shell("Tasks", body)
+
+    @app.post("/app/posts")
+    def posts_create_page():
+        author = _ui_agent()
+        if not author:
+            return redirect("/app")
+        try:
+            storage.create_post(
+                get_db(),
+                author=author,
+                kind="note",
+                title=str(request.form.get("title") or ""),
+                body=str(request.form.get("body") or ""),
+            )
+        except ValueError:
+            pass
+        return redirect("/app/posts")
+
+    @app.post("/app/tasks")
+    def tasks_create_page():
+        author = _ui_agent()
+        if not author:
+            return redirect("/app")
+        try:
+            storage.create_task(
+                get_db(),
+                title=str(request.form.get("title") or ""),
+                acceptance=str(request.form.get("acceptance") or ""),
+            )
+        except ValueError:
+            pass
+        return redirect("/app/tasks")
+
+    @app.get("/app/memory")
+    def memory_page():
+        author = _ui_agent()
+        facts = storage.list_facts(get_db(), limit=100)
+        items = []
+        for fact in facts:
+            buttons = "".join(
+                f'<form method="post" action="/app/memory/{escape(str(fact["id"]))}/review">'
+                f'<input type="hidden" name="status" value="{status}">'
+                f'<button type="submit">{label}</button></form>'
+                for status, label in (
+                    ("approved", "Approve"), ("rejected", "Reject"), ("archived", "Archive")
+                )
+            )
+            items.append(
+                '<div class="fact">'
+                f'<div><b>[{escape(str(fact.get("status") or ""))}]</b> '
+                f'{escape(str(fact.get("claim") or ""))}</div>'
+                f'<div class="meta">{escape(str(fact.get("id") or ""))}'
+                f' · {escape(str(fact.get("source") or "no source"))}</div>'
+                f'<pre>{escape(str(fact.get("evidence") or ""))[:400]}</pre>'
+                f'{buttons}</div>'
+            )
+        form = (
+            '<form class="compose" method="post" action="/app/memory">'
+            '<input name="claim" placeholder="Fact / claim" required maxlength="500">'
+            '<input name="source" placeholder="Source">'
+            '<textarea name="evidence" placeholder="Evidence"></textarea>'
+            '<button type="submit">Add candidate fact</button></form>'
+            if author else '<p class="meta">Initialize an agent first: loomsci init</p>'
+        )
+        body = form + ("".join(items) or '<p class="meta">No facts yet.</p>')
+        return _data_shell("Memory", body)
+
+    @app.post("/app/memory")
+    def memory_add_page():
+        author = _ui_agent()
+        if not author:
+            return redirect("/app")
+        try:
+            storage.add_fact(
+                get_db(),
+                claim=str(request.form.get("claim") or ""),
+                evidence=str(request.form.get("evidence") or ""),
+                source=str(request.form.get("source") or ""),
+                created_by=author,
+            )
+        except ValueError:
+            pass
+        return redirect("/app/memory")
+
+    @app.post("/app/memory/<fact_id>/review")
+    def memory_review_page(fact_id: str):
+        author = _ui_agent()
+        if not author:
+            return redirect("/app")
+        status = str(request.form.get("status") or "")
+        try:
+            storage.review_fact(
+                get_db(), fact_id=fact_id, status=status, reviewer=author
+            )
+        except Exception:  # noqa: BLE001 - UI redirects on bad input
+            pass
+        return redirect("/app/memory")
 
     @app.get("/v1/health")
     def health():
@@ -309,6 +433,57 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "task": task})
+
+    @app.get("/v1/memory")
+    def memory_list():
+        try:
+            limit = int(request.args.get("limit", "50"))
+        except ValueError:
+            return jsonify({"ok": False, "error": "invalid_limit"}), 400
+        facts = storage.list_facts(
+            get_db(),
+            q=str(request.args.get("q") or ""),
+            status=request.args.get("status") or None,
+            project=request.args.get("project") or None,
+            limit=limit,
+        )
+        return jsonify({"ok": True, "facts": facts})
+
+    @app.post("/v1/memory")
+    def memory_add():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            fact = storage.add_fact(
+                get_db(),
+                claim=str(body.get("claim") or ""),
+                evidence=str(body.get("evidence") or ""),
+                source=str(body.get("source") or ""),
+                project=str(body.get("project") or ""),
+                tags=str(body.get("tags") or ""),
+                created_by=g.loomsci_agent,
+                confidence=body.get("confidence"),
+            )
+        except Exception as exc:  # noqa: BLE001 - mapped below
+            return _storage_error(exc)
+        return jsonify({"ok": True, "fact": fact}), 201
+
+    @app.post("/v1/memory/<fact_id>/review")
+    def memory_review(fact_id: str):
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            fact = storage.review_fact(
+                get_db(),
+                fact_id=fact_id,
+                status=str(body.get("status") or ""),
+                reviewer=g.loomsci_agent,
+            )
+        except Exception as exc:  # noqa: BLE001 - mapped below
+            return _storage_error(exc)
+        return jsonify({"ok": True, "fact": fact})
 
     @app.get("/v1/read")
     def read_get():

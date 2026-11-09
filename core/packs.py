@@ -40,6 +40,7 @@ CORE = PackSpec(
         "/app/posts",
         "/app/tasks",
         "/app/memory",
+        "/app/memory*",
         "/app/settings",
         "/app/diag",
         "/app/upload",

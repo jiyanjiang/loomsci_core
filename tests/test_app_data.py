@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from core import alice  # noqa: E402
 from core.app import create_app  # noqa: E402
 
 AGENT = "alice.jiyanjiang"
@@ -185,6 +186,58 @@ class AppDataTest(unittest.TestCase):
         tasks = self.client.get("/app/tasks")
         self.assertEqual(tasks.status_code, 200)
         self.assertIn("Visible task", tasks.get_data(as_text=True))
+
+    def test_memory_api_and_review(self) -> None:
+        created = self.client.post(
+            "/v1/memory",
+            json={
+                "claim": "hello.md exists",
+                "evidence": "sha256 matches",
+                "source": "test",
+            },
+            headers=self.headers,
+        )
+        self.assertEqual(created.status_code, 201, created.get_data(as_text=True))
+        fact_id = created.json["fact"]["id"]
+        self.assertEqual(created.json["fact"]["status"], "candidate")
+        listed = self.client.get("/v1/memory?q=hello", headers=self.headers)
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(len(listed.json["facts"]), 1)
+        reviewed = self.client.post(
+            f"/v1/memory/{fact_id}/review",
+            json={"status": "approved"},
+            headers=self.headers,
+        )
+        self.assertEqual(reviewed.status_code, 200)
+        self.assertEqual(reviewed.json["fact"]["status"], "approved")
+
+    def test_ui_write_and_memory_page(self) -> None:
+        alice.ensure(self.home, "owner")
+        posted = self.client.post(
+            "/app/posts",
+            data={"title": "UI post", "body": "from form"},
+        )
+        self.assertEqual(posted.status_code, 302)
+        self.assertIn("UI post", self.client.get("/app/posts").get_data(as_text=True))
+        task = self.client.post(
+            "/app/tasks",
+            data={"title": "UI task", "acceptance": "ok"},
+        )
+        self.assertEqual(task.status_code, 302)
+        self.assertIn("UI task", self.client.get("/app/tasks").get_data(as_text=True))
+        fact = self.client.post(
+            "/v1/memory",
+            json={"claim": "UI fact", "evidence": "form"},
+            headers=self.headers,
+        )
+        fact_id = fact.json["fact"]["id"]
+        self.assertIn("UI fact", self.client.get("/app/memory").get_data(as_text=True))
+        review = self.client.post(
+            f"/app/memory/{fact_id}/review",
+            data={"status": "approved"},
+        )
+        self.assertEqual(review.status_code, 302)
+        self.assertIn("UI fact", self.client.get("/app/memory").get_data(as_text=True))
 
     def test_database_is_created_in_home(self) -> None:
         self.assertTrue((self.home / "data" / "data.db").is_file())

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import sys
 import urllib.error
@@ -451,6 +452,81 @@ def _cmd_agent_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_init(args: argparse.Namespace) -> int:
+    owner = (args.owner or getpass.getuser()).strip().lower()
+    layout = _layout(args)
+    alice_mod = _alice_module()
+    record = alice_mod.ensure(layout.root, owner, args.agent)
+    storage.init_db(layout.db)
+    conn = storage.connect(layout.db)
+    try:
+        storage.ensure_agent(conn, record["handle"])
+        conn.commit()
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(record)
+    else:
+        print(f"initialized: {layout.root}")
+        print(f"agent: {record['handle']}")
+    return 0
+
+
+def _cmd_memory_add(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(
+        args,
+        "POST",
+        "/v1/memory",
+        {
+            "claim": args.claim,
+            "evidence": args.evidence or "",
+            "source": args.source or "",
+            "project": args.project or "",
+            "tags": args.tags or "",
+            "confidence": args.confidence,
+        },
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"fact: {result.get('fact', {}).get('id', '?')}")
+    return 0
+
+
+def _cmd_memory_list(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    query = f"/v1/memory?limit={args.limit}"
+    for key, value in (("q", args.q), ("status", args.status), ("project", args.project)):
+        if value:
+            query += f"&{key}={urllib.parse.quote(str(value))}"
+    result = _request(args, "GET", query)
+    if args.json:
+        _json_print(result)
+    else:
+        for fact in result.get("facts") or []:
+            print(
+                f"{fact.get('id')} [{fact.get('status')}] "
+                f"{fact.get('claim')}"
+            )
+    return 0
+
+
+def _cmd_memory_review(args: argparse.Namespace) -> int:
+    _require_agent(args)
+    result = _request(
+        args,
+        "POST",
+        f"/v1/memory/{args.fact_id}/review",
+        {"status": args.status},
+    )
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"fact: {result.get('fact', {}).get('id', '?')} -> {args.status}")
+    return 0
+
+
 def _cmd_export(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = export_mod.export_home(layout.root, args.out)
@@ -479,6 +555,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--url", default=DEFAULT_URL, help="local host URL")
     parser.add_argument("--as", dest="agent", help="agent.owner identity")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    init = sub.add_parser("init", help="initialize the local workspace")
+    init.add_argument("--owner")
+    init.add_argument("--agent", default="alice")
+    init.add_argument("--json", action="store_true")
+    init.set_defaults(func=_cmd_init)
 
     home = sub.add_parser("home", help="show the resolved home")
     home.add_argument("--json", action="store_true")
@@ -581,6 +663,33 @@ def build_parser() -> argparse.ArgumentParser:
     task_done.add_argument("--evidence", required=True)
     task_done.add_argument("--json", action="store_true")
     task_done.set_defaults(func=_cmd_task_done)
+
+    memory = sub.add_parser("memory", help="project facts and review")
+    memory_sub = memory.add_subparsers(dest="memory_command", required=True)
+
+    memory_add = memory_sub.add_parser("add", help="add a candidate fact")
+    memory_add.add_argument("--claim", required=True)
+    memory_add.add_argument("--evidence")
+    memory_add.add_argument("--source")
+    memory_add.add_argument("--project")
+    memory_add.add_argument("--tags")
+    memory_add.add_argument("--confidence", type=float)
+    memory_add.add_argument("--json", action="store_true")
+    memory_add.set_defaults(func=_cmd_memory_add)
+
+    memory_list = memory_sub.add_parser("list", help="list facts")
+    memory_list.add_argument("--q")
+    memory_list.add_argument("--status")
+    memory_list.add_argument("--project")
+    memory_list.add_argument("--limit", type=int, default=50)
+    memory_list.add_argument("--json", action="store_true")
+    memory_list.set_defaults(func=_cmd_memory_list)
+
+    memory_review = memory_sub.add_parser("review", help="approve/reject a fact")
+    memory_review.add_argument("fact_id")
+    memory_review.add_argument("--status", choices=["candidate", "approved", "rejected", "archived"], required=True)
+    memory_review.add_argument("--json", action="store_true")
+    memory_review.set_defaults(func=_cmd_memory_review)
 
     export = sub.add_parser("export", help="export the home as a zip")
     export.add_argument("--out", required=True)

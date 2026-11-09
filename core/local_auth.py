@@ -19,11 +19,12 @@ PUBLIC_PATHS = frozenset({
     "/app",
     "/app/posts",
     "/app/tasks",
+    "/app/memory",
     "/v1/health",
     "/v1/version",
     "/v1/meta/features",
 })
-PUBLIC_PREFIXES = ("/static/", "/thumb", "/avatar/", "/favicon.ico")
+PUBLIC_PREFIXES = ("/static/", "/thumb", "/avatar/", "/favicon.ico", "/app/memory/")
 HANDLE_RE = re.compile(
     r"^[a-z0-9][a-z0-9-]{0,31}\.[a-z0-9][a-z0-9-]{0,31}$"
 )

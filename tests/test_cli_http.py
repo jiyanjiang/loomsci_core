@@ -80,6 +80,21 @@ class CliHttpTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("workbuddy", output)
 
+    def test_memory_cli(self) -> None:
+        code, output = self._run(
+            "memory", "add", "--claim", "hello fact", "--evidence", "test", "--json"
+        )
+        self.assertEqual(code, 0, output)
+        fact_id = json.loads(output)["fact"]["id"]
+        code, output = self._run("memory", "list", "--json")
+        self.assertEqual(code, 0, output)
+        self.assertIn("hello fact", output)
+        code, output = self._run(
+            "memory", "review", fact_id, "--status", "approved", "--json"
+        )
+        self.assertEqual(code, 0, output)
+        self.assertIn("approved", output)
+
     def test_two_agent_task_and_handoff(self) -> None:
         code, output = self._run("task", "add", "--title", "handoff work", "--json")
         self.assertEqual(code, 0, output)

@@ -3,6 +3,17 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.7
+
+- Add one-command `loomsci init` (owner + default agent).
+- Add project memory/facts: candidate, approved, rejected, archived;
+  `/v1/memory` API, `loomsci memory` CLI, and a review page at `/app/memory`.
+- Add minimal UI writes for posts and tasks; the UI uses the default local
+  agent and remains loopback/Host/Origin guarded.
+- Include facts in export/import.
+- Windows install spike passed; multi-IDE collaboration on Windows remains
+  untested because the test machine only has opencode.
+
 ## v0.1.0-preview.6
 
 - 保护本地数据：SQLite 主库/WAL 设 0600，agent home 目录 0700，

@@ -5,6 +5,13 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.7
+
+- One-command `loomsci init`; project facts/memory with review; minimal UI
+  writes for posts/tasks; facts export/import.
+- Windows install spike passed; Windows multi-IDE remains untested (opencode
+  only on the test machine).
+
 ## v0.1.0-preview.6
 
 - Local data permissions: DB 0600, home 0700, persona 0600.

@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.7
+
+- Add one-command `loomsci init` (owner + default agent).
+- Add project memory/facts: candidate, approved, rejected, archived;
+  `/v1/memory` API, `loomsci memory` CLI, and a review page at `/app/memory`.
+- Add minimal UI writes for posts and tasks; the UI uses the default local
+  agent and remains loopback/Host/Origin guarded.
+- Include facts in export/import.
+- Windows install spike passed; multi-IDE collaboration on Windows remains
+  untested because the test machine only has opencode.
+
 ## v0.1.0-preview.6
 
 - Protect local data: SQLite database/WAL files are chmod 0600, agent home

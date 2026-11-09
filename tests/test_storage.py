@@ -87,6 +87,28 @@ class StorageTest(unittest.TestCase):
             self.skipTest("POSIX mode check")
         self.assertEqual(self.db_path.stat().st_mode & 0o777, 0o600)
 
+    def test_facts(self) -> None:
+        fact = storage.add_fact(
+            self.conn,
+            claim="hello.md exists",
+            evidence="sha256 matches",
+            source="test",
+            project="p",
+            created_by="alice.jiyanjiang",
+        )
+        self.assertEqual(fact["status"], "candidate")
+        self.assertEqual(len(storage.list_facts(self.conn, q="hello")), 1)
+        reviewed = storage.review_fact(
+            self.conn,
+            fact_id=fact["id"],
+            status="approved",
+            reviewer="alice.jiyanjiang",
+        )
+        self.assertEqual(reviewed["status"], "approved")
+        self.assertEqual(
+            len(storage.list_facts(self.conn, status="approved")), 1
+        )
+
     def test_presence_and_read_cursor(self) -> None:
         storage.upsert_presence(
             self.conn,

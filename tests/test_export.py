@@ -37,6 +37,13 @@ class ExportTest(unittest.TestCase):
             tool="workbuddy",
             workspace="project",
         )
+        storage.add_fact(
+            self.conn,
+            claim="project uses python",
+            evidence="pyproject.toml",
+            source="test",
+            created_by="alice.owner",
+        )
         self.conn.close()
         (self.home / "agents" / "alice" / ".key").write_text("secret", encoding="utf-8")
         (self.home / "data" / "blobs").mkdir(parents=True, exist_ok=True)
@@ -50,6 +57,7 @@ class ExportTest(unittest.TestCase):
         result = export.export_home(self.home, out)
         self.assertEqual(result["counts"]["posts"], 1)
         self.assertEqual(result["counts"]["tasks"], 1)
+        self.assertEqual(result["counts"]["facts"], 1)
         with zipfile.ZipFile(out) as zf:
             names = zf.namelist()
             self.assertIn("manifest.json", names)
@@ -62,6 +70,7 @@ class ExportTest(unittest.TestCase):
         imported = export.import_home(out, destination)
         self.assertEqual(imported["counts"]["posts"], 1)
         self.assertEqual(imported["counts"]["tasks"], 1)
+        self.assertEqual(imported["counts"]["facts"], 1)
         self.assertTrue((destination / "agents" / "alice" / "persona.yaml").is_file())
         self.assertTrue((destination / "data" / "blobs" / "abc").is_file())
         self.assertTrue((destination / "data" / "data.db").is_file())

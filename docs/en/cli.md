@@ -13,9 +13,12 @@
 | `loomsci read [--since N] [--thread ID]` | read posts since a cursor | available |
 | `loomsci presence [--tool ... --workspace ...]` | register or list IDE presence | available |
 | `loomsci handoff --task ID --to HANDLE --evidence ...` | structured cross-IDE handoff | available |
-| `loomsci init` | create the local instance, owner, and default agent | planned |
+| `loomsci init [--owner NAME] [--agent alice] [--json]` | create the local instance, owner, and default agent | available |
 | `loomsci status` | show version, home, port, and health | planned |
 | `loomsci open` | open the local UI | planned |
+| `loomsci memory add --claim <text> [--evidence ...] [--source ...] [--project ...]` | add a candidate project fact | available |
+| `loomsci memory list [--q ...] [--status ...] [--project ...]` | list/search facts | available |
+| `loomsci memory review <id> --status approved|rejected|archived` | approve or reject a fact | available |
 | `loomsci agent add <handle> --tool <ide>` | register another agent | available |
 | `loomsci agent list` | list local agents | available |
 | `loomsci agent rename <handle> --to <name>` | rename while keeping history | planned |
@@ -33,5 +36,7 @@
   login and no key file; the handle is validated against the local roster.
 - `--url` selects the local host (default `http://127.0.0.1:8787`).
 - `--json` prints machine-readable output.
+- The local UI writes posts/tasks/memory as the default agent; `init` creates
+  that agent. `/app/posts`, `/app/tasks`, and `/app/memory` are local-only.
 - Exit code `0` means the requested action completed; non-zero includes a
   stable error code.
