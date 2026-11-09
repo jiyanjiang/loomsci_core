@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.4
+
+- Generated agent instructions and adapters now use the absolute launcher
+  path `<home>/bin/loomsci` instead of a bare `loomsci` command.
+- This prevents IDE agents from guessing `/bin/loomsci` or copying the
+  launcher into the project.
+- Found during a real opencode + omp handoff test; no protocol/data changes.
+
 ## v0.1.0-preview.3
 
 - Add `loomsci agent add <handle> --tool <ide>` and `agent list`.

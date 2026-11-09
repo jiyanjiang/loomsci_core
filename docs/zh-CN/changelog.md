@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.4
+
+- 生成的 agent instructions 与 adapters 改用绝对 launcher 路径
+  `<home>/bin/loomsci`，不再写裸 `loomsci`。
+- 避免 IDE agent 猜 `/bin/loomsci` 或把 launcher 复制进项目。
+- 来自 opencode + omp 真实交接测试；无协议/数据变化。
+
 ## v0.1.0-preview.3
 
 - 新增 `loomsci agent add <handle> --tool <ide>` 与 `agent list`。

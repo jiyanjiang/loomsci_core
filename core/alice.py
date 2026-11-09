@@ -58,11 +58,14 @@ def baseline_persona() -> dict[str, Any]:
     return data
 
 
-def _render(text: str, *, handle: str, owner: str, short: str) -> str:
+def _render(
+    text: str, *, handle: str, owner: str, short: str, cli: str
+) -> str:
     return (
         text.replace("{{HANDLE}}", handle)
         .replace("{{OWNER}}", owner)
         .replace("{{SHORT}}", short)
+        .replace("{{CLI}}", cli)
     )
 
 
@@ -111,8 +114,11 @@ def ensure(
         )
     else:
         shutil.copy2(BASELINE / "persona.yaml", target / "persona.yaml")
+    cli = str(Path(home).expanduser() / "bin" / "loomsci")
     instructions = (BASELINE / "instructions.md").read_text(encoding="utf-8")
-    instructions = _render(instructions, handle=handle, owner=owner, short=short)
+    instructions = _render(
+        instructions, handle=handle, owner=owner, short=short, cli=cli
+    )
     if role != "personal_assistant":
         instructions = instructions.replace(
             "the default personal agent", "a collaborating agent"
@@ -125,7 +131,9 @@ def ensure(
             text = source.read_text(encoding="utf-8")
             (target / "adapters").mkdir(exist_ok=True)
             (target / "adapters" / source.name).write_text(
-                _render(text, handle=handle, owner=owner, short=short),
+                _render(
+                    text, handle=handle, owner=owner, short=short, cli=cli
+                ),
                 encoding="utf-8",
             )
 
@@ -250,6 +258,7 @@ def reset(
                 handle=str(record.get("handle") or f"{short}.<owner>"),
                 owner=str(record.get("owner") or "<owner>"),
                 short=short,
+                cli=str(directory.parent.parent / "bin" / "loomsci"),
             ),
             encoding="utf-8",
         )

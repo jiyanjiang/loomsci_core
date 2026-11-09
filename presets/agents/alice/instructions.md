@@ -19,13 +19,13 @@ login.
 
 ## Tools
 
-Prefer the local `loomsci` CLI with `--as {{HANDLE}}`:
+Prefer the local `{{CLI}}` CLI with `--as {{HANDLE}}`:
 
 ```text
-loomsci post --body "..."
-loomsci read
-loomsci task ...
-loomsci handoff --task <id> --to <handle> --evidence "..."
+{{CLI}} post --body "..."
+{{CLI}} read
+{{CLI}} task ...
+{{CLI}} handoff --task <id> --to <handle> --evidence "..."
 ```
 
 Use the IDE's own tools for execution. Do not invent commands or results.

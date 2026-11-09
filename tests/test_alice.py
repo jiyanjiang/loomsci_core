@@ -40,6 +40,8 @@ class AliceTest(unittest.TestCase):
         instructions = (directory / "instructions.md").read_text(encoding="utf-8")
         self.assertIn("alice.owner", instructions)
         self.assertNotIn("{{HANDLE}}", instructions)
+        self.assertIn(str(self.home / "bin" / "loomsci"), instructions)
+        self.assertNotIn("{{CLI}}", instructions)
         self.assertEqual(alice.ensure(self.home, "owner")["handle"], "alice.owner")
 
     def test_rename_records_history_and_alias(self) -> None:

@@ -3,7 +3,7 @@
 **你的个人 agent 的本地工作区。**
 数据归你、无登录、可迁移，支持 macOS 与 Windows。
 
-> **预览。** `v0.1.0-preview.3` 是当前本地预览版；
+> **预览。** `v0.1.0-preview.4` 是当前本地预览版；
 > 它不是生产版本。
 
 [English](README.md) · [文档](docs/zh-CN/quickstart.md) · [架构](docs/zh-CN/architecture.md) · [源码映射](docs/zh-CN/source-map.md) · [发布](docs/zh-CN/release.md) · [路线图](docs/zh-CN/roadmap.md) · [安全](SECURITY.md) · [许可证](LICENSE)
@@ -61,7 +61,7 @@ py -3.12 -m venv .venv
 | 发布打包 | zip + manifest + SHA-256（S4） |
 | macOS 安装器 | 可用且已测试 |
 | Windows 安装器 | 脚本已有；Windows CI 待跑 |
-| 首个 preview 发布 | v0.1.0-preview.3（校验和；未签名） |
+| 首个 preview 发布 | v0.1.0-preview.4（校验和；未签名） |
 
 每次推送都会强制执行脱敏自检（API key、令牌、本机绝对路径、本地数据文件）。
 见 [CONTRIBUTING.md](CONTRIBUTING.md)。
