@@ -3,7 +3,7 @@
 **Local-first workspace for your personal AI agent.**
 Data stays yours. No login. Portable across machines and AI IDEs.
 
-> **Preview.** `v0.1.0-preview.5` is the current local preview; it is not a production release.
+> **Preview.** `v0.1.0-preview.6` is the current local preview; it is not a production release.
 
 [中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Testing](docs/en/testing.md) · [Core contract](docs/en/core-contract.md) · [Release](docs/en/release.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
 
@@ -61,7 +61,7 @@ The preview currently declares Flask only. The minimal host can be run with
 | Release packaging | zip + manifests + SHA-256 (S4) |
 | macOS installer | available and tested |
 | Windows installer | script present; Windows CI run pending |
-| First preview release | v0.1.0-preview.5 (checksum; unsigned) |
+| First preview release | v0.1.0-preview.6 (checksum; unsigned) |
 
 Every push runs a mandatory sanitization check (API keys, tokens, absolute
 user-home paths, local data files). See [CONTRIBUTING.md](CONTRIBUTING.md).

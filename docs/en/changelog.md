@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.6
+
+- Protect local data: SQLite database/WAL files are chmod 0600, agent home
+  directories 0700, persona/agent files 0600; installer private dirs 0700.
+- Add the Core contract and testing-plan docs to the package.
+- Found during the N0 self-check; no protocol/data changes.
+
 ## v0.1.0-preview.5
 
 - Prompt overhaul: read the project first, discover the CLI/host, adapt within

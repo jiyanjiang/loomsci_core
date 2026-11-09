@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -22,6 +23,13 @@ OWNER_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,31}$")
 
 class AliceError(RuntimeError):
     pass
+
+
+def _chmod(path: Path, mode: int = 0o600) -> None:
+    try:
+        os.chmod(path, mode)
+    except OSError:
+        pass
 
 
 def _now() -> str:
@@ -101,6 +109,7 @@ def ensure(
 
     for name in ("skills", "experience", "versions", "inbox"):
         (target / name).mkdir(parents=True, exist_ok=True)
+    _chmod(target, 0o700)
 
     persona = yaml.safe_load((BASELINE / "persona.yaml").read_text(encoding="utf-8"))
     if isinstance(persona, dict):
@@ -112,6 +121,7 @@ def ensure(
             yaml.safe_dump(persona, sort_keys=False, allow_unicode=True),
             encoding="utf-8",
         )
+        _chmod(target / "persona.yaml")
     else:
         shutil.copy2(BASELINE / "persona.yaml", target / "persona.yaml")
     cli = str(Path(home).expanduser() / "bin" / "loomsci")
@@ -124,6 +134,7 @@ def ensure(
             "the default personal agent", "a collaborating agent"
         )
     (target / "instructions.md").write_text(instructions, encoding="utf-8")
+    _chmod(target / "instructions.md")
 
     adapters = BASELINE / "adapters"
     if adapters.is_dir():
@@ -136,6 +147,7 @@ def ensure(
                 ),
                 encoding="utf-8",
             )
+            _chmod(target / "adapters" / source.name)
 
     record = {
         "handle": handle,
@@ -149,6 +161,7 @@ def ensure(
         json.dumps(record, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    _chmod(target / "agent.json")
     return record
 
 
@@ -158,6 +171,7 @@ def _write_record(home: str | Path, short: str, record: dict[str, Any]) -> None:
         json.dumps(record, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    _chmod(path)
 
 
 def rename(
@@ -216,6 +230,7 @@ def snapshot(
     target = directory / "versions" / f"{_stamp()}-{safe_reason}.yaml"
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(persona, target)
+    _chmod(target)
     return target
 
 
@@ -249,6 +264,7 @@ def reset(
         raise AliceError(f"agent not found: {short}")
     snapshot(home, short, reason="before-reset")
     shutil.copy2(BASELINE / "persona.yaml", directory / "persona.yaml")
+    _chmod(directory / "persona.yaml")
     record = read_agent(home, short)
     if record:
         instructions = (BASELINE / "instructions.md").read_text(encoding="utf-8")

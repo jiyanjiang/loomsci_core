@@ -33,6 +33,8 @@ fi
 
 mkdir -p "$HOME_DIR/bin" "$HOME_DIR/data" "$HOME_DIR/agents" \
          "$HOME_DIR/packs" "$HOME_DIR/logs" "$HOME_DIR/runtime"
+chmod 700 "$HOME_DIR" "$HOME_DIR/data" "$HOME_DIR/agents" \
+          "$HOME_DIR/packs" "$HOME_DIR/logs" "$HOME_DIR/runtime" 2>/dev/null || true
 VENV="$HOME_DIR/venv"
 if [[ ! -x "$VENV/bin/python" ]]; then
   PYTHON_BIN="${LOOMSCI_PYTHON:-python3.12}"

@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.6
+
+- 保护本地数据：SQLite 主库/WAL 设 0600，agent home 目录 0700，
+  persona/agent 文件 0600；安装器私有目录 0700。
+- 包内加入 Core 契约与测试规范文档。
+- 来自 N0 全面自检；无协议/数据变化。
+
 ## v0.1.0-preview.5
 
 - 提示词重写：先读项目、发现 CLI/host、在硬边界内适配；允许项目内 helper 与

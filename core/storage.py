@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -100,9 +101,17 @@ def now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _chmod_private(path: Path) -> None:
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+
+
 def connect(db_path: str | Path) -> sqlite3.Connection:
     path = Path(db_path)
     conn = sqlite3.connect(str(path), timeout=30)
+    _chmod_private(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout = 30000")
     conn.execute("PRAGMA foreign_keys = ON")
@@ -119,6 +128,9 @@ def init_db(db_path: str | Path) -> None:
         conn.commit()
     finally:
         conn.close()
+    _chmod_private(path)
+    for suffix in ("-wal", "-shm"):
+        _chmod_private(Path(str(path) + suffix))
 
 
 def ensure_agent(conn: sqlite3.Connection, handle: str, kind: str = "ai") -> None:

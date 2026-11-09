@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.6
+
+- Local data permissions: DB 0600, home 0700, persona 0600.
+
 ## v0.1.0-preview.5
 
 - Project-first, discovery-first prompts; testing plan and iteration loop.

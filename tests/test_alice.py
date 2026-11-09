@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -46,6 +47,10 @@ class AliceTest(unittest.TestCase):
         self.assertIn("Adapt, within boundaries", instructions)
         adapter = (directory / "adapters" / "opencode.md").read_text(encoding="utf-8")
         self.assertIn("default model stalls", adapter)
+        if os.name == "posix":
+            self.assertEqual(
+                (directory / "persona.yaml").stat().st_mode & 0o777, 0o600
+            )
         self.assertEqual(alice.ensure(self.home, "owner")["handle"], "alice.owner")
 
     def test_rename_records_history_and_alias(self) -> None:

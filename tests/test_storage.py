@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 import unittest
@@ -80,6 +81,11 @@ class StorageTest(unittest.TestCase):
     def test_unknown_task(self) -> None:
         with self.assertRaises(storage.NotFound):
             storage.claim_task(self.conn, task_id="t-missing", agent="alice.jiyanjiang")
+
+    def test_database_permissions(self) -> None:
+        if os.name != "posix":
+            self.skipTest("POSIX mode check")
+        self.assertEqual(self.db_path.stat().st_mode & 0o777, 0o600)
 
     def test_presence_and_read_cursor(self) -> None:
         storage.upsert_presence(
