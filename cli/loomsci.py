@@ -20,7 +20,7 @@ from core.home import (
     migration_plan,
     resolve_home,
 )
-from core.local_auth import is_loopback_host
+from core.local_auth import is_loopback_host, normalize_agent
 from core.packs import Registry
 
 DEFAULT_URL = "http://127.0.0.1:8787"
@@ -400,6 +400,57 @@ def _cmd_task_done(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_agent_add(args: argparse.Namespace) -> int:
+    handle = normalize_agent(args.handle)
+    if not handle:
+        raise CliError("handle must be <agent>.<owner>")
+    short, _, owner = handle.partition(".")
+    layout = _layout(args)
+    alice_mod = _alice_module()
+    record = alice_mod.ensure(
+        layout.root,
+        owner,
+        short,
+        role=args.role or "collaborator",
+        default_tool=args.tool,
+    )
+    storage.init_db(layout.db)
+    conn = storage.connect(layout.db)
+    try:
+        storage.ensure_agent(conn, record["handle"])
+        conn.commit()
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(record)
+    else:
+        print(f"agent: {record['handle']} ({record.get('role')})")
+    return 0
+
+
+def _cmd_agent_list(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    alice_mod = _alice_module()
+    entries = []
+    agents_dir = layout.root / "agents"
+    if agents_dir.is_dir():
+        for path in sorted(agents_dir.iterdir()):
+            if not path.is_dir():
+                continue
+            record = alice_mod.read_agent(layout.root, path.name)
+            if record:
+                entries.append(record)
+    if args.json:
+        _json_print({"agents": entries})
+    else:
+        for record in entries:
+            print(
+                f"{record.get('handle')} role={record.get('role')} "
+                f"tool={record.get('default_tool') or '-'}"
+            )
+    return 0
+
+
 def _cmd_export(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = export_mod.export_home(layout.root, args.out)
@@ -487,6 +538,20 @@ def build_parser() -> argparse.ArgumentParser:
     handoff.add_argument("--evidence", required=True)
     handoff.add_argument("--json", action="store_true")
     handoff.set_defaults(func=_cmd_handoff)
+
+    agent = sub.add_parser("agent", help="manage additional agents")
+    agent_sub = agent.add_subparsers(dest="agent_command", required=True)
+
+    agent_add = agent_sub.add_parser("add", help="add an agent from the baseline")
+    agent_add.add_argument("handle")
+    agent_add.add_argument("--tool")
+    agent_add.add_argument("--role", default="collaborator")
+    agent_add.add_argument("--json", action="store_true")
+    agent_add.set_defaults(func=_cmd_agent_add)
+
+    agent_list = agent_sub.add_parser("list", help="list local agents")
+    agent_list.add_argument("--json", action="store_true")
+    agent_list.set_defaults(func=_cmd_agent_list)
 
     task = sub.add_parser("task", help="task lifecycle and leases")
     task_sub = task.add_subparsers(dest="task_command", required=True)

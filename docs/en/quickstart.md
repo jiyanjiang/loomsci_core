@@ -31,6 +31,8 @@ From the repository root:
 
 ```bash
 python -m cli.loomsci alice init --owner <owner>
+loomsci agent add bob.<owner> --tool opencode
+loomsci agent add carol.<owner> --tool workbuddy
 python -m cli.loomsci serve
 curl http://127.0.0.1:8787/v1/health
 ```

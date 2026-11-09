@@ -70,6 +70,30 @@ class CliTest(unittest.TestCase):
                 json.loads(renamed.stdout)["handle"], "assistant.owner"
             )
 
+    def test_add_second_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            env = {"LOOMSCI_HOME": str(home)}
+            init = _run(["alice", "init", "--owner", "owner"], env=env)
+            self.assertEqual(init.returncode, 0, init.stderr)
+            added = _run(
+                ["agent", "add", "bob.owner", "--tool", "opencode", "--json"],
+                env=env,
+            )
+            self.assertEqual(added.returncode, 0, added.stderr)
+            self.assertEqual(json.loads(added.stdout)["handle"], "bob.owner")
+            shown = _run(
+                ["alice", "show", "--short", "bob", "--json"], env=env
+            )
+            self.assertEqual(shown.returncode, 0, shown.stderr)
+            payload = json.loads(shown.stdout)
+            self.assertEqual(payload["handle"], "bob.owner")
+            self.assertEqual(payload["default_tool"], "opencode")
+            listed = _run(["agent", "list", "--json"], env=env)
+            self.assertEqual(listed.returncode, 0, listed.stderr)
+            handles = {item["handle"] for item in json.loads(listed.stdout)["agents"]}
+            self.assertEqual(handles, {"alice.owner", "bob.owner"})
+
     def test_export_then_import(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

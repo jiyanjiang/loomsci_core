@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.3
+
+- 新增 `loomsci agent add <handle> --tool <ide>` 与 `agent list`。
+- 新 agent 从 alice 基线创建，拥有自己的 handle、role、persona、instructions、
+  adapters。
+- 这是 WorkBuddy / opencode / codebuddy / Qoder / omp 真实多 IDE 测试的前置能力。
+
 ## v0.1.0-preview.2
 
 - 用 WorkBuddy adapter 替换 Codex adapter。

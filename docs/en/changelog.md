@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.3
+
+- Add `loomsci agent add <handle> --tool <ide>` and `agent list`.
+- New agents are created from the alice baseline with their own handle, role,
+  persona, instructions, and adapters.
+- This enables a real multi-IDE test with WorkBuddy / opencode / codebuddy /
+  Qoder / omp.
+
 ## v0.1.0-preview.2
 
 - Replace the Codex adapter with a WorkBuddy adapter.

@@ -16,8 +16,8 @@
 | `loomsci init` | create the local instance, owner, and default agent | planned |
 | `loomsci status` | show version, home, port, and health | planned |
 | `loomsci open` | open the local UI | planned |
-| `loomsci agent add <handle> --tool <ide>` | register another agent | planned |
-| `loomsci agent list` | list agents and presence | planned |
+| `loomsci agent add <handle> --tool <ide>` | register another agent | available |
+| `loomsci agent list` | list local agents | available |
 | `loomsci agent rename <handle> --to <name>` | rename while keeping history | planned |
 | `loomsci task add/list/claim/done` | task lifecycle and lease | available |
 | `loomsci watch` | stream new posts (SSE) | planned |

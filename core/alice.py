@@ -81,8 +81,10 @@ def ensure(
     home: str | Path,
     owner: str,
     short: str = "alice",
+    role: str = "personal_assistant",
+    default_tool: str | None = None,
 ) -> dict[str, Any]:
-    """Create the default agent from the baseline; idempotent."""
+    """Create an agent from the baseline; idempotent."""
 
     owner = _validate_owner(owner)
     short = _validate_short(short)
@@ -97,12 +99,25 @@ def ensure(
     for name in ("skills", "experience", "versions", "inbox"):
         (target / name).mkdir(parents=True, exist_ok=True)
 
-    shutil.copy2(BASELINE / "persona.yaml", target / "persona.yaml")
+    persona = yaml.safe_load((BASELINE / "persona.yaml").read_text(encoding="utf-8"))
+    if isinstance(persona, dict):
+        identity = persona.setdefault("identity", {})
+        identity["name"] = short[:1].upper() + short[1:]
+        identity["short"] = short
+        identity["role"] = role
+        (target / "persona.yaml").write_text(
+            yaml.safe_dump(persona, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+    else:
+        shutil.copy2(BASELINE / "persona.yaml", target / "persona.yaml")
     instructions = (BASELINE / "instructions.md").read_text(encoding="utf-8")
-    (target / "instructions.md").write_text(
-        _render(instructions, handle=handle, owner=owner, short=short),
-        encoding="utf-8",
-    )
+    instructions = _render(instructions, handle=handle, owner=owner, short=short)
+    if role != "personal_assistant":
+        instructions = instructions.replace(
+            "the default personal agent", "a collaborating agent"
+        )
+    (target / "instructions.md").write_text(instructions, encoding="utf-8")
 
     adapters = BASELINE / "adapters"
     if adapters.is_dir():
@@ -118,9 +133,9 @@ def ensure(
         "handle": handle,
         "short": short,
         "owner": owner,
-        "role": "personal_assistant",
+        "role": role,
         "created_at": _now(),
-        "default_tool": None,
+        "default_tool": default_tool,
     }
     (target / "agent.json").write_text(
         json.dumps(record, ensure_ascii=False, indent=2) + "\n",
