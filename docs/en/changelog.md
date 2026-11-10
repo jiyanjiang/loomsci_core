@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.25
+
+- Fourth add-on: `media` v0.1 (media library over Core attachments).
+- Indexes posts, classifies image/audio/video/file, previews and plays through
+  `/api/attachment/<id>`; no local DB, no Core table/API changes.
+- Transcoding, thumbnails, OCR/transcription are explicitly deferred to media
+  v0.2.
+- Default port 8794.
+
 ## v0.1.0-preview.24
 
 - `ui-shell` 0.3.0 baseline theme: single token source, system light/dark,

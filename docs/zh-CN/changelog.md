@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.25
+
+- 第四个 add-on：`media` v0.1（基于 Core 附件的媒体库）。
+- 索引帖子，按 image/audio/video/file 分类，通过 `/api/attachment/<id>`
+  预览/播放；无本地库，不改 Core 表/API。
+- 转码、缩略图、OCR/转写明确留到 media v0.2。
+- 默认端口 8794。
+
 ## v0.1.0-preview.24
 
 - `ui-shell` 0.3.0 baseline theme：单一 token 源、跟随系统明暗、WCAG-AA

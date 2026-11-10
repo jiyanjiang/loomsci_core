@@ -21,7 +21,7 @@ Core 是长期稳定的内核；UI 和能力都是 add-on。本文是契约规�
 | 1 | `app-host` | 安装/卸载、`/apps/<slug>/`、manifest/权限、profile | Core 最小 host（preview.20）；完整 app-host 暂缓 | 中 |
 | 2 | `collab` | 房间、线程、角色、presence、增强 handoff | Core posts/tasks | 中 — preview.21 房间/线程完成 |
 | 3 | `notify` | digest、未读摘要、桌面/WezTerm/email 适配 | Core inbox，collab 可选 | 低 — preview.22 digest 完成 |
-| 4 | `media` | 图片/音频/视频库、缩略图、OCR/转写 | Core attachments、app-host | 中 |
+| 4 | `media` | 图片/音频/视频库、缩略图、OCR/转写 | Core attachments、app-host | 中 — v0.1 库/预览完成 |
 | 5 | `research` | 来源、引用、笔记、专著/报告工作流 | Core memory、media | 高 |
 | 6 | `sync` | 多机身份、备份恢复、中心/对端同步 | Core export/import、app-host | 高 |
 | 7 | `social` | 公开主页、feed、好友/邀请、分享链接 | collab + sync | 高 |
