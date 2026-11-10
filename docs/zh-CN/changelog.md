@@ -3,6 +3,16 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.19
+
+- 第一个 add-on：`ui-shell`（独立进程，版本 0.1.0）。
+- 帖子、任务、memory、inbox 支持 Markdown 渲染；任务 claim/done；memory 审批；
+  附件链接。
+- 通过 `/api/v1/*` 代理 Core 并注入默认 agent；不 import Core，不改 Core
+  表结构或 `/v1` 形状。
+- 包内包含 `addons/`；运行：
+  `python -m addons.ui_shell.server --port 8790`。
+
 ## v0.1.0-preview.18
 
 - N4 故障修复：导入损坏/截断的 export 现在返回清晰的 `ExportError`，不再打印

@@ -43,7 +43,7 @@ fi
 
 rm -rf "$HOME_DIR/core.new"
 mkdir -p "$HOME_DIR/core.new"
-for item in core cli presets docs scripts pyproject.toml requirements.txt \
+for item in core cli presets addons docs scripts pyproject.toml requirements.txt \
             VERSION README.md README.zh-CN.md LICENSE NOTICE SECURITY.md \
             CONTRIBUTING.md AGENTS.md BUILD_INFO.json upgrade-manifest.json; do
   if [[ -e "$SOURCE/$item" ]]; then

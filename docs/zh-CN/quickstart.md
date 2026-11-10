@@ -1,20 +1,20 @@
-# 快速开始（preview.18）
+# 快速开始（preview.19）
 
 ## 安装
 
 macOS / Linux：
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.18.zip
-unzip loomsci_core-0.1.0-preview.18.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.19.zip
+unzip loomsci_core-0.1.0-preview.19.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.18.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.19.zip
 ```
 
 Windows PowerShell：
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.18.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.19.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -26,8 +26,16 @@ loomsci init --owner <owner>
 loomsci serve
 ```
 
-浏览器打开 `http://127.0.0.1:8787/app`。UI 仅本地使用，写入时使用默认
+浏览器打开 `http://127.0.0.1:8787/app`。Core UI 仅本地使用，写入时使用默认
 agent（`alice.<owner>`）。
+
+第一个 add-on `ui-shell` 是独立的 Markdown UI：
+
+```bash
+python -m addons.ui_shell.server --home ~/.loomsci --port 8790
+```
+
+打开 `http://127.0.0.1:8790/`；它代理到 8787，不修改 Core 数据。
 
 ## UI
 

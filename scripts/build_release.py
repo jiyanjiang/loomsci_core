@@ -22,7 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PACKAGE_NAME = "loomsci_core"
-INCLUDE_DIRS = ("core", "cli", "presets", "docs", "scripts")
+INCLUDE_DIRS = ("core", "cli", "presets", "addons", "docs", "scripts")
 INCLUDE_FILES = (
     "pyproject.toml",
     "requirements.txt",

@@ -44,7 +44,7 @@ try {
   Remove-Item -Recurse -Force $newCore -ErrorAction SilentlyContinue
   New-Item -ItemType Directory -Path $newCore | Out-Null
   $items = @(
-    "core", "cli", "presets", "docs", "scripts",
+    "core", "cli", "presets", "addons", "docs", "scripts",
     "pyproject.toml", "requirements.txt", "VERSION",
     "README.md", "README.zh-CN.md", "LICENSE", "NOTICE",
     "SECURITY.md", "CONTRIBUTING.md", "AGENTS.md",

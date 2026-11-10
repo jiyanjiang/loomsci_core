@@ -1,0 +1,11 @@
+{
+  "name": "ui-shell",
+  "version": "0.1.0",
+  "api": "core/1",
+  "requires": ["core/1"],
+  "routes": ["/"],
+  "storage": "addon.ui",
+  "jobs": [],
+  "nav": [{"label": "UI shell", "href": "http://127.0.0.1:8790/"}],
+  "preserve": []
+}

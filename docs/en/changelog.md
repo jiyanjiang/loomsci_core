@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.19
+
+- First add-on: `ui-shell` (standalone, version 0.1.0).
+- Markdown rendering for posts, tasks, memory, and inbox; tasks claim/done;
+  memory review; attachment links.
+- It proxies `/api/v1/*` to Core and injects the default agent; it does not
+  import Core or change Core tables/API shapes.
+- `addons/` is included in the package; run:
+  `python -m addons.ui_shell.server --port 8790`.
+
 ## v0.1.0-preview.18
 
 - N4 fault fix: importing a corrupt/truncated export now raises a clean

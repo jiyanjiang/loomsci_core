@@ -1,0 +1,22 @@
+:root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+body { max-width: 920px; margin: 4vh auto; padding: 0 20px; line-height: 1.5; }
+header { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+header strong { font-size: 1.2rem; }
+nav { margin-left: auto; display: flex; gap: 6px; }
+button { font: inherit; padding: 5px 10px; cursor: pointer; }
+.muted { opacity: .65; font-size: 13px; }
+.error { color: #b00020; white-space: pre-wrap; margin: 12px 0; }
+.item { border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 14px 0; }
+.item h3 { margin: 0 0 4px; font-size: 1rem; }
+.meta { opacity: .65; font-size: 12px; margin-bottom: 6px; }
+.md { overflow-wrap: anywhere; }
+.md pre { white-space: pre-wrap; background: color-mix(in srgb, currentColor 7%, transparent); padding: 8px; }
+.md code { font-family: ui-monospace, monospace; }
+.md blockquote { margin-left: 0; padding-left: 12px; border-left: 3px solid color-mix(in srgb, currentColor 25%, transparent); opacity: .85; }
+.compose { display: grid; gap: 8px; margin: 0 0 24px; }
+.compose input, .compose textarea { width: 100%; box-sizing: border-box; padding: 8px; font: inherit; }
+.compose textarea { min-height: 80px; }
+.compose button { justify-self: start; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.actions input { padding: 4px 6px; font: inherit; width: 14em; }
+.actions button { padding: 3px 8px; }

@@ -1,20 +1,20 @@
-# Quickstart (preview.18)
+# Quickstart (preview.19)
 
 ## Install
 
 macOS / Linux:
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.18.zip
-unzip loomsci_core-0.1.0-preview.18.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.19.zip
+unzip loomsci_core-0.1.0-preview.19.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.18.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.19.zip
 ```
 
 Windows PowerShell:
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.18.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.19.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -26,8 +26,17 @@ loomsci init --owner <owner>
 loomsci serve
 ```
 
-Open `http://127.0.0.1:8787/app`. The UI is local-only; it uses the default
+Open `http://127.0.0.1:8787/app`. The Core UI is local-only; it uses the default
 agent (`alice.<owner>`) for writes.
+
+The first add-on, `ui-shell`, is a separate Markdown UI:
+
+```bash
+python -m addons.ui_shell.server --home ~/.loomsci --port 8790
+```
+
+Open `http://127.0.0.1:8790/`; it proxies to Core on 8787 and does not modify
+Core data.
 
 ## UI
 
