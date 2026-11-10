@@ -221,7 +221,11 @@ def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
     _terminate(home, name, pid, process)
     _PROCESSES.pop(name, None)
     _clear_state(home, name)
-    raise AddonRuntimeError(f"{name} did not become healthy on port {port}: {_tail(log_path)}")
+    raise AddonRuntimeError(
+        f"{name} did not become healthy on port {port}: "
+        f"pid={pid} alive={_alive(pid)} port_open={_port_open(port)} "
+        f"python={_python(home)} log={_tail(log_path)}"
+    )
 
 
 def _tail(path: Path, limit: int = 1200) -> str:
