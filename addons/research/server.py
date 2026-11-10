@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from . import store
+from . import llm, store
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
@@ -45,6 +45,7 @@ class Handler(BaseHTTPRequestHandler):
     upstream_port = 8787
     agent = "alice.owner"
     data_root = Path("research")
+    home = Path.home() / ".loomsci"
 
     def do_GET(self) -> None:
         self._route("GET")
@@ -71,6 +72,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._draft(ref)
             if action == "check" and method == "POST":
                 return self._check(ref)
+            if action == "retrieve" and method == "POST":
+                return self._retrieve(ref)
+            if action == "ask" and method == "POST":
+                return self._ask(ref)
             if action == "publish" and method == "POST":
                 return self._publish(ref)
         self._static(path)
@@ -152,6 +157,44 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(exc)
         self._json(200 if result.get("ok") else 422, {"ok": True, "gate": result})
 
+    def _retrieve(self, ref: str) -> None:
+        body = self._read_json()
+        try:
+            key = llm.deepseek_key(self.home)
+            if not key:
+                return self._json(503, {"ok": False, "error": "deepseek_key_missing"})
+            data = store.describe(self.data_root, ref)
+            query = str(body.get("query") or data.get("prompt") or "")
+            results = llm.search(query, key, limit=int(body.get("limit") or 8))
+            added = []
+            for item in results:
+                added.append(store.add_source(self.data_root, ref, **item))
+        except Exception as exc:  # noqa: BLE001
+            return self._error(exc)
+        self._json(200, {"ok": True, "added": added})
+
+    def _ask(self, ref: str) -> None:
+        body = self._read_json()
+        try:
+            key = llm.deepseek_key(self.home)
+            if not key:
+                return self._json(503, {"ok": False, "error": "deepseek_key_missing"})
+            data = store.describe(self.data_root, ref)
+            prompt = str(data.get("prompt") or "")
+            sources = data.get("sources") or []
+            if not sources and body.get("sources", True) is not False:
+                results = llm.search(prompt, key, limit=int(body.get("source_limit") or 8))
+                for item in results:
+                    store.add_source(self.data_root, ref, **item)
+                data = store.describe(self.data_root, ref)
+                sources = data.get("sources") or []
+            text = llm.answer(prompt, sources, key, model=str(body.get("model") or llm.MODEL))
+            store.write_draft(self.data_root, ref, text)
+            result = store.check(self.data_root, ref)
+        except Exception as exc:  # noqa: BLE001
+            return self._error(exc)
+        self._json(200 if result.get("ok") else 422, {"ok": True, "draft": text, "gate": result})
+
     def _publish(self, ref: str) -> None:
         try:
             result = store.check(self.data_root, ref)
@@ -221,6 +264,7 @@ def main() -> int:
     Handler.upstream_port = args.upstream_port
     Handler.agent = args.agent or default_agent(home)
     Handler.data_root = base / "packs" / "research" / "data"
+    Handler.home = base
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     print(f"research on http://127.0.0.1:{args.port} (agent={Handler.agent})", flush=True)
     server.serve_forever()

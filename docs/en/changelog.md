@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.33
+
+- research v0.2: optional DeepSeek Search + Chat, with source-gated answer.
+- Key resolution: `DEEPSEEK_API_KEY`/`DS_KEY` > `<home>/config.yaml`
+  `llm.deepseek_api_key` > legacy `~/.taa/config.toml`; keys are never logged.
+- `/retrieve` adds real search sources; `/ask` writes a draft, runs the same
+  deterministic gate, and only a passing draft can publish.
+- UI adds Retrieve sources / Ask DeepSeek; no key is exposed to the browser.
+- Real test: Python 3.12 release date, 6 retrieved sources + official source,
+  answer gate passed; macOS and Windows (key from environment).
+
 ## v0.1.0-preview.32
 
 - media v0.2a: cross-platform image/video thumbnails via ffmpeg, cached under

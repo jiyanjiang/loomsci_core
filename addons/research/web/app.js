@@ -47,6 +47,14 @@ $("fact-form").onsubmit = async (e) => {
   try { await api(`workspaces/${encodeURIComponent(current)}/facts`, {method:"POST", body:{claim:f.get("claim"), url:f.get("url"), quote:f.get("quote")}}); e.target.reset(); await select(current); }
   catch (err) { showError(err.message); }
 };
+$("retrieve").onclick = async () => {
+  try { await api(`workspaces/${encodeURIComponent(current)}/retrieve`, {method:"POST", body:{}}); await select(current); }
+  catch (err) { showError(err.message); }
+};
+$("ask").onclick = async () => {
+  try { const data = await api(`workspaces/${encodeURIComponent(current)}/ask`, {method:"POST", body:{}}); $("gate").textContent = JSON.stringify(data.gate, null, 2); await select(current); }
+  catch (err) { showError(err.message); }
+};
 $("save").onclick = async () => {
   try { await api(`workspaces/${encodeURIComponent(current)}/draft`, {method:"POST", body:{draft:$("draft").value}}); await select(current); }
   catch (err) { showError(err.message); }

@@ -3,6 +3,17 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.33
+
+- research v0.2：可选 DeepSeek Search + Chat，带来源约束回答。
+- Key 解析：`DEEPSEEK_API_KEY`/`DS_KEY` > `<home>/config.yaml`
+  `llm.deepseek_api_key` > 旧 `~/.taa/config.toml`；key 不写日志。
+- `/retrieve` 写入真实搜索来源；`/ask` 写草稿并走同一确定性 gate，
+  只有通过才可发布。
+- UI 增加 Retrieve sources / Ask DeepSeek；浏览器不接触 key。
+- 真实测试：Python 3.12 发布日，6 条搜索来源 + 官方来源，gate 通过；
+  macOS 与 Windows（环境变量 key）。
+
 ## v0.1.0-preview.32
 
 - media v0.2a：通过 ffmpeg 生成图片/视频缩略图，缓存到
