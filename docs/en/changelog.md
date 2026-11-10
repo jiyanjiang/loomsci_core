@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.30
+
+- Fix the real cause of screenshot paste failures: Flask rejected request bodies
+  over 1MB (`body_too_large`, HTTP 413) and storage capped attachments at 512KB.
+  Real screenshots are larger than both.
+- Raise request limit to 24MB and attachment limit to 16MB; keep local boundary.
+- Real 2.8MB PNG pasted via the system clipboard now uploads and renders in the
+  post (1200x800 image); regression test covers >512KB attachments.
+- No protocol/data shape changes.
+
 ## v0.1.0-preview.29
 
 - Fix `serve` port preflight false positives on POSIX when the port is in

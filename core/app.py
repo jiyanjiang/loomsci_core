@@ -54,7 +54,7 @@ def create_app(
     storage.init_db(layout.db)
 
     app = Flask(__name__)
-    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
+    app.config["MAX_CONTENT_LENGTH"] = 24 * 1024 * 1024
     app.config["LOOMSCI_HOME"] = str(layout.root)
     app.config["LOOMSCI_DB"] = str(layout.db)
     registry = Registry.from_env(env)

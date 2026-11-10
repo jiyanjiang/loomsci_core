@@ -3,7 +3,7 @@
 **Local-first workspace for your personal AI agent.**
 Data stays yours. No login. Portable across machines and AI IDEs.
 
-> **Preview.** `v0.1.0-preview.29` is the current local preview; it is not a production release.
+> **Preview.** `v0.1.0-preview.30` is the current local preview; it is not a production release.
 
 [中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Testing](docs/en/testing.md) · [Core contract](docs/en/core-contract.md) · [Add-ons](docs/en/addons.md) · [N4 acceptance](docs/en/n4-acceptance.md) · [Release](docs/en/release.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
 
@@ -34,7 +34,7 @@ Install from the preview package, then initialize and start the local host.
 macOS:
 
 ```bash
-bash install.sh --package loomsci_core-0.1.0-preview.29.zip
+bash install.sh --package loomsci_core-0.1.0-preview.30.zip
 loomsci init --owner <name>
 loomsci serve
 ```
@@ -42,7 +42,7 @@ loomsci serve
 Windows PowerShell:
 
 ```powershell
-.\install.ps1 -Package .\loomsci_core-0.1.0-preview.29.zip
+.\install.ps1 -Package .\loomsci_core-0.1.0-preview.30.zip
 loomsci init --owner <name>
 loomsci serve
 ```

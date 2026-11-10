@@ -63,6 +63,18 @@ class StorageTest(unittest.TestCase):
         self.assertEqual(len(storage.search(self.conn, q="review")), 1)
         self.assertEqual(storage.stats(self.conn)["integrity"], "ok")
 
+    def test_large_attachment_roundtrip(self) -> None:
+        data = b"x" * (600 * 1024)
+        attachment = storage.add_attachment(
+            self.conn,
+            filename="large.bin",
+            content_type="application/octet-stream",
+            data=data,
+            blob_dir=Path(self.tmp.name) / "data" / "blobs",
+        )
+        self.assertEqual(attachment["bytes"], len(data))
+        self.assertEqual(storage.get_attachment(self.conn, attachment["id"])["bytes"], len(data))
+
     def test_attachment_roundtrip(self) -> None:
         post = storage.create_post(
             self.conn, author="alice.jiyanjiang", kind="note", body="with file"

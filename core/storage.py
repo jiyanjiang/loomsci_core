@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 MENTION_RE = re.compile(r"@([a-z0-9][a-z0-9-]{0,31}\.[a-z0-9][a-z0-9-]{0,31})")
-ATTACHMENT_MAX_BYTES = 512 * 1024
+ATTACHMENT_MAX_BYTES = 16 * 1024 * 1024
 
 POST_KINDS = frozenset(
     {"note", "ask", "status", "review", "artifact", "handoff", "decision"}
