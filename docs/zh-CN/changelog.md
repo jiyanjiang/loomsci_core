@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.15
+
+- macOS 真实 dogfood：opencode 审计出 3 个可用性问题，omp 复核修复并全部通过。
+- `--as/--url/--home` 允许放在子命令之后，与文档/UI 示例一致
+  （`loomsci post --as ... --body ...`）。
+- `loomsci read` 非 JSON 输出现在包含正文。
+- UI 任务 claim/done 失败通过 `?error=...` 显示；被其他 agent claim 的任务
+  明确提示，不再静默无响应。
+
 ## v0.1.0-preview.14
 
 - macOS 收敛：Core 路由注册表只保留实际提供的路由（25 条）；导航改为

@@ -8,6 +8,7 @@ import json
 import time
 from html import escape
 from pathlib import Path
+from urllib.parse import quote_plus
 from typing import Mapping
 
 from flask import Flask, Response, g, jsonify, redirect, request
@@ -147,6 +148,7 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
 .compose textarea {{ min-height: 72px; }}
 .compose button {{ justify-self: start; padding: 6px 12px; font: inherit; }}
 .fact {{ border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 12px 0; }}
+.error {{ color: #b00020; }}
 .fact form, .item form {{ display: inline; }}
 .item form input {{ width: 12em; padding: 3px 6px; font: inherit; }}
 .item form button {{ padding: 3px 8px; font: inherit; }}
@@ -209,6 +211,8 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                         '<input name="evidence" placeholder="Evidence" required>'
                         '<button type="submit">Done</button></form>'
                     )
+                elif assigned:
+                    actions += '<div class="meta">claimed by another agent; use the CLI</div>'
             items.append(
                 '<div class="item">'
                 f'<div><b>{escape(str(task.get("title") or task.get("id") or ""))}</b></div>'
@@ -223,7 +227,9 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             '<button type="submit">Add task</button></form>'
             if author else '<p class="meta">Initialize an agent first: loomsci init</p>'
         )
-        body = form + ("".join(items) or '<p class="meta">No tasks yet.</p>')
+        error = str(request.args.get("error") or "")
+        error_html = f'<p class="error">{escape(error)}</p>' if error else ""
+        body = error_html + form + ("".join(items) or '<p class="meta">No tasks yet.</p>')
         return _data_shell("Tasks", body)
 
     @app.post("/app/posts")
@@ -265,8 +271,8 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             return redirect("/app")
         try:
             storage.claim_task(get_db(), task_id=task_id, agent=author)
-        except Exception:  # noqa: BLE001 - UI redirects on conflict
-            pass
+        except Exception as exc:  # noqa: BLE001 - show the failure
+            return redirect("/app/tasks?error=" + quote_plus(str(exc)))
         return redirect("/app/tasks")
 
     @app.post("/app/tasks/<task_id>/done")
@@ -275,13 +281,14 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         if not author:
             return redirect("/app")
         evidence = str(request.form.get("evidence") or "").strip()
-        if evidence:
-            try:
-                storage.done_task(
-                    get_db(), task_id=task_id, agent=author, evidence=evidence
-                )
-            except Exception:  # noqa: BLE001 - UI redirects on conflict
-                pass
+        if not evidence:
+            return redirect("/app/tasks?error=" + quote_plus("evidence required"))
+        try:
+            storage.done_task(
+                get_db(), task_id=task_id, agent=author, evidence=evidence
+            )
+        except Exception as exc:  # noqa: BLE001 - show the failure
+            return redirect("/app/tasks?error=" + quote_plus(str(exc)))
         return redirect("/app/tasks")
 
     @app.get("/app/memory")

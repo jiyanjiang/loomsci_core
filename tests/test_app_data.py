@@ -367,6 +367,20 @@ class AppDataTest(unittest.TestCase):
         finally:
             conn.close()
 
+    def test_ui_task_action_reports_conflict(self) -> None:
+        alice.ensure(self.home, "owner")
+        conn = storage.connect(self.home / "data" / "data.db")
+        task = storage.create_task(conn, title="other task")
+        storage.claim_task(conn, task_id=task["id"], agent="other.owner")
+        conn.close()
+        response = self.client.post(
+            f"/app/tasks/{task['id']}/done", data={"evidence": "nope"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("error=", response.headers["Location"])
+        page = self.client.get(response.headers["Location"]).get_data(as_text=True)
+        self.assertIn("only the assignee", page)
+
     def test_database_is_created_in_home(self) -> None:
         self.assertTrue((self.home / "data" / "data.db").is_file())
 

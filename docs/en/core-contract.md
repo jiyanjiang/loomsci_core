@@ -56,7 +56,7 @@ namespace, namespaced storage, and a single event/audit path.
 | N0 · done | Contract freeze 1 (`v0.1.0-preview.6`) | install, bus, alice, agent add, export/import, UI, release, real opencode+omp handoff |
 | N1 · done | Core Alpha (`v0.1.0-preview.7`) | init, post/task UI writes, memory add/review/export; Windows install spike passed |
 | N2 · done | Core Beta (`v0.1.0-preview.8`) | search, watch/SSE, inbox/mentions, attachments, status recovery; restart/replay tests |
-| **N3 · current** | Core RC (`v0.1.0-preview.14` prep) | upgrade signature verification and rollback tests; Windows regression + release signing key pending |
+| **N3 · current** | Core RC (`v0.1.0-preview.15` prep) | upgrade signature verification and rollback tests; Windows regression + release signing key pending |
 | N3 · Core RC | Windows, signed package, GitHub Release, update/rollback, migration | clean install on macOS + Windows; rollback; `latest.json` |
 | N4 · Core 0.2.0 | soak and freeze | no new features; only bugfix; docs final |
 

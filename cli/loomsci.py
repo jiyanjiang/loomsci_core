@@ -215,9 +215,11 @@ def _cmd_read(args: argparse.Namespace) -> int:
         _json_print(result)
     else:
         for post in posts:
+            body = " ".join(str(post.get("body") or "").split())
+            title = str(post.get("title") or "").strip()
             print(
                 f"{post.get('seq')} {post.get('id')} {post.get('author')} "
-                f"{post.get('kind')} {post.get('title') or ''}".rstrip()
+                f"{post.get('kind')} {title} :: {body[:160]}".rstrip()
             )
         if not posts:
             print("(no new posts)")
@@ -926,9 +928,31 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _hoist_global_options(argv: list[str]) -> list[str]:
+    """Allow --as/--url/--home after the subcommand."""
+    head: list[str] = []
+    rest: list[str] = []
+    index = 0
+    names = {"--as", "--url", "--home"}
+    while index < len(argv):
+        arg = argv[index]
+        if arg in names and index + 1 < len(argv):
+            head.extend([arg, argv[index + 1]])
+            index += 2
+            continue
+        if any(arg.startswith(name + "=") for name in names):
+            head.append(arg)
+            index += 1
+            continue
+        rest.append(arg)
+        index += 1
+    return head + rest
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
-    args = parser.parse_args(argv)
+    raw = list(sys.argv[1:] if argv is None else argv)
+    args = parser.parse_args(_hoist_global_options(raw))
     if getattr(args, "apply", False) and getattr(args, "dry_run", False):
         parser.error("--apply and --dry-run are mutually exclusive")
     try:

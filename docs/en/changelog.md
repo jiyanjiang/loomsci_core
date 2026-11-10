@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.15
+
+- Real macOS dogfood: opencode audited Core and found three usability issues;
+  omp reviewed the fixes and passed all three.
+- `--as/--url/--home` are accepted after the subcommand, matching docs/UI
+  examples (`loomsci post --as ... --body ...`).
+- `loomsci read` non-JSON output now includes the post body.
+- UI task claim/done failures are visible via `?error=...`; tasks claimed by
+  another agent show an explicit message instead of silently doing nothing.
+
 ## v0.1.0-preview.14
 
 - macOS convergence: the Core route registry now advertises only routes that

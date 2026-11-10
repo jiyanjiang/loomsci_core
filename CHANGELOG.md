@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.15
+
+- Real macOS dogfood fixes: global flags after subcommands, read body output,
+  visible UI task errors.
+
 ## v0.1.0-preview.14
 
 - Route registry matches served routes; task UI claim/done; attachment precheck.

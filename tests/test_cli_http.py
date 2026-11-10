@@ -70,6 +70,9 @@ class CliHttpTest(unittest.TestCase):
         code, output = self._run("read", "--json")
         self.assertEqual(code, 0)
         self.assertIn("hello from cli", output)
+        code, output = self._run("read", "--since", "0", "--no-update")
+        self.assertEqual(code, 0)
+        self.assertIn("hello from cli", output)
 
         code, output = self._run("read")
         self.assertEqual(code, 0)
@@ -100,6 +103,17 @@ class CliHttpTest(unittest.TestCase):
         )
         self.assertEqual(code, 0, output)
         self.assertIn("approved", output)
+
+    def test_global_as_can_follow_subcommand(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            code = loomsci.main(
+                ["--url", self.base, "post", "--as", AGENT, "--body", "late as"]
+            )
+        self.assertEqual(code, 0, output.getvalue())
+        code, output = self._run("read", "--json")
+        self.assertEqual(code, 0)
+        self.assertIn("late as", output)
 
     def test_search_inbox_watch_status_attachment(self) -> None:
         code, output = self._run(

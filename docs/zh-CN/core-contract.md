@@ -53,7 +53,7 @@ Core 只保留这些能力的**宿主契约**：pack 注册表、`/apps/<slug>/`
 | N0 · 完成 | 契约冻结 1（`v0.1.0-preview.6`） | 安装、总线、alice、agent add、导出/导入、UI、发布、真实 opencode+omp 交接 |
 | N1 · 完成 | Core Alpha（`v0.1.0-preview.7`） | init、帖子/任务 UI 写入、记忆 add/review/export；Windows 安装 spike 通过 |
 | N2 · 完成 | Core Beta（`v0.1.0-preview.8`） | search、watch/SSE、inbox/mention、附件、status 恢复；重启/双 IDE 测试 |
-| **N3 · 当前** | Core RC（`v0.1.0-preview.14` 预备） | 升级签名验证与回滚测试；Windows 回归 + 发布签名密钥待完成 |
+| **N3 · 当前** | Core RC（`v0.1.0-preview.15` 预备） | 升级签名验证与回滚测试；Windows 回归 + 发布签名密钥待完成 |
 | N3 · Core RC | Windows、签名包、GitHub Release、更新/回滚、迁移 | macOS + Windows 干净安装；回滚；`latest.json` |
 | N4 · Core 0.2.0 | soak 与冻结 | 不加功能；只修 bug；文档定稿 |
 
