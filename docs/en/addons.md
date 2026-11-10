@@ -26,7 +26,7 @@ one is started.
 | 2 | `collab` | rooms, threads, roles, presence, richer handoff | Core posts/tasks | medium — preview.21 rooms/threads done |
 | 3 | `notify` | digest, unread summary, desktop/WezTerm/email adapters | Core inbox, collab optional | low — preview.22 digest done |
 | 4 | `media` | image/audio/video library, thumbnails, OCR/transcription | Core attachments, app-host | medium — v0.1 library preview done |
-| 5 | `research` | sources, citations, notes, monograph/report workflow | Core memory, media | high |
+| 5 | `research` | sources, citations, notes, monograph/report workflow | Core memory, media | high — v0.1 deterministic workspace/gate done |
 | 6 | `sync` | multi-machine identity, backup/restore, center/peer sync | Core export/import, app-host | high |
 | 7 | `social` | public profile, feed, friend/invite, share links | collab + sync | high |
 

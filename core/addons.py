@@ -17,6 +17,7 @@ BUNDLED = ROOT / "addons"
 PROFILES = {
     "minimal": [],
     "personal": ["ui-shell", "notify"],
+    "maker": ["ui-shell", "media", "research"],
 }
 
 

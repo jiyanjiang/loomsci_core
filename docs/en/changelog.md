@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.31
+
+- Fifth add-on: `research` v0.1 (deterministic, no LLM).
+- Workspaces `r-<hash>/vN`; source intake with URL/title/excerpt/grade; facts must
+  reference an existing source; `fact_gate` enforces 2 domains, a strong source,
+  2 citations, topical match, and abstention handling.
+- Publish only a gated draft to Core; no Core table/API changes.
+- Default port 8796; `maker` profile = ui-shell + media + research.
+- Reuses TAA's SOP and fact-gate discipline, not its storage/config/rooms/jobs.
+
 ## v0.1.0-preview.30
 
 - Fix the real cause of screenshot paste failures: Flask rejected request bodies

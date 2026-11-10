@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.31
+
+- Research v0.1 add-on: deterministic workspaces, sources, facts, gate, publish.
+
 ## v0.1.0-preview.30
 
 - Fix 413/512KB screenshot upload limits; real clipboard paste verified.

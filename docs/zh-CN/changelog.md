@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.31
+
+- 第五个 add-on：`research` v0.1（确定性，不调 LLM）。
+- 工作区 `r-<hash>/vN`；来源 URL/标题/摘录/分级；事实必须引用已有来源；
+  `fact_gate` 要求 2 个域名、1 个强来源、2 条引用、切题性、abstain 处理。
+- 只有 gate 通过的稿才可发布到 Core；不改 Core 表/API。
+- 默认端口 8796；`maker` profile = ui-shell + media + research。
+- 复用 TAA 的 SOP 与 fact gate 纪律，不复用其存储/config/rooms/jobs。
+
 ## v0.1.0-preview.30
 
 - 修复截图粘贴失败的真正原因：Flask 1MB 请求体上限导致 `body_too_large`

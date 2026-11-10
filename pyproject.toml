@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loomsci_core"
-version = "0.1.0-preview.30"
+version = "0.1.0-preview.31"
 description = "Local-first workspace for your personal AI agent."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -30,4 +30,4 @@ Issues = "https://github.com/jiyanjiang/loomsci_core/issues"
 Security = "https://github.com/jiyanjiang/loomsci_core/security"
 
 [tool.setuptools]
-packages = ["core", "cli", "addons", "addons.ui_shell", "addons.collab", "addons.notify", "addons.media"]
+packages = ["core", "cli", "addons", "addons.ui_shell", "addons.collab", "addons.notify", "addons.media", "addons.research"]

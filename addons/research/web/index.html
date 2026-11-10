@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loomsci research</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><strong>loomsci research</strong><span id="status" class="muted">deterministic · no LLM</span></header>
+<div class="layout">
+  <aside>
+    <form id="new-form"><input name="prompt" placeholder="Research prompt" required><input name="title" placeholder="Title (optional)"><button>New workspace</button></form>
+    <div id="list"></div>
+  </aside>
+  <main>
+    <h2 id="title">Select a workspace</h2>
+    <div id="meta" class="muted"></div>
+    <div id="detail" hidden>
+      <section><h3>Source</h3><form id="source-form" class="grid"><input name="url" placeholder="URL" required><input name="title" placeholder="Title"><input name="text" placeholder="Excerpt"><button>Add source</button></form><div id="sources"></div></section>
+      <section><h3>Fact</h3><form id="fact-form" class="grid"><input name="claim" placeholder="Claim" required><input name="url" placeholder="Source URL" required><input name="quote" placeholder="Quote"><button>Add fact</button></form><div id="facts"></div></section>
+      <section><h3>Draft</h3><textarea id="draft" placeholder="Draft Markdown"></textarea><div class="actions"><button id="save">Save draft</button><button id="check">Check gate</button><button id="publish">Publish to Core</button></div><pre id="gate"></pre></section>
+    </div>
+  </main>
+</div>
+<div id="error" class="error" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>
