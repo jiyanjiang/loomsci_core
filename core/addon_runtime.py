@@ -7,6 +7,7 @@ lives under ``runtime/addons/<name>.json``; logs under ``logs/addons/``.
 from __future__ import annotations
 
 import ctypes
+import http.client
 import json
 import os
 import shutil
@@ -15,8 +16,6 @@ import socket
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -92,11 +91,15 @@ def _port_open(port: int) -> bool:
 def _health(port: int, path: str) -> bool:
     if not port:
         return False
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     try:
-        with opener.open(f"http://127.0.0.1:{port}{path or '/'}", timeout=2) as response:
-            return 200 <= response.status < 300
-    except (OSError, urllib.error.URLError):
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+        conn.request("GET", path or "/")
+        response = conn.getresponse()
+        status = response.status
+        response.read()
+        conn.close()
+        return 200 <= status < 300
+    except (OSError, http.client.HTTPException):
         return False
 
 
