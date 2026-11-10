@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.20
+
+- Minimal add-on host: list/install/remove/profile; ui-shell via personal profile.
+
 ## v0.1.0-preview.19
 
 - First add-on `ui-shell`: Markdown UI, proxy to Core; Core unchanged.

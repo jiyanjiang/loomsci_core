@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from core import addons as addons_mod
 from core import export as export_mod
 from core import storage
 from core.home import (
@@ -680,6 +681,59 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_addon_list(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    current = set(addons_mod.installed(layout.root))
+    entries = [
+        {**item, "installed": item.get("name") in current}
+        for item in addons_mod.available()
+    ]
+    if args.json:
+        _json_print({"addons": entries, "profiles": addons_mod.PROFILES})
+    else:
+        for item in entries:
+            mark = "*" if item["installed"] else " "
+            print(f"{mark} {item['name']:<12} {item.get('version', '?'):<8} {item.get('api', '')}")
+        print("profiles: " + ", ".join(addons_mod.PROFILES))
+    return 0
+
+
+def _cmd_addon_install(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = addons_mod.install(layout.root, args.name)
+    except addons_mod.AddonError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"installed: {result['name']} {result['version'] or ''}".rstrip())
+    return 0
+
+
+def _cmd_addon_remove(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = addons_mod.remove(layout.root, args.name)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"removed: {result['name']}")
+    return 0
+
+
+def _cmd_addon_profile(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = addons_mod.install_profile(layout.root, args.profile)
+    except addons_mod.AddonError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print({"profile": args.profile, "installed": result})
+    else:
+        print(f"profile {args.profile}: " + (", ".join(item["name"] for item in result) or "(core)"))
+    return 0
+
+
 def _cmd_export(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = export_mod.export_home(layout.root, args.out)
@@ -876,6 +930,28 @@ def build_parser() -> argparse.ArgumentParser:
     status = sub.add_parser("status", help="show health, integrity, and counts")
     status.add_argument("--json", action="store_true")
     status.set_defaults(func=_cmd_status)
+
+    addon = sub.add_parser("addon", help="local add-on catalog")
+    addon_sub = addon.add_subparsers(dest="addon_command", required=True)
+
+    addon_list = addon_sub.add_parser("list", help="list bundled/installed add-ons")
+    addon_list.add_argument("--json", action="store_true")
+    addon_list.set_defaults(func=_cmd_addon_list)
+
+    addon_install = addon_sub.add_parser("install", help="install a bundled add-on")
+    addon_install.add_argument("name")
+    addon_install.add_argument("--json", action="store_true")
+    addon_install.set_defaults(func=_cmd_addon_install)
+
+    addon_remove = addon_sub.add_parser("remove", help="remove an installed add-on")
+    addon_remove.add_argument("name")
+    addon_remove.add_argument("--json", action="store_true")
+    addon_remove.set_defaults(func=_cmd_addon_remove)
+
+    addon_profile = addon_sub.add_parser("profile", help="install a recommended profile")
+    addon_profile.add_argument("profile", choices=sorted(addons_mod.PROFILES))
+    addon_profile.add_argument("--json", action="store_true")
+    addon_profile.set_defaults(func=_cmd_addon_profile)
 
     export = sub.add_parser("export", help="export the home as a zip")
     export.add_argument("--out", required=True)

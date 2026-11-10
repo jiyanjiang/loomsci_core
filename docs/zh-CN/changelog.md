@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.20
+
+- Core 增加最小本地 add-on host：`loomsci addon list/install/remove/profile`。
+- 内置 add-on 安装到 `packs/<name>`，记录在 `packs/installed.json`；
+  不联网、不做市场。
+- `personal` profile 安装 `ui-shell`；`minimal` 不装。其他 profile 在对应
+  add-on 存在前保持保留。
+- host 只读 manifest，不 import add-on 代码。
+
 ## v0.1.0-preview.19
 
 - 第一个 add-on：`ui-shell`（独立进程，版本 0.1.0）。

@@ -18,7 +18,7 @@ Core 是长期稳定的内核；UI 和能力都是 add-on。本文是契约规�
 | # | Add-on | 用途 | 依赖 | 风险 |
 |---|---|---|---|---|
 | 0 | `ui-shell` | Markdown、主题、导航、空/错状态 | Core API | 低 |
-| 1 | `app-host` | 安装/卸载、`/apps/<slug>/`、manifest/权限、profile | Core pack registry | 中 |
+| 1 | `app-host` | 安装/卸载、`/apps/<slug>/`、manifest/权限、profile | Core 最小 host（preview.20）；完整 app-host 暂缓 | 中 |
 | 2 | `collab` | 房间、线程、角色、presence、增强 handoff | Core posts/tasks | 中 |
 | 3 | `notify` | digest、未读摘要、桌面/WezTerm/email 适配 | Core inbox，collab 可选 | 低 |
 | 4 | `media` | 图片/音频/视频库、缩略图、OCR/转写 | Core attachments、app-host | 中 |

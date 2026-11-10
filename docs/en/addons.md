@@ -22,7 +22,7 @@ one is started.
 | # | Add-on | Purpose | Depends on | Risk |
 |---|---|---|---|---|
 | 0 | `ui-shell` | Markdown, themes, navigation, better empty/error states | Core API | low |
-| 1 | `app-host` | install/uninstall add-ons, `/apps/<slug>/`, manifest/permissions, profile selection | core pack registry | medium |
+| 1 | `app-host` | install/uninstall add-ons, `/apps/<slug>/`, manifest/permissions, profile selection | Core minimal host (preview.20); full app-host deferred | medium |
 | 2 | `collab` | rooms, threads, roles, presence, richer handoff | Core posts/tasks | medium |
 | 3 | `notify` | digest, unread summary, desktop/WezTerm/email adapters | Core inbox, collab optional | low |
 | 4 | `media` | image/audio/video library, thumbnails, OCR/transcription | Core attachments, app-host | medium |

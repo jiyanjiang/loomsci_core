@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.20
+
+- Minimal local add-on host in Core: `loomsci addon list/install/remove/profile`.
+- Bundled add-ons are installed into `packs/<name>` and recorded in
+  `packs/installed.json`; no network and no marketplace.
+- `personal` profile installs `ui-shell`; `minimal` installs none. Other
+  profiles remain reserved until their add-ons exist.
+- The host reads manifests only; it does not import add-on code.
+
 ## v0.1.0-preview.19
 
 - First add-on: `ui-shell` (standalone, version 0.1.0).
