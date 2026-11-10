@@ -92,8 +92,9 @@ def _port_open(port: int) -> bool:
 def _health(port: int, path: str) -> bool:
     if not port:
         return False
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}{path or '/'}", timeout=2) as response:
+        with opener.open(f"http://127.0.0.1:{port}{path or '/'}", timeout=2) as response:
             return 200 <= response.status < 300
     except (OSError, urllib.error.URLError):
         return False
@@ -133,15 +134,17 @@ def _port_pid_windows(port: int) -> int:
 
 def _spawn_windows(python: str, module: str, home: Path, port: int, log, env: dict[str, str]) -> subprocess.Popen:
     """Detach from the SSH/PowerShell job so the server survives the caller."""
-    flags = 0x00000008 | 0x00000200 | 0x01000000  # DETACHED | NEW_GROUP | BREAKAWAY
-    try:
-        return subprocess.Popen(
-            [python, "-m", module, "--home", str(home), "--port", str(port)],
-            cwd=str(home), env=env, stdin=subprocess.DEVNULL,
-            stdout=log, stderr=subprocess.STDOUT, creationflags=flags, close_fds=True,
-        )
-    except OSError as exc:
-        raise AddonRuntimeError(f"detached start failed: {exc}") from None
+    base = [python, "-m", module, "--home", str(home), "--port", str(port)]
+    last: OSError | None = None
+    for flags in (0x00000008 | 0x00000200 | 0x01000000, 0x00000008 | 0x00000200):
+        try:
+            return subprocess.Popen(
+                base, cwd=str(home), env=env, stdin=subprocess.DEVNULL,
+                stdout=log, stderr=subprocess.STDOUT, creationflags=flags, close_fds=True,
+            )
+        except OSError as exc:
+            last = exc
+    raise AddonRuntimeError(f"detached start failed: {last}") from None
 
 
 def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
