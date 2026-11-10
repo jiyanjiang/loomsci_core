@@ -3,6 +3,16 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.23
+
+- `ui-shell` 0.2.0 达到 `docs/zh-CN/ui-shell.md` 功能目标：
+  Markdown 表格/有序列表/引用/代码、本地 KaTeX、图片/音频/视频附件、搜索、文件上传。
+- 修复 UI 代理丢失 query string（`search?q=`、`posts?limit=`），此前搜索为空、
+  limit 不生效；通过 `/v1/status` 的 `last_seq` 计算 `since`，显示最新帖子而非最早 100 条。
+- 自检：Markdown 表格、KaTeX、媒体元素、搜索、上传、任务/记忆操作、XSS 拒绝
+  均在真实浏览器通过。
+- 主题仍不在范围内。
+
 ## v0.1.0-preview.22
 
 - 第三个 add-on：`notify`（未读摘要、Markdown digest、一键已读）。

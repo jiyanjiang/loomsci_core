@@ -1,20 +1,20 @@
-# Quickstart (preview.22)
+# Quickstart (preview.23)
 
 ## Install
 
 macOS / Linux:
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.22.zip
-unzip loomsci_core-0.1.0-preview.22.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.23.zip
+unzip loomsci_core-0.1.0-preview.23.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.22.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.23.zip
 ```
 
 Windows PowerShell:
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.22.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.23.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```

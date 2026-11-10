@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.23
+
+- ui-shell 0.2.0: functional Markdown/LaTeX/media/search/upload target.
+
 ## v0.1.0-preview.22
 
 - Notify add-on: unread summary, digest, mark-all-read.

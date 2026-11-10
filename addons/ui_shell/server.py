@@ -51,9 +51,13 @@ class Handler(BaseHTTPRequestHandler):
         self._route()
 
     def _route(self) -> None:
-        path = urlsplit(self.path).path
+        parsed = urlsplit(self.path)
+        path = parsed.path
         if path.startswith("/api/"):
-            self._proxy("/v1/" + path[len("/api/v1/"):] if path.startswith("/api/v1/") else path)
+            upstream = "/v1/" + path[len("/api/v1/"):] if path.startswith("/api/v1/") else path
+            if parsed.query:
+                upstream += "?" + parsed.query
+            self._proxy(upstream)
             return
         self._static(path)
 

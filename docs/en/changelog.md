@@ -4,6 +4,18 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.23
+
+- `ui-shell` 0.2.0 meets the functional target in `docs/en/ui-shell.md`:
+  Markdown tables/ordered lists/blockquotes/code, vendored KaTeX, image/audio/video
+  attachments, search, and file upload.
+- Fix the UI proxy dropping query strings (`search?q=`, `posts?limit=`), which
+  made search return empty and limits ineffective; show the newest posts by
+  deriving `since` from `/v1/status` instead of the oldest 100.
+- Self-check: Markdown table, KaTeX, media elements, search, upload, task/
+  memory actions, and XSS rejection pass in a real browser.
+- Theme work remains out of scope.
+
 ## v0.1.0-preview.22
 
 - Third add-on: `notify` (unread summary, Markdown digest, mark-all-read).

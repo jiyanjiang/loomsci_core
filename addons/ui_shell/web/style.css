@@ -20,3 +20,9 @@ button { font: inherit; padding: 5px 10px; cursor: pointer; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .actions input { padding: 4px 6px; font: inherit; width: 14em; }
 .actions button { padding: 3px 8px; }
+
+.md table { border-collapse: collapse; margin: 10px 0; }
+.md th, .md td { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); padding: 4px 8px; text-align: left; }
+.attachment { margin: 8px 0; }
+.attachment-image { max-width: 100%; height: auto; max-height: 420px; }
+.attachment audio, .attachment video { max-width: 100%; }

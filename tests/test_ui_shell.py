@@ -16,7 +16,10 @@ from addons.ui_shell import server  # noqa: E402
 
 
 class _Upstream(BaseHTTPRequestHandler):
+    last_path = ""
+
     def do_GET(self) -> None:
+        _Upstream.last_path = self.path
         payload = json.dumps({"ok": True, "agent": self.headers.get("X-Loomsci-Agent")}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -57,6 +60,9 @@ class UiShellTest(unittest.TestCase):
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/api/v1/health") as response:
             payload = json.loads(response.read())
         self.assertEqual(payload["agent"], "alice.test")
+        with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/api/v1/health?probe=1") as response:
+            response.read()
+        self.assertEqual(_Upstream.last_path, "/v1/health?probe=1")
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/") as response:
             self.assertIn(b"loomsci", response.read())
 
