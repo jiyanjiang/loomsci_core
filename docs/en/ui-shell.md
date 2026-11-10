@@ -66,3 +66,18 @@ Only then may the next add-on (`media`) start.
   upload, task/memory actions, XSS rejection — pass.
 - Windows: Markdown table, KaTeX, search, create post — pass; the same package
   is used, with media elements verified on macOS.
+
+## Baseline theme gate
+
+This phase is tokens + accessibility, not branding or theme switching.
+
+- single token source for colors, spacing, type, radius
+- system light/dark via `prefers-color-scheme`
+- body contrast 15.7:1 (light) / 16.6:1 (dark); muted 5.9:1 / 8.3:1
+- keyboard focus: 2px solid accent outline
+- min control height 36px
+- 360px viewport: no horizontal scroll
+- no external fonts/CDN; KaTeX stays local
+
+Self-checked 2026-11-10 with a real Chromium tab. Full visual themes,
+site name/logo, i18n, and boards remain separate/later.

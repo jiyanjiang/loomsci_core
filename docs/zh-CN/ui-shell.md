@@ -65,3 +65,18 @@ macOS 与 Windows 自动浏览器检查必须通过：
   任务/记忆操作、XSS 拒绝 — 通过。
 - Windows：Markdown 表格、KaTeX、搜索、发帖 — 通过；使用同一包，媒体元素在
   macOS 验证。
+
+## Baseline theme 门槛
+
+本阶段只做 token + 可访问性，不做品牌或多主题切换。
+
+- 单一 token 源：颜色、间距、字体、圆角
+- 通过 `prefers-color-scheme` 跟随系统明暗
+- 正文对比度 15.7:1（亮）/ 16.6:1（暗）；muted 5.9:1 / 8.3:1
+- 键盘焦点：2px accent outline
+- 控件最小高度 36px
+- 360px 视口无横向滚动
+- 无外部字体/CDN；KaTeX 保持本地
+
+2026-11-10 用真实 Chromium 标签页自检。完整视觉主题、站点名/Logo、i18n、
+开版仍分开且后续再做。

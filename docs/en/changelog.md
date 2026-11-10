@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.24
+
+- `ui-shell` 0.3.0 baseline theme: single token source, system light/dark,
+  WCAG-AA contrast, visible keyboard focus, 36px controls, 360px responsive.
+- No theme switcher, branding, i18n, or boards; those stay separate/later.
+- Self-check: body contrast 15.7:1/16.6:1, muted 5.9:1/8.3:1, 2px focus,
+  no horizontal scroll at 360px.
+
 ## v0.1.0-preview.23
 
 - `ui-shell` 0.2.0 meets the functional target in `docs/en/ui-shell.md`:

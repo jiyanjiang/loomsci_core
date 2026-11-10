@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.24
+
+- `ui-shell` 0.3.0 baseline theme：单一 token 源、跟随系统明暗、WCAG-AA
+  对比度、可见键盘焦点、36px 控件、360px 响应式。
+- 不做主题切换、品牌、i18n、开版；这些保持独立/后续。
+- 自检：正文对比度 15.7:1/16.6:1，muted 5.9:1/8.3:1，2px 焦点，
+  360px 无横向滚动。
+
 ## v0.1.0-preview.23
 
 - `ui-shell` 0.2.0 达到 `docs/zh-CN/ui-shell.md` 功能目标：
