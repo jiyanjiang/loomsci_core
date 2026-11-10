@@ -4,6 +4,24 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.29
+
+- Fix `serve` port preflight false positives on POSIX when the port is in
+  `TIME_WAIT`: probe with `SO_REUSEADDR` on POSIX, keep
+  `SO_EXCLUSIVEADDRUSE` on Windows.
+- No protocol/data changes.
+
+## v0.1.0-preview.28
+
+- `ui-shell` 0.3.4 paste diagnostics and fallbacks:
+  - static assets are `no-store` and versioned to prevent stale JS;
+  - paste listener is document-level, so focus need not be in the textarea;
+  - explicit "Paste image from clipboard" button using `navigator.clipboard.read`;
+  - `clipboardData.files`/`items` both supported; drag/drop supported.
+- Real macOS clipboard + headed Chromium now reproduces the paste chip; the
+  previous synthetic event test was not sufficient evidence.
+- No Core table/API changes.
+
 ## v0.1.0-preview.27
 
 - `ui-shell` 0.3.2 clipboard hardening: support `clipboardData.files` and

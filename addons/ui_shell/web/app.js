@@ -3,6 +3,7 @@ const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
 let view = "posts";
 let pendingFiles = [];
+let documentPasteBound = false;
 
 function showError(message) { errorEl.hidden = !message; errorEl.textContent = message || ""; }
 function esc(value) { return String(value ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -152,6 +153,7 @@ async function loadPosts() {
     <input name="title" placeholder="Title" maxlength="200">
     <textarea name="body" placeholder="Markdown + $LaTeX$ body; paste an image here" required></textarea>
     <input type="file" name="file" multiple>
+    <button type="button" id="paste-image">Paste image from clipboard</button>
     <div id="pending-files" class="pending"></div>
     <button type="submit">Post</button></form>
     <form class="compose" id="search-form"><input name="q" placeholder="Search posts, tasks, facts"><button type="submit">Search</button></form>`;
@@ -161,8 +163,30 @@ async function loadPosts() {
   app.innerHTML = form + (posts || '<p class="muted">No posts yet.</p>');
   const fileInput = document.querySelector('#post-form input[type="file"]');
   fileInput.onchange = () => addFiles(fileInput.files);
+  document.getElementById("paste-image").onclick = async () => {
+    showError("");
+    if (!navigator.clipboard?.read) {
+      showError("This browser does not expose navigator.clipboard.read; use copy/paste or the file picker.");
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      const files = [];
+      for (const item of items) {
+        const type = item.types.find((value) => value.startsWith("image/"));
+        if (type) files.push(new File([await item.getType(type)], `clipboard-${Date.now()}.${type.split("/")[1] || "png"}`, {type}));
+      }
+      if (files.length) addFiles(files);
+      else showError("Clipboard contains no image.");
+    } catch (err) {
+      showError("Clipboard read failed: " + err.message + ". Use Cmd/Ctrl+V in the body or the file picker.");
+    }
+  };
   const bodyInput = document.querySelector('#post-form textarea[name="body"]');
-  bodyInput.addEventListener("paste", (event) => {
+  if (!documentPasteBound) {
+  documentPasteBound = true;
+  document.addEventListener("paste", (event) => {
+    if (view !== "posts" || !document.getElementById("post-form")) return;
     const files = clipboardImageFiles(event);
     if (files.length) {
       event.preventDefault();
@@ -174,6 +198,7 @@ async function loadPosts() {
       showError("Clipboard did not expose an image file; copy the image itself (not a file path) and paste again.");
     }
   });
+  }
   bodyInput.addEventListener("dragover", (event) => {
     if ([...(event.dataTransfer?.items || [])].some((item) => item.kind === "file" && item.type.startsWith("image/"))) {
       event.preventDefault();

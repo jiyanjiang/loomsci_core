@@ -5,6 +5,14 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.29
+
+- Fix POSIX TIME_WAIT port preflight false positive.
+
+## v0.1.0-preview.28
+
+- ui-shell paste diagnostics: no-store assets, document-level paste, clipboard button.
+
 ## v0.1.0-preview.27
 
 - ui-shell clipboard fallback/files/drop and diagnostic.

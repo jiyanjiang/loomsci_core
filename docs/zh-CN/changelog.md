@@ -3,6 +3,22 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.29
+
+- 修复 POSIX 下端口处于 `TIME_WAIT` 时 `serve` 预检误报：POSIX 探测使用
+  `SO_REUSEADDR`，Windows 继续 `SO_EXCLUSIVEADDRUSE`。
+- 无协议/数据变更。
+
+## v0.1.0-preview.28
+
+- `ui-shell` 0.3.4 粘贴诊断与兜底：
+  - 静态资源 `no-store` + 版本号，避免旧 JS 缓存；
+  - paste 监听放到 document，焦点不必在 textarea；
+  - 增加“Paste image from clipboard”按钮，走 `navigator.clipboard.read`；
+  - 同时支持 `clipboardData.files`/`items` 与拖放。
+- 真实 macOS 剪贴板 + 有头 Chromium 已复现粘贴 chip；之前的合成事件测试不算充分证据。
+- 不改 Core 表/API。
+
 ## v0.1.0-preview.27
 
 - `ui-shell` 0.3.2 剪贴板加固：同时支持 `clipboardData.files` 与
