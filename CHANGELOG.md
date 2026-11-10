@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.35
+
+- Add-on lifecycle: manifest package/entry/port/health, installed metadata,
+  update/verify/start/stop/status, dependency checks, correct home venv.
+
 ## v0.1.0-preview.34
 
 - Media v0.2b OCR and speech transcription, optional tools.

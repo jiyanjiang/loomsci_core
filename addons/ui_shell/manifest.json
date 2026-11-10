@@ -2,10 +2,23 @@
   "name": "ui-shell",
   "version": "0.3.4",
   "api": "core/1",
-  "requires": ["core/1"],
-  "routes": ["/"],
+  "requires": [
+    "core/1"
+  ],
+  "routes": [
+    "/"
+  ],
   "storage": "addon.ui",
   "jobs": [],
-  "nav": [{"label": "UI shell", "href": "http://127.0.0.1:8790/"}],
-  "preserve": []
+  "nav": [
+    {
+      "label": "UI shell",
+      "href": "http://127.0.0.1:8790/"
+    }
+  ],
+  "preserve": [],
+  "package": "ui_shell",
+  "entry": "server",
+  "port": 8790,
+  "health": "/api/health"
 }

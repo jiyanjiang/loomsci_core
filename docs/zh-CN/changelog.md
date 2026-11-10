@@ -3,6 +3,23 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.35
+
+- add-on 生命周期 v1：manifest 增加 `package`、`entry`、`port`、`health`；
+  安装代码位于 `packs/<package>/`。
+- `packs/installed.json` 记录版本、包名、目录哈希和安装时间。
+- `addon update [name|--all]` 替换代码并保留 add-on 数据。
+- 新增 `addon verify`、`addon start/stop/status`；运行时使用 home venv，
+  拒绝占用端口，检查健康，并把日志/状态写到 home。
+- `requires` 支持 add-on 依赖（`core/1` 以及可选 `name>=version`），
+  在安装/更新时校验。
+- `team` / `full` profile 与当前自带目录一致；文档改用真实命令
+  `addon profile`。
+- media worker 按安装包解析（`packs.media.worker`），OCR/转写从 `packs/`
+  运行也可用，不再只依赖源码目录。
+- add-on 提供本地 `/api/health`，运行状态不依赖 Core 是否在线；Windows
+  add-on 从 SSH job 脱离，并按实际监听 PID 跟踪。
+
 ## v0.1.0-preview.34
 
 - media v0.2b：可选 RapidOCR 与 faster-whisper。

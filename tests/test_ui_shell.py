@@ -57,6 +57,8 @@ class UiShellTest(unittest.TestCase):
 
     def test_default_agent_and_proxy(self) -> None:
         self.assertEqual(server.default_agent(self.home), "alice.test")
+        with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/api/health") as response:
+            self.assertEqual(json.loads(response.read())["addon"], "ui-shell")
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/api/v1/health") as response:
             payload = json.loads(response.read())
         self.assertEqual(payload["agent"], "alice.test")

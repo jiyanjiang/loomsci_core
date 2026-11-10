@@ -71,6 +71,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _route(self) -> None:
         path = urlsplit(self.path).path
+        if path == "/api/health":
+            return self._json(200, {"ok": True, "addon": "media"})
         if path == "/api/capabilities":
             return self._json(200, {"ok": True, **extract.capabilities()})
         if path == "/api/library":
@@ -176,8 +178,9 @@ class Handler(BaseHTTPRequestHandler):
             source = Path(tmp) / f"input{suffix}"
             source.write_bytes(data)
             core_root = ROOT.parents[1]
+            package = __package__ or "addons.media"
             result = subprocess.run(
-                [sys.executable, "-m", "addons.media.worker", kind, str(source), content_type],
+                [sys.executable, "-m", f"{package}.worker", kind, str(source), content_type],
                 cwd=str(core_root), env={**os.environ, "PYTHONPATH": str(core_root), "PYTHONIOENCODING": "utf-8"},
                 text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=300,
             )

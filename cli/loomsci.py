@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from core import addon_runtime
 from core import addons as addons_mod
 from core import export as export_mod
 from core import storage
@@ -685,17 +686,25 @@ def _cmd_status(args: argparse.Namespace) -> int:
 
 def _cmd_addon_list(args: argparse.Namespace) -> int:
     layout = _layout(args)
-    current = set(addons_mod.installed(layout.root))
-    entries = [
-        {**item, "installed": item.get("name") in current}
-        for item in addons_mod.available()
-    ]
+    records = {name: addons_mod.record(layout.root, name) for name in addons_mod.installed(layout.root)}
+    entries = []
+    for item in addons_mod.available():
+        name = item["name"]
+        rec = records.get(name, {})
+        entries.append({
+            **item,
+            "installed": name in records,
+            "installed_version": rec.get("version"),
+            "installed_package": rec.get("package"),
+            "update_available": bool(rec) and rec.get("version") != item.get("version"),
+        })
     if args.json:
         _json_print({"addons": entries, "profiles": addons_mod.PROFILES})
     else:
         for item in entries:
             mark = "*" if item["installed"] else " "
-            print(f"{mark} {item['name']:<12} {item.get('version', '?'):<8} {item.get('api', '')}")
+            update = " UPDATE" if item["update_available"] else ""
+            print(f"{mark} {item['name']:<12} {item.get('version', '?'):<8} {item.get('api', '')}{update}")
         print("profiles: " + ", ".join(addons_mod.PROFILES))
     return 0
 
@@ -704,17 +713,102 @@ def _cmd_addon_install(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
         result = addons_mod.install(layout.root, args.name)
-    except addons_mod.AddonError as exc:
+        if args.start:
+            result["runtime"] = addon_runtime.start(layout.root, args.name)
+    except (addons_mod.AddonError, addon_runtime.AddonRuntimeError) as exc:
         raise CliError(str(exc)) from None
     if args.json:
         _json_print(result)
     else:
-        print(f"installed: {result['name']} {result['version'] or ''}".rstrip())
+        print(f"installed: {result['name']} {result['version'] or ''} -> {result['package']}".rstrip())
+    return 0
+
+
+def _cmd_addon_update(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        if args.all:
+            result = addons_mod.update_all(layout.root)
+        elif args.name:
+            result = addons_mod.update(layout.root, args.name)
+        else:
+            raise CliError("specify an add-on name or --all")
+    except addons_mod.AddonError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print({"updated": result})
+    else:
+        items = result if isinstance(result, list) else [result]
+        for item in items:
+            print(f"updated: {item['name']} {item.get('previous_version') or '?'} -> {item.get('version') or '?'}")
+    return 0
+
+
+def _cmd_addon_verify(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = addons_mod.verify(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        for item in result["addons"]:
+            print(f"{'ok' if item['ok'] else 'FAIL'} {item['name']} {item.get('version') or '?'}")
+    return 0 if result["ok"] else 1
+
+
+def _cmd_addon_start(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        if args.all:
+            result = addon_runtime.start_all(layout.root)
+        elif args.name:
+            result = addon_runtime.start(layout.root, args.name)
+        else:
+            raise CliError("specify an add-on name or --all")
+    except addon_runtime.AddonRuntimeError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print({"started": result})
+    else:
+        items = result if isinstance(result, list) else [result]
+        for item in items:
+            print(f"{item.get('name')}: {item.get('state', 'error')}" + (f" ({item.get('error')})" if item.get("error") else ""))
+    return 0 if not isinstance(result, list) or all(item.get("running") for item in result) else 1
+
+
+def _cmd_addon_stop(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    if args.all:
+        result = addon_runtime.stop_all(layout.root)
+    elif args.name:
+        result = addon_runtime.stop(layout.root, args.name)
+    else:
+        raise CliError("specify an add-on name or --all")
+    if args.json:
+        _json_print({"stopped": result})
+    else:
+        items = result if isinstance(result, list) else [result]
+        for item in items:
+            print(f"{item['name']}: stopped={item.get('stopped')} running={item.get('running')}")
+    return 0
+
+
+def _cmd_addon_status(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = addon_runtime.status_all(layout.root)
+    if args.json:
+        _json_print({"addons": result})
+    else:
+        for item in result:
+            print(f"{item['name']:<12} {item['state']:<12} pid={item.get('pid') or '-'} port={item.get('port') or '-'}")
     return 0
 
 
 def _cmd_addon_remove(args: argparse.Namespace) -> int:
     layout = _layout(args)
+    try:
+        addon_runtime.stop(layout.root, args.name)
+    except addon_runtime.AddonRuntimeError:
+        pass
     result = addons_mod.remove(layout.root, args.name)
     if args.json:
         _json_print(result)
@@ -727,7 +821,10 @@ def _cmd_addon_profile(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
         result = addons_mod.install_profile(layout.root, args.profile)
-    except addons_mod.AddonError as exc:
+        if args.start:
+            for item in result:
+                item["runtime"] = addon_runtime.start(layout.root, item["name"])
+    except (addons_mod.AddonError, addon_runtime.AddonRuntimeError) as exc:
         raise CliError(str(exc)) from None
     if args.json:
         _json_print({"profile": args.profile, "installed": result})
@@ -942,8 +1039,35 @@ def build_parser() -> argparse.ArgumentParser:
 
     addon_install = addon_sub.add_parser("install", help="install a bundled add-on")
     addon_install.add_argument("name")
+    addon_install.add_argument("--start", action="store_true", help="start after install")
     addon_install.add_argument("--json", action="store_true")
     addon_install.set_defaults(func=_cmd_addon_install)
+
+    addon_update = addon_sub.add_parser("update", help="update installed add-on code, preserving data")
+    addon_update.add_argument("name", nargs="?")
+    addon_update.add_argument("--all", action="store_true")
+    addon_update.add_argument("--json", action="store_true")
+    addon_update.set_defaults(func=_cmd_addon_update)
+
+    addon_verify = addon_sub.add_parser("verify", help="verify installed add-on files and versions")
+    addon_verify.add_argument("--json", action="store_true")
+    addon_verify.set_defaults(func=_cmd_addon_verify)
+
+    addon_start = addon_sub.add_parser("start", help="start an installed add-on")
+    addon_start.add_argument("name", nargs="?")
+    addon_start.add_argument("--all", action="store_true")
+    addon_start.add_argument("--json", action="store_true")
+    addon_start.set_defaults(func=_cmd_addon_start)
+
+    addon_stop = addon_sub.add_parser("stop", help="stop a running add-on")
+    addon_stop.add_argument("name", nargs="?")
+    addon_stop.add_argument("--all", action="store_true")
+    addon_stop.add_argument("--json", action="store_true")
+    addon_stop.set_defaults(func=_cmd_addon_stop)
+
+    addon_status = addon_sub.add_parser("status", help="show add-on runtime state")
+    addon_status.add_argument("--json", action="store_true")
+    addon_status.set_defaults(func=_cmd_addon_status)
 
     addon_remove = addon_sub.add_parser("remove", help="remove an installed add-on")
     addon_remove.add_argument("name")
@@ -952,6 +1076,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     addon_profile = addon_sub.add_parser("profile", help="install a recommended profile")
     addon_profile.add_argument("profile", choices=sorted(addons_mod.PROFILES))
+    addon_profile.add_argument("--start", action="store_true", help="start installed add-ons")
     addon_profile.add_argument("--json", action="store_true")
     addon_profile.set_defaults(func=_cmd_addon_profile)
 

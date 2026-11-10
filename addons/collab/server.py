@@ -75,8 +75,7 @@ class Handler(BaseHTTPRequestHandler):
     def _route(self, method: str) -> None:
         path = urlsplit(self.path).path
         if path == "/api/health" and method == "GET":
-            status, data = self._core("GET", "/v1/health")
-            return self._json(status, data)
+            return self._json(200, {"ok": True, "addon": "collab"})
         if path == "/api/rooms" and method == "GET":
             return self._rooms()
         if path == "/api/rooms" and method == "POST":

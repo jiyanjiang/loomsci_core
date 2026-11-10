@@ -239,5 +239,25 @@ class CliTest(unittest.TestCase):
             self.assertTrue((source / "data.db").is_file())
 
 
+    def test_addon_lifecycle_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            env = {"LOOMSCI_HOME": str(home)}
+            installed = _run(["addon", "install", "ui-shell", "--json"], env=env)
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            payload = json.loads(installed.stdout)
+            self.assertEqual(payload["package"], "ui_shell")
+            updated = _run(["addon", "update", "ui-shell", "--json"], env=env)
+            self.assertEqual(updated.returncode, 0, updated.stderr)
+            verified = _run(["addon", "verify", "--json"], env=env)
+            self.assertEqual(verified.returncode, 0, verified.stderr)
+            self.assertTrue(json.loads(verified.stdout)["ok"])
+            listed = _run(["addon", "list", "--json"], env=env)
+            self.assertEqual(listed.returncode, 0, listed.stderr)
+            entry = next(item for item in json.loads(listed.stdout)["addons"] if item["name"] == "ui-shell")
+            self.assertEqual(entry["installed_version"], "0.3.4")
+            self.assertIn("team", json.loads(listed.stdout)["profiles"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2,10 +2,23 @@
   "name": "media",
   "version": "0.2.0",
   "api": "core/1",
-  "requires": ["core/1"],
-  "routes": ["/"],
+  "requires": [
+    "core/1"
+  ],
+  "routes": [
+    "/"
+  ],
   "storage": "addon.media",
   "jobs": [],
-  "nav": [{"label": "Media", "href": "http://127.0.0.1:8794/"}],
-  "preserve": []
+  "nav": [
+    {
+      "label": "Media",
+      "href": "http://127.0.0.1:8794/"
+    }
+  ],
+  "preserve": [],
+  "package": "media",
+  "entry": "server",
+  "port": 8794,
+  "health": "/api/health"
 }

@@ -4,6 +4,24 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.35
+
+- Add-on lifecycle v1: manifests now carry `package`, `entry`, `port`, and
+  `health`; installed code lives under `packs/<package>/`.
+- `packs/installed.json` records version, package, tree hash, and install time.
+- `addon update [name|--all]` replaces code while preserving add-on data.
+- `addon verify`, `addon start/stop/status`; the runtime uses the home venv,
+  refuses occupied ports, checks health, and writes logs/state under the home.
+- Add-on dependencies are declared in `requires` (`core/1` plus optional
+  `name>=version`) and checked at install/update.
+- `team` / `full` profiles now match the bundled catalog. Docs use the real
+  `addon profile` command.
+- media worker resolves its installed package (`packs.media.worker`), so OCR and
+  transcription work from `packs/`, not only from the source tree.
+- Add-ons expose a local `/api/health` endpoint; runtime status is independent of
+  Core availability. Windows add-ons detach from the SSH job and are tracked by
+  the actual listening PID.
+
 ## v0.1.0-preview.34
 
 - media v0.2b: optional RapidOCR and faster-whisper.

@@ -41,34 +41,49 @@ needed for the first add-on. Do not implement it speculatively; extract it when
 | `minimal` | none | Core only; CLI-first |
 | `personal` | `ui-shell`, `notify` | one owner, one machine |
 | `maker` | `ui-shell`, `media`, `research` | creator/researcher |
-| `team` | `ui-shell`, `collab`, `notify`, `sync` | small trusted team |
-| `full` | all stable add-ons | power user; explicit opt-in |
+| `team` | `ui-shell`, `collab`, `notify` | small trusted team |
+| `full` | all bundled add-ons | power user; explicit opt-in |
 
 Installation must allow:
 
 ```bash
 loomsci addon list
 loomsci addon install ui-shell
-loomsci addon install --profile personal
+loomsci addon install ui-shell --start
+loomsci addon profile personal
+loomsci addon update --all
+loomsci addon verify
+loomsci addon start --all
+loomsci addon stop --all
+loomsci addon status
 loomsci addon remove ui-shell
 ```
 
-Profiles are recommendations, not forced bundles.
+Profiles are recommendations, not forced bundles. Installed code lives in
+`packs/<package>/`; `packs/installed.json` records version, package, hash, and
+install time. `addon update` replaces code but preserves `packs/<package>/data/`.
+A Core upgrade preserves `packs/`, so installed add-ons are updated explicitly.
+`addon update` does not restart a running process; use `addon stop` then
+`addon start`. `addon start` launches the installed copy with the home venv;
+Core is not imported and is not started by the add-on host.
 
 ## Manifest
 
 ```json
 {
   "name": "ui-shell",
-  "version": "0.1.0",
+  "version": "0.3.4",
+  "package": "ui_shell",
+  "entry": "server",
+  "port": 8790,
+  "health": "/api/health",
   "api": "core/1",
   "requires": ["core/1"],
-  "routes": ["/apps/ui/*"],
+  "routes": ["/"],
   "storage": "addon.ui",
-  "migrations": ["001_init.sql"],
   "jobs": [],
-  "nav": [{"label": "UI", "href": "/apps/ui/"}],
-  "preserve": ["data/addons/ui/"]
+  "nav": [{"label": "UI", "href": "http://127.0.0.1:8790/"}],
+  "preserve": []
 }
 ```
 
@@ -79,6 +94,9 @@ Rules:
 - `storage` maps to an isolated directory and/or table prefix.
 - `migrations` are additive and idempotent; no cross-add-on tables.
 - `jobs` are disabled unless the profile enables the add-on.
+- `package` is the importable directory under `packs/`; `entry` is its module.
+- `port` and `health` are used by `addon start/status`.
+- `requires` may name another add-on, e.g. `social: ["core/1", "collab>=0.2"]`.
 - `preserve` survives upgrade/uninstall according to policy.
 
 ## Implementation sequence

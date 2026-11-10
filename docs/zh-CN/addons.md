@@ -36,34 +36,48 @@ Core 是长期稳定的内核；UI 和能力都是 add-on。本文是契约规�
 | `minimal` | 无 | 纯 Core，CLI 优先 |
 | `personal` | `ui-shell`, `notify` | 单人单机 |
 | `maker` | `ui-shell`, `media`, `research` | 创作者/研究者 |
-| `team` | `ui-shell`, `collab`, `notify`, `sync` | 小团队 |
-| `full` | 全部稳定 add-on | 高级用户，显式选择 |
+| `team` | `ui-shell`, `collab`, `notify` | 小团队 |
+| `full` | 全部自带 add-on | 高级用户，显式选择 |
 
 安装方式：
 
 ```bash
 loomsci addon list
 loomsci addon install ui-shell
-loomsci addon install --profile personal
+loomsci addon install ui-shell --start
+loomsci addon profile personal
+loomsci addon update --all
+loomsci addon verify
+loomsci addon start --all
+loomsci addon stop --all
+loomsci addon status
 loomsci addon remove ui-shell
 ```
 
-profile 是推荐组合，不是强制捆绑。
+profile 是推荐组合，不是强制捆绑。安装后的代码在 `packs/<package>/`；
+`packs/installed.json` 记录版本、包名、哈希和安装时间。`addon update` 替换代码，
+但保留 `packs/<package>/data/`。Core 升级保留 `packs/`，因此已安装 add-on
+需要显式 `addon update`。`addon update` 不重启已运行进程；先 `addon stop`
+再 `addon start`。`addon start` 用 home 的 venv 启动已安装副本；不 import
+Core，也不由 add-on host 启动 Core。
 
 ## Manifest
 
 ```json
 {
   "name": "ui-shell",
-  "version": "0.1.0",
+  "version": "0.3.4",
+  "package": "ui_shell",
+  "entry": "server",
+  "port": 8790,
+  "health": "/api/health",
   "api": "core/1",
   "requires": ["core/1"],
-  "routes": ["/apps/ui/*"],
+  "routes": ["/"],
   "storage": "addon.ui",
-  "migrations": ["001_init.sql"],
   "jobs": [],
-  "nav": [{"label": "UI", "href": "/apps/ui/"}],
-  "preserve": ["data/addons/ui/"]
+  "nav": [{"label": "UI", "href": "http://127.0.0.1:8790/"}],
+  "preserve": []
 }
 ```
 
@@ -74,6 +88,9 @@ profile 是推荐组合，不是强制捆绑。
 - `storage` 映射到隔离目录和/或表前缀。
 - `migrations` 只做加法且幂等；不跨 add-on 建表。
 - `jobs` 只有 profile 启用该 add-on 时才运行。
+- `package` 是 `packs/` 下可导入的目录名；`entry` 是模块名。
+- `port`、`health` 供 `addon start/status` 使用。
+- `requires` 可声明其他 add-on，例如 `social: ["core/1", "collab>=0.2"]`。
 - `preserve` 按策略在升级/卸载时保留。
 
 ## 实现顺序

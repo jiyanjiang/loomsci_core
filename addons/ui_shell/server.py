@@ -53,6 +53,9 @@ class Handler(BaseHTTPRequestHandler):
     def _route(self) -> None:
         parsed = urlsplit(self.path)
         path = parsed.path
+        if path == "/api/health":
+            self._json(200, {"ok": True, "addon": "ui-shell"})
+            return
         if path.startswith("/api/"):
             upstream = "/v1/" + path[len("/api/v1/"):] if path.startswith("/api/v1/") else path
             if parsed.query:
@@ -60,6 +63,14 @@ class Handler(BaseHTTPRequestHandler):
             self._proxy(upstream)
             return
         self._static(path)
+
+    def _json(self, status: int, payload: dict) -> None:
+        data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def _proxy(self, upstream_path: str) -> None:
         length = int(self.headers.get("Content-Length") or 0)
