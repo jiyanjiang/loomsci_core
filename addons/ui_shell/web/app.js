@@ -121,8 +121,25 @@ function renderPending() {
   });
 }
 
+function clipboardImageFiles(event) {
+  const data = event.clipboardData;
+  if (!data) return [];
+  const files = [...(data.files || [])].filter((file) => file.type.startsWith("image/"));
+  if (files.length) return files;
+  return [...(data.items || [])]
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .map((item) => item.getAsFile())
+    .filter(Boolean);
+}
+
+function normalizeFile(file) {
+  if (file.name) return file;
+  const ext = (file.type.split("/")[1] || "png").replace("+xml", "");
+  return new File([file], `pasted-${Date.now()}.${ext}`, {type: file.type || "image/png"});
+}
+
 function addFiles(files) {
-  for (const file of files || []) if (file && file.size) pendingFiles.push(file);
+  for (const file of files || []) if (file && file.size) pendingFiles.push(normalizeFile(file));
   renderPending();
 }
 
@@ -146,13 +163,25 @@ async function loadPosts() {
   fileInput.onchange = () => addFiles(fileInput.files);
   const bodyInput = document.querySelector('#post-form textarea[name="body"]');
   bodyInput.addEventListener("paste", (event) => {
-    const files = [...(event.clipboardData?.items || [])]
-      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
-      .map((item) => item.getAsFile());
+    const files = clipboardImageFiles(event);
     if (files.length) {
       event.preventDefault();
       addFiles(files);
+      return;
     }
+    const types = [...(event.clipboardData?.types || [])];
+    if (types.includes("Files") || types.some((type) => type.startsWith("image/"))) {
+      showError("Clipboard did not expose an image file; copy the image itself (not a file path) and paste again.");
+    }
+  });
+  bodyInput.addEventListener("dragover", (event) => {
+    if ([...(event.dataTransfer?.items || [])].some((item) => item.kind === "file" && item.type.startsWith("image/"))) {
+      event.preventDefault();
+    }
+  });
+  bodyInput.addEventListener("drop", (event) => {
+    const files = [...(event.dataTransfer?.files || [])].filter((file) => file.type.startsWith("image/"));
+    if (files.length) { event.preventDefault(); addFiles(files); }
   });
   document.getElementById("post-form").onsubmit = async (event) => {
     event.preventDefault(); showError("");

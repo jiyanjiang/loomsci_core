@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.27
+
+- ui-shell clipboard fallback/files/drop and diagnostic.
+
 ## v0.1.0-preview.26
 
 - ui-shell clipboard image paste; attached on submit.

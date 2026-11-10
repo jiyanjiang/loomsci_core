@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.27
+
+- `ui-shell` 0.3.2 剪贴板加固：同时支持 `clipboardData.files` 与
+  `clipboardData.items`，补齐无名粘贴文件，剪贴板没有图片文件时给出提示，
+  并支持图片拖放。
+- 粘贴仍是 `ui-shell` 输入层能力，不属于 `media`。
+- 不改 Core 表/API。
+
 ## v0.1.0-preview.26
 
 - `ui-shell` 0.3.1：可直接从剪贴板粘贴图片到正文编辑器；提交时上传并附加。

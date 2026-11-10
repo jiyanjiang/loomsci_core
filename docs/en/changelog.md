@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.27
+
+- `ui-shell` 0.3.2 clipboard hardening: support `clipboardData.files` and
+  `clipboardData.items`, normalize unnamed pasted files, show a diagnostic when
+  the clipboard exposes no image file, and accept image drag/drop.
+- Paste remains a `ui-shell` input feature, not `media`.
+- No Core table/API changes.
+
 ## v0.1.0-preview.26
 
 - `ui-shell` 0.3.1: paste an image from the clipboard directly into the post
