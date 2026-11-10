@@ -1,0 +1,19 @@
+:root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+body { max-width: 1080px; margin: 3vh auto; padding: 0 20px; line-height: 1.5; }
+header { display: flex; gap: 12px; align-items: baseline; margin-bottom: 18px; }
+.layout { display: grid; grid-template-columns: 230px 1fr; gap: 24px; }
+aside { border-right: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding-right: 16px; }
+aside form { display: flex; gap: 5px; margin-bottom: 14px; }
+aside input { min-width: 0; padding: 6px; font: inherit; }
+.room { padding: 7px 8px; cursor: pointer; border-radius: 4px; }
+.room:hover, .room.active { background: color-mix(in srgb, currentColor 10%, transparent); }
+.room b { display: block; font-size: 14px; }
+.muted { opacity: .65; font-size: 12px; }
+#post-form { display: grid; gap: 8px; margin-top: 18px; }
+#post-form textarea { min-height: 80px; padding: 8px; font: inherit; }
+#post-form button, #room-form button { padding: 5px 10px; font: inherit; }
+.item { border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent); padding: 12px 0; }
+.md pre { white-space: pre-wrap; background: color-mix(in srgb, currentColor 7%, transparent); padding: 8px; }
+.md code { font-family: ui-monospace, monospace; }
+.md blockquote { margin-left: 0; padding-left: 12px; border-left: 3px solid color-mix(in srgb, currentColor 25%, transparent); opacity: .85; }
+.error { color: #b00020; white-space: pre-wrap; margin: 12px 0; }

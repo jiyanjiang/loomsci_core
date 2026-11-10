@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.21
+
+- Collab add-on: rooms/threads over Core posts.
+
 ## v0.1.0-preview.20
 
 - Minimal add-on host: list/install/remove/profile; ui-shell via personal profile.

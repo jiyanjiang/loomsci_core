@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>loomsci collab</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><strong>loomsci collab</strong><span id="status" class="muted"></span></header>
+<div class="layout">
+  <aside>
+    <form id="room-form"><input name="name" placeholder="New room" required maxlength="80"><button>Create</button></form>
+    <div id="rooms"></div>
+  </aside>
+  <main>
+    <h2 id="room-title">Select a room</h2>
+    <div id="members" class="muted"></div>
+    <div id="posts"></div>
+    <form id="post-form" hidden><textarea name="body" placeholder="Message (Markdown)" required></textarea><button>Send</button></form>
+  </main>
+</div>
+<div id="error" class="error" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>

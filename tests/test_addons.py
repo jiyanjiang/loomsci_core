@@ -26,7 +26,13 @@ class AddonHostTest(unittest.TestCase):
         self.assertTrue((self.home / "packs" / "ui-shell" / "manifest.json").is_file())
         self.assertIn("ui-shell", addons.installed(self.home))
         self.assertEqual(result["name"], "ui-shell")
+        data = self.home / "packs" / "ui-shell" / "data"
+        data.mkdir()
+        (data / "state.json").write_text("{}")
+        addons.install(self.home, "ui-shell")
+        self.assertTrue((data / "state.json").is_file())
         addons.remove(self.home, "ui-shell")
+        self.assertTrue((data / "state.json").is_file())
         self.assertNotIn("ui-shell", addons.installed(self.home))
         installed = addons.install_profile(self.home, "personal")
         self.assertEqual([item["name"] for item in installed], ["ui-shell"])

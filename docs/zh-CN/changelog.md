@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.21
+
+- 第二个 add-on：`collab` 房间/线程。
+- 房间元数据在 `packs/collab/data/collab.db`；消息是 Core 帖子，
+  `thread_id=room:<id>`；不改 Core 表和 `/v1` 形状。
+- UI：房间列表/创建、成员、Markdown 消息。
+- 默认端口 8792（8791 被本机其他服务占用）。
+- 测试覆盖房间创建、线程命名空间、代理行为，以及重装/移除时的 add-on 数据保留。
+
 ## v0.1.0-preview.20
 
 - Core 增加最小本地 add-on host：`loomsci addon list/install/remove/profile`。

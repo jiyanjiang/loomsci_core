@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.21
+
+- Second add-on: `collab` rooms/threads.
+- Room metadata lives in `packs/collab/data/collab.db`; messages are Core
+  posts with `thread_id=room:<id>`. Core tables and `/v1` shapes are unchanged.
+- UI: room list/create, members, Markdown messages.
+- Default port 8792 (8791 is used by an unrelated local service).
+- Tests cover room creation, thread namespace, proxy behavior, and add-on data preservation on reinstall/remove.
+
 ## v0.1.0-preview.20
 
 - Minimal local add-on host in Core: `loomsci addon list/install/remove/profile`.

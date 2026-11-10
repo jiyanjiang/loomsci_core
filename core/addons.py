@@ -97,10 +97,9 @@ def install(home: Path, name: str) -> dict[str, Any]:
     source = _source_for(name)
     manifest = read_manifest(source)
     target = home / "packs" / name
-    if target.exists():
-        shutil.rmtree(target)
     target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source, target)
+    # Never delete add-on data on reinstall; overwrite code/manifest only.
+    shutil.copytree(source, target, dirs_exist_ok=True)
     names = installed(home)
     if name not in names:
         names.append(name)
@@ -111,7 +110,16 @@ def install(home: Path, name: str) -> dict[str, Any]:
 def remove(home: Path, name: str) -> dict[str, Any]:
     target = home / "packs" / name
     if target.exists():
+        data = target / "data"
+        backup = home / "packs" / f".{name}.data"
+        if data.exists():
+            if backup.exists():
+                shutil.rmtree(backup)
+            shutil.move(str(data), str(backup))
         shutil.rmtree(target)
+        if backup.exists():
+            target.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(backup), str(target / "data"))
     names = [item for item in installed(home) if item != name]
     _write_state(home, names)
     return {"name": name, "removed": True}

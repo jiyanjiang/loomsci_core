@@ -1,0 +1,11 @@
+{
+  "name": "collab",
+  "version": "0.1.0",
+  "api": "core/1",
+  "requires": ["core/1"],
+  "routes": ["/"],
+  "storage": "addon.collab",
+  "jobs": [],
+  "nav": [{"label": "Collab", "href": "http://127.0.0.1:8792/"}],
+  "preserve": ["packs/collab/data/"]
+}
