@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.17
+
+- Fix Windows agent instructions: when a `loomsci.cmd` launcher exists (or the
+  host is Windows), generated instructions use the `.cmd` path instead of the
+  extensionless Unix path. This was observed in real Windows omp L7.
+- No protocol or data changes.
+
 ## v0.1.0-preview.16
 
 - Documentation/package alignment only: README quickstart now uses the actual

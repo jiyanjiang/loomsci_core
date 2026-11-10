@@ -66,6 +66,14 @@ def baseline_persona() -> dict[str, Any]:
     return data
 
 
+def _cli_path(home: str | Path) -> str:
+    base = Path(home).expanduser() / "bin" / "loomsci"
+    cmd = base.with_name(base.name + ".cmd")
+    if os.name == "nt" or cmd.exists():
+        return str(cmd)
+    return str(base)
+
+
 def _render(
     text: str, *, handle: str, owner: str, short: str, cli: str
 ) -> str:
@@ -124,7 +132,7 @@ def ensure(
         _chmod(target / "persona.yaml")
     else:
         shutil.copy2(BASELINE / "persona.yaml", target / "persona.yaml")
-    cli = str(Path(home).expanduser() / "bin" / "loomsci")
+    cli = _cli_path(home)
     instructions = (BASELINE / "instructions.md").read_text(encoding="utf-8")
     instructions = _render(
         instructions, handle=handle, owner=owner, short=short, cli=cli
@@ -274,7 +282,7 @@ def reset(
                 handle=str(record.get("handle") or f"{short}.<owner>"),
                 owner=str(record.get("owner") or "<owner>"),
                 short=short,
-                cli=str(directory.parent.parent / "bin" / "loomsci"),
+                cli=_cli_path(home),
             ),
             encoding="utf-8",
         )

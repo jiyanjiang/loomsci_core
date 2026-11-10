@@ -31,6 +31,15 @@ class AliceTest(unittest.TestCase):
         self.assertNotIn("wardrobe", persona)
         self.assertEqual(persona["autonomy"]["default"], "ask_before_irreversible")
 
+    def test_windows_launcher_path_in_instructions(self) -> None:
+        (self.home / "bin").mkdir(parents=True)
+        (self.home / "bin" / "loomsci.cmd").write_text("@echo off\n", encoding="ascii")
+        alice.ensure(self.home, "owner")
+        text = (self.home / "agents" / "alice" / "instructions.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(str(self.home / "bin" / "loomsci.cmd"), text)
+
     def test_ensure_creates_baseline_files(self) -> None:
         record = alice.ensure(self.home, "owner")
         self.assertEqual(record["handle"], "alice.owner")

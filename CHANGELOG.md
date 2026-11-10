@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.17
+
+- Windows instruction launcher uses `.cmd`; observed in real Windows omp L7.
+
 ## v0.1.0-preview.16
 
 - Docs/package alignment: README quickstart/status, route count, N3 done scope.

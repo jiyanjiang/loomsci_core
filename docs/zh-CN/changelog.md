@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.17
+
+- 修复 Windows agent 指令：存在 `loomsci.cmd`（或宿主为 Windows）时，生成的
+  指令使用 `.cmd` 路径，而不是 Unix 无扩展名路径。由 Windows 真实 omp L7 发现。
+- 无协议或数据变更。
+
 ## v0.1.0-preview.16
 
 - 仅文档/打包对齐：README 快速开始改为真实安装器 + `loomsci init`；状态表
