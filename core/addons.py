@@ -229,6 +229,7 @@ def install(home: Path, name: str) -> dict[str, Any]:
     _check_requires(manifest, records)
     destination = home / "packs" / manifest["package"]
     destination.parent.mkdir(parents=True, exist_ok=True)
+    (destination.parent / "__init__.py").touch(exist_ok=True)
     _copy_code(source, destination)
     _migrate_legacy_target(home, name, destination)
     records[name] = {

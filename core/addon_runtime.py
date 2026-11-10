@@ -134,7 +134,7 @@ def _port_pid_windows(port: int) -> int:
 
 def _spawn_windows(python: str, module: str, home: Path, port: int, log, env: dict[str, str]) -> subprocess.Popen:
     """Detach from the SSH/PowerShell job so the server survives the caller."""
-    base = [python, "-m", module, "--home", str(home), "--port", str(port)]
+    base = [python, "-u", "-m", module, "--home", str(home), "--port", str(port)]
     last: OSError | None = None
     for flags in (0x00000008 | 0x00000200 | 0x01000000, 0x00000008 | 0x00000200):
         try:
@@ -182,7 +182,7 @@ def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
             )
         else:
             process = subprocess.Popen(
-                [_python(home), "-m", module, "--home", str(home), "--port", str(port)],
+                [_python(home), "-u", "-m", module, "--home", str(home), "--port", str(port)],
                 cwd=str(home),
                 env=env,
                 stdin=subprocess.DEVNULL,

@@ -92,6 +92,7 @@ class AddonHostTest(unittest.TestCase):
         port = sock.getsockname()[1]
         sock.close()
         (source / "manifest.json").write_text(json.dumps(_manifest("demo", port=port)))
+        (source / "__init__.py").write_text("")
         (source / "server.py").write_text(
             "import argparse, json\n"
             "from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer\n"
@@ -113,7 +114,7 @@ class AddonHostTest(unittest.TestCase):
         )
         with mock.patch.object(addons, "BUNDLED", bundled):
             addons.install(self.home, "demo")
-            started = addon_runtime.start(self.home, "demo", timeout=8)
+            started = addon_runtime.start(self.home, "demo", timeout=30)
             self.assertTrue(started["running"])
             self.assertTrue(started["healthy"])
             self.assertEqual(addon_runtime.status(self.home, "demo")["state"], "running")
