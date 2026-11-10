@@ -1,10 +1,10 @@
 {
   "product": "loomsci_core",
-  "version": "0.1.0-preview.33",
+  "version": "0.1.0-preview.34",
   "channel": "preview",
-  "url": "loomsci_core-0.1.0-preview.33.zip",
-  "bytes": 506830,
-  "sha256": "420a2984c0de02c51d37fb1de3d132afeacdbed3080bcb2954cb8d61fefae885",
-  "published_at": "2026-11-10T14:10:30+00:00",
+  "url": "loomsci_core-0.1.0-preview.34.zip",
+  "bytes": 510979,
+  "sha256": "488427e419f1c887eb4bb493b48267414fe930ba2f75b2bcbc7ee21af182524b",
+  "published_at": "2026-11-10T14:45:47+00:00",
   "signature": ""
 }

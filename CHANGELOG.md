@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.34
+
+- Media v0.2b OCR and speech transcription, optional tools.
+
 ## v0.1.0-preview.33
 
 - Research v0.2: optional DeepSeek Search/Chat with source gate.

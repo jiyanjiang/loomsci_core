@@ -4,6 +4,19 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.34
+
+- media v0.2b: optional RapidOCR and faster-whisper.
+- `POST /api/ocr/<attachment>` and `POST /api/transcribe/<attachment>`; GET
+  returns cached results. Missing tools return `*_not_available`.
+- OCR: RapidOCR 1.4.4 + onnxruntime; transcription: faster-whisper 1.2.1
+  with `small` int8; `av==17.1.0` pinned for compatibility.
+- Pins for cross-platform stability: onnxruntime 1.20.1, ctranslate2 4.4.0,
+  av 17.1.0, setuptools 80.10.2. Extractors run in an isolated worker process.
+- Real macOS + Windows tests: OCR "HELLO OCR 123"; transcription of 4.5s
+  Chinese audio returned exact text; cache works on both.
+- Optional dependencies are in `addons/media/requirements-media.txt`, not Core.
+
 ## v0.1.0-preview.33
 
 - research v0.2: optional DeepSeek Search + Chat, with source-gated answer.

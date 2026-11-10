@@ -11,12 +11,15 @@ import http.client
 import json
 import mimetypes
 import os
+import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
+from . import extract
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
@@ -57,18 +60,25 @@ class Handler(BaseHTTPRequestHandler):
     upstream_port = 8787
     agent = "alice.owner"
     thumb_dir = Path("thumbs")
+    ocr_dir = Path("ocr")
+    transcript_dir = Path("transcripts")
 
     def do_GET(self) -> None:
+        self._route()
+
+    def do_POST(self) -> None:
         self._route()
 
     def _route(self) -> None:
         path = urlsplit(self.path).path
         if path == "/api/capabilities":
-            return self._json(200, {"ok": True, "ffmpeg": bool(shutil.which("ffmpeg")),
-                                    "tesseract": bool(shutil.which("tesseract")),
-                                    "whisper": bool(shutil.which("whisper"))})
+            return self._json(200, {"ok": True, **extract.capabilities()})
         if path == "/api/library":
             return self._library()
+        if path.startswith("/api/ocr/"):
+            return self._extract(unquote(path[len("/api/ocr/"):]), "ocr")
+        if path.startswith("/api/transcribe/"):
+            return self._extract(unquote(path[len("/api/transcribe/"):]), "transcribe")
         if path.startswith("/api/thumbnail/"):
             return self._thumbnail(unquote(path[len("/api/thumbnail/"):]))
         if path.startswith("/api/attachment/"):
@@ -132,6 +142,52 @@ class Handler(BaseHTTPRequestHandler):
         for item in values:
             counts[item["kind"]] += 1
         self._json(200, {"ok": True, "counts": counts, "items": values[:500]})
+
+    def _extract(self, attachment_id: str, kind: str) -> None:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", attachment_id):
+            return self._json(404, {"ok": False, "error": "attachment_not_found"})
+        directory = self.ocr_dir if kind == "ocr" else self.transcript_dir
+        cache = directory / f"{attachment_id}.json"
+        if self.command == "GET" and cache.is_file():
+            return self._json(200, {"ok": True, "cached": True, **json.loads(cache.read_text(encoding="utf-8"))})
+        status, headers, data = self._core_bytes(f"/v1/attachments/{attachment_id}")
+        if status != 200:
+            return self._json(404, {"ok": False, "error": "attachment_not_found"})
+        content_type = headers.get("Content-Type", "")
+        try:
+            if kind == "ocr":
+                if not content_type.startswith("image/"):
+                    return self._json(415, {"ok": False, "error": "not_image"})
+            else:
+                if not (content_type.startswith("audio/") or content_type.startswith("video/")):
+                    return self._json(415, {"ok": False, "error": "not_audio_or_video"})
+            result = self._worker(kind, data, content_type)
+        except RuntimeError as exc:
+            return self._json(501, {"ok": False, "error": str(exc)})
+        except Exception as exc:  # noqa: BLE001 - add-on boundary
+            return self._json(422, {"ok": False, "error": f"extract_failed: {type(exc).__name__}"})
+        directory.mkdir(parents=True, exist_ok=True)
+        cache.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        self._json(200, {"ok": True, "cached": False, **result})
+
+    def _worker(self, kind: str, data: bytes, content_type: str) -> dict:
+        suffix = ".png" if kind == "ocr" else ".mp4" if content_type.startswith("video/") else ".mp3"
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / f"input{suffix}"
+            source.write_bytes(data)
+            core_root = ROOT.parents[1]
+            result = subprocess.run(
+                [sys.executable, "-m", "addons.media.worker", kind, str(source), content_type],
+                cwd=str(core_root), env={**os.environ, "PYTHONPATH": str(core_root), "PYTHONIOENCODING": "utf-8"},
+                text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=300,
+            )
+        if result.returncode != 0:
+            detail = (result.stdout or result.stderr).strip()[:300]
+            raise RuntimeError(detail or "worker_failed")
+        try:
+            return json.loads(result.stdout)
+        except ValueError:
+            raise RuntimeError("worker_invalid_json") from None
 
     def _thumbnail(self, attachment_id: str) -> None:
         ffmpeg = shutil.which("ffmpeg")
@@ -214,6 +270,8 @@ def main() -> int:
     Handler.agent = args.agent or default_agent(home)
     base = home or Path.home() / ".loomsci"
     Handler.thumb_dir = base / "packs" / "media" / "data" / "thumbs"
+    Handler.ocr_dir = base / "packs" / "media" / "data" / "ocr"
+    Handler.transcript_dir = base / "packs" / "media" / "data" / "transcripts"
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     print(f"media on http://127.0.0.1:{args.port} (agent={Handler.agent})", flush=True)
     server.serve_forever()

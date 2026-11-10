@@ -7,6 +7,8 @@ import sys
 import tempfile
 import threading
 import unittest
+import unittest.mock
+import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -14,7 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from addons.media import server  # noqa: E402
+from addons.media import extract, server  # noqa: E402
 
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAACXBIWXMAAAABAAAAAQBPJcTWAAAAEElEQVR4nGP8w4AALAxEcQAz1AEKG5dMywAAAABJRU5ErkJggg==")
@@ -75,6 +77,26 @@ class MediaTest(unittest.TestCase):
         self.assertEqual(data["items"][0]["kind"], "image")
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/api/attachment/a-img") as response:
             self.assertEqual(response.read(), PNG)
+
+    def test_extract_capabilities_shape(self) -> None:
+        caps = extract.capabilities()
+        for key in ("ffmpeg", "rapidocr", "faster_whisper", "whisper_model"):
+            self.assertIn(key, caps)
+
+    def test_extract_does_not_fake_missing_tools(self) -> None:
+        with unittest.mock.patch.object(extract, "_available", return_value=False):
+            with self.assertRaises(RuntimeError):
+                extract.ocr_bytes(PNG, "image/png")
+            with self.assertRaises(RuntimeError):
+                extract.transcribe_bytes(b"x", "audio/wav")
+
+    def test_extract_rejects_wrong_media_type(self) -> None:
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{self.shell.server_port}/api/transcribe/a-bin", data=b"", method="POST"
+        )
+        with self.assertRaises(urllib.error.HTTPError) as ctx:
+            urllib.request.urlopen(request)
+        self.assertEqual(ctx.exception.code, 415)
 
     @unittest.skipUnless(shutil.which("ffmpeg"), "ffmpeg unavailable")
     def test_thumbnail(self) -> None:

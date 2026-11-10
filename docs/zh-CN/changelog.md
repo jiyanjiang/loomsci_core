@@ -3,6 +3,19 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.34
+
+- media v0.2b：可选 RapidOCR 与 faster-whisper。
+- `POST /api/ocr/<attachment>`、`POST /api/transcribe/<attachment>`；GET
+  返回缓存结果。工具缺失返回 `*_not_available`。
+- OCR：RapidOCR 1.4.4 + onnxruntime；转写：faster-whisper 1.2.1，
+  `small` int8；固定 `av==17.1.0` 以兼容。
+- 跨平台稳定固定：onnxruntime 1.20.1、ctranslate2 4.4.0、av 17.1.0、
+  setuptools 80.10.2；提取在独立 worker 进程运行。
+- macOS + Windows 实测：OCR 识别 "HELLO OCR 123"；4.5s 中文音频转写
+  文本完全正确；两端缓存均生效。
+- 可选依赖在 `addons/media/requirements-media.txt`，不进 Core。
+
 ## v0.1.0-preview.33
 
 - research v0.2：可选 DeepSeek Search + Chat，带来源约束回答。

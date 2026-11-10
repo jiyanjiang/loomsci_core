@@ -17,3 +17,6 @@ audio { width:100%; }
 .error { color:var(--danger); white-space:pre-wrap; }
 .empty { grid-column:1/-1; color:var(--muted); }
 @media (max-width:640px){ #grid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); } .media { height:120px; } }
+
+.card button { margin-top: 6px; }
+.result { white-space: pre-wrap; font-size: 12px; max-height: 160px; overflow: auto; margin: 6px 0 0; }

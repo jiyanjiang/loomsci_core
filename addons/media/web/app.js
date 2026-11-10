@@ -15,8 +15,25 @@ function render() {
     if (item.kind === "image") media = `<a href="${src}" target="_blank" rel="noreferrer"><img class="media" src="${thumb}" onerror="this.src='${src}'" alt="${esc(item.filename)}" loading="lazy"></a>`;
     if (item.kind === "audio") media = `<audio controls preload="metadata" src="${src}"></audio>`;
     if (item.kind === "video") media = `<video class="media" controls preload="metadata" poster="${thumb}" src="${src}"></video>`;
-    return `<article class="card">${media}<div class="name">${esc(item.filename)}</div><div class="muted">${esc(item.kind)} · ${Math.ceil((item.bytes || 0)/1024)} KB · ${esc(item.author || "")}</div></article>`;
+    const action = item.kind === "image"
+      ? `<button data-extract="ocr" data-id="${esc(item.id)}">OCR</button>`
+      : (item.kind === "audio" || item.kind === "video")
+        ? `<button data-extract="transcribe" data-id="${esc(item.id)}">Transcribe</button>` : "";
+    return `<article class="card">${media}<div class="name">${esc(item.filename)}</div><div class="muted">${esc(item.kind)} · ${Math.ceil((item.bytes || 0)/1024)} KB · ${esc(item.author || "")}</div>${action}<pre class="result" id="result-${esc(item.id)}"></pre></article>`;
   }).join("") || '<p class="empty">No media yet.</p>';
+  grid.querySelectorAll("button[data-extract]").forEach((button) => {
+    button.onclick = async () => {
+      const id = button.dataset.id, kind = button.dataset.extract;
+      const out = document.getElementById(`result-${id}`);
+      out.textContent = "working…";
+      try {
+        const res = await fetch(`/api/${kind}/${encodeURIComponent(id)}`, {method:"POST"});
+        const data = await res.json();
+        if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+        out.textContent = data.text || JSON.stringify(data);
+      } catch (err) { out.textContent = "error: " + err.message; }
+    };
+  });
 }
 async function load() {
   showError("");
