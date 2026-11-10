@@ -957,7 +957,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--apply and --dry-run are mutually exclusive")
     try:
         return int(args.func(args))
-    except (HomeError, CliError) as exc:
+    except (HomeError, CliError, export_mod.ExportError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

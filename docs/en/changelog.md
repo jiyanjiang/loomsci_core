@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.18
+
+- N4 fault fix: importing a corrupt/truncated export now raises a clean
+  `ExportError` instead of a raw traceback; the CLI exits non-zero without
+  creating the destination home.
+- Added a regression test; no protocol changes.
+
 ## v0.1.0-preview.17
 
 - Fix Windows agent instructions: when a `loomsci.cmd` launcher exists (or the

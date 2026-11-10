@@ -98,6 +98,14 @@ class ExportTest(unittest.TestCase):
             export.export_home(self.home, out)
         self.assertEqual(mkstemp.call_args.kwargs["dir"], out.parent)
 
+    def test_corrupt_zip_rejected(self) -> None:
+        bad = Path(self.tmp.name) / "corrupt.zip"
+        bad.write_bytes(b"not a zip")
+        destination = Path(self.tmp.name) / "corrupt-dest"
+        with self.assertRaises(export.ExportError):
+            export.import_home(bad, destination)
+        self.assertFalse(destination.exists())
+
     def test_unsafe_member_rejected(self) -> None:
         bad = Path(self.tmp.name) / "bad.zip"
         with zipfile.ZipFile(bad, "w") as zf:

@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.18
+
+- N4 故障修复：导入损坏/截断的 export 现在返回清晰的 `ExportError`，不再打印
+  原始 Traceback；CLI 非零退出，且不会创建目标 home。
+- 增加回归测试；无协议变更。
+
 ## v0.1.0-preview.17
 
 - 修复 Windows agent 指令：存在 `loomsci.cmd`（或宿主为 Windows）时，生成的

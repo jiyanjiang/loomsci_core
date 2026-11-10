@@ -201,7 +201,11 @@ def import_home(zip_path: str | Path, destination: str | Path) -> dict[str, Any]
     if dest.exists() and any(dest.iterdir()):
         raise ExportError(f"destination is not empty: {dest}")
 
-    with zipfile.ZipFile(source, "r") as zf:
+    try:
+        archive = zipfile.ZipFile(source, "r")
+    except (zipfile.BadZipFile, OSError) as exc:
+        raise ExportError("invalid export zip") from exc
+    with archive as zf:
         infos = zf.infolist()
         if len(infos) > MAX_MEMBERS:
             raise ExportError("too many zip members")

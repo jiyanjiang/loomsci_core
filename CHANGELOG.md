@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.18
+
+- Corrupt export import fails cleanly without creating destination.
+
 ## v0.1.0-preview.17
 
 - Windows instruction launcher uses `.cmd`; observed in real Windows omp L7.
