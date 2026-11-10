@@ -3,7 +3,7 @@
 **Local-first workspace for your personal AI agent.**
 Data stays yours. No login. Portable across machines and AI IDEs.
 
-> **Preview.** `v0.1.0-preview.15` is the current local preview; it is not a production release.
+> **Preview.** `v0.1.0-preview.16` is the current local preview; it is not a production release.
 
 [中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Testing](docs/en/testing.md) · [Core contract](docs/en/core-contract.md) · [Release](docs/en/release.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
 
@@ -29,39 +29,37 @@ AI IDE agents (WorkBuddy / opencode / other local IDEs)
 
 ## Quickstart (preview)
 
-The runnable installer is not available yet. The planned environment is
-Python 3.12 on macOS and Windows.
+Install from the preview package, then initialize and start the local host.
 
 macOS:
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
+bash install.sh --package loomsci_core-0.1.0-preview.16.zip
+loomsci init --owner <name>
+loomsci serve
 ```
 
-Windows (PowerShell):
+Windows PowerShell:
 
 ```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
+.\install.ps1 -Package .\loomsci_core-0.1.0-preview.16.zip
+loomsci init --owner <name>
+loomsci serve
 ```
 
-The preview currently declares Flask only. The minimal host can be run with
-`python -m cli.loomsci serve`; the full installer is still pending.
+Open `http://127.0.0.1:8787/app`. The host binds loopback; there is no login.
 
 ## Status
 
 | Area | Status |
 |---|---|
-| Public seed / docs | available |
-| Core host + local API | minimal host + bus + handoff (S1.5) |
-| alice baseline | available (S2) |
-| Status UI | `/app` + read-only posts/tasks (S2–S3) |
-| Export / import | zip round-trip (S3) |
-| Release packaging | zip + manifests + SHA-256 (S4) |
-| macOS installer | available and tested |
-| Windows installer | script present; Windows CI run pending |
-| First preview release | v0.1.0-preview.6 (checksum; unsigned) |
+| Core host / local API | available |
+| UI | posts, tasks (claim/done), memory review, inbox, attachments |
+| Search / watch / export / import | available |
+| macOS installer | tested |
+| Windows installer | tested (L0-L6) |
+| Real IDE | macOS opencode + omp passed; Windows dual-IDE waived |
+| Release | local unsigned package; no GitHub Release |
 
 Every push runs a mandatory sanitization check (API keys, tokens, absolute
 user-home paths, local data files). See [CONTRIBUTING.md](CONTRIBUTING.md).

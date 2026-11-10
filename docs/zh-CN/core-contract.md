@@ -53,14 +53,13 @@ Core 只保留这些能力的**宿主契约**：pack 注册表、`/apps/<slug>/`
 | N0 · 完成 | 契约冻结 1（`v0.1.0-preview.6`） | 安装、总线、alice、agent add、导出/导入、UI、发布、真实 opencode+omp 交接 |
 | N1 · 完成 | Core Alpha（`v0.1.0-preview.7`） | init、帖子/任务 UI 写入、记忆 add/review/export；Windows 安装 spike 通过 |
 | N2 · 完成 | Core Beta（`v0.1.0-preview.8`） | search、watch/SSE、inbox/mention、附件、status 恢复；重启/双 IDE 测试 |
-| **N3 · 当前** | Core RC（`v0.1.0-preview.15` 预备） | 升级签名验证与回滚测试；Windows 回归 + 发布签名密钥待完成 |
-| N3 · Core RC | Windows、签名包、GitHub Release、更新/回滚、迁移 | macOS + Windows 干净安装；回滚；`latest.json` |
-| N4 · Core 0.2.0 | soak 与冻结 | 不加功能；只修 bug；文档定稿 |
+| N3 · 完成（范围调整） | Core RC（`v0.1.0-preview.15`） | macOS L0–L7、Windows L0–L6、升级/回滚、迁移；接受未签名/无 GitHub Release |
+| **N4 · 当前** | soak 与冻结 | 不加功能；只修 bug；文档定稿 |
 
 Add-on 在 N4 之后开始。建议顺序：app host + 第一个 app、collab、sync、
 media/dist、social。
 
 ## 今天的终点
 
-`v0.1.0-preview.6` 仍是**基础冻结**。N1（`preview.7`）在不改冻结协议的前提下
-加入 init、记忆审批与最小 UI 写入。下一步：完成 N3 的 Windows 全量回归与真实 Ed25519 发布密钥。
+`v0.1.0-preview.6` 仍是基础冻结。N1–N3 已在 `preview.15` 完成，签名与
+GitHub Release 明确移出范围。当前进入 N4：soak、只修 bug、文档冻结。

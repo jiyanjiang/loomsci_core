@@ -56,15 +56,14 @@ namespace, namespaced storage, and a single event/audit path.
 | N0 · done | Contract freeze 1 (`v0.1.0-preview.6`) | install, bus, alice, agent add, export/import, UI, release, real opencode+omp handoff |
 | N1 · done | Core Alpha (`v0.1.0-preview.7`) | init, post/task UI writes, memory add/review/export; Windows install spike passed |
 | N2 · done | Core Beta (`v0.1.0-preview.8`) | search, watch/SSE, inbox/mentions, attachments, status recovery; restart/replay tests |
-| **N3 · current** | Core RC (`v0.1.0-preview.15` prep) | upgrade signature verification and rollback tests; Windows regression + release signing key pending |
-| N3 · Core RC | Windows, signed package, GitHub Release, update/rollback, migration | clean install on macOS + Windows; rollback; `latest.json` |
-| N4 · Core 0.2.0 | soak and freeze | no new features; only bugfix; docs final |
+| N3 · done (scope adjusted) | Core RC (`v0.1.0-preview.15`) | macOS L0–L7, Windows L0–L6, upgrade/rollback, migration; unsigned/no GitHub Release accepted |
+| **N4 · current** | soak and freeze | no new features; only bugfix; docs final |
 
 Add-ons start only after N4. Suggested order: app host + first app, collab,
 sync, media/dist, social.
 
 ## Today's endpoint
 
-`v0.1.0-preview.6` remains the **foundation freeze**. N1 (`preview.7`) adds
-init, facts/memory review, and minimal UI writes without changing the frozen
-protocol. Next: finish N3 with Windows full regression and a real Ed25519 release key.
+`v0.1.0-preview.6` remains the foundation freeze. N1–N3 are complete at
+`preview.15`, with signing and GitHub Release explicitly out of scope. Current
+work is N4: soak, bug fixes only, documentation freeze.

@@ -3,7 +3,7 @@
 **你的个人 agent 的本地工作区。**
 数据归你、无登录、可迁移，支持 macOS 与 Windows。
 
-> **预览。** `v0.1.0-preview.15` 是当前本地预览版；
+> **预览。** `v0.1.0-preview.16` 是当前本地预览版；
 > 它不是生产版本。
 
 [English](README.md) · [文档](docs/zh-CN/quickstart.md) · [架构](docs/zh-CN/architecture.md) · [源码映射](docs/zh-CN/source-map.md) · [测试](docs/zh-CN/testing.md) · [Core 契约](docs/zh-CN/core-contract.md) · [发布](docs/zh-CN/release.md) · [路线图](docs/zh-CN/roadmap.md) · [安全](SECURITY.md) · [许可证](LICENSE)
@@ -30,38 +30,37 @@ AI IDE agents（WorkBuddy / opencode / 其他本地 IDE）
 
 ## 快速开始（预览）
 
-可运行安装器尚未发布。计划环境为 macOS 与 Windows 上的 Python 3.12。
+用预览包安装，然后初始化并启动本地 host。
 
 macOS：
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
+bash install.sh --package loomsci_core-0.1.0-preview.16.zip
+loomsci init --owner <name>
+loomsci serve
 ```
 
-Windows（PowerShell）：
+Windows PowerShell：
 
 ```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
+.\install.ps1 -Package .\loomsci_core-0.1.0-preview.16.zip
+loomsci init --owner <name>
+loomsci serve
 ```
 
-预览阶段目前只声明 Flask。可用 `python -m cli.loomsci serve` 启动最小 host；
-完整安装器仍在规划中。
+浏览器打开 `http://127.0.0.1:8787/app`。Host 只绑回环，无登录。
 
 ## 状态
 
 | 模块 | 状态 |
 |---|---|
-| 公共 seed / 文档 | 已有 |
-| Core host + 本地 API | 最小 host + 总线 + handoff（S1.5） |
-| alice 基线 | 可用（S2） |
-| 状态 UI | `/app` + 只读帖子/任务（S2–S3） |
-| 导出 / 导入 | zip round-trip（S3） |
-| 发布打包 | zip + manifest + SHA-256（S4） |
-| macOS 安装器 | 可用且已测试 |
-| Windows 安装器 | 脚本已有；Windows CI 待跑 |
-| 首个 preview 发布 | v0.1.0-preview.6（校验和；未签名） |
+| Core host / 本地 API | 可用 |
+| UI | 帖子、任务（claim/done）、记忆审批、inbox、附件 |
+| 搜索 / watch / 导出 / 导入 | 可用 |
+| macOS 安装器 | 已测试 |
+| Windows 安装器 | 已测试（L0–L6） |
+| 真实 IDE | macOS opencode + omp 通过；Windows 双 IDE 暂缓 |
+| 发布 | 本地未签名包；无 GitHub Release |
 
 每次推送都会强制执行脱敏自检（API key、令牌、本机绝对路径、本地数据文件）。
 见 [CONTRIBUTING.md](CONTRIBUTING.md)。

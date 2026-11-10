@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.16
+
+- Documentation/package alignment only: README quickstart now uses the actual
+  installer and `loomsci init`; status reflects the 26 Core routes, macOS L7,
+  Windows L0-L6, and unsigned/no-Release scope.
+- N3 is marked done with signing/GitHub Release explicitly out of scope; N4
+  (soak/freeze) is the current node.
+- No code behavior changes.
+
 ## v0.1.0-preview.15
 
 - Real macOS dogfood: opencode audited Core and found three usability issues;
@@ -17,7 +26,7 @@ suffix.
 ## v0.1.0-preview.14
 
 - macOS convergence: the Core route registry now advertises only routes that
-  are actually served (25); navigation is `home/posts/tasks/memory/inbox`.
+  are actually served (26); navigation is `home/posts/tasks/memory/inbox`.
 - Add task claim/done actions to `/app/tasks`, so the local UI can complete the
   basic task lifecycle.
 - Reject unknown/already-linked attachments before inserting a post, avoiding
