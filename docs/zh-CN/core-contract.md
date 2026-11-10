@@ -54,7 +54,7 @@ Core 只保留这些能力的**宿主契约**：pack 注册表、`/apps/<slug>/`
 | N1 · 完成 | Core Alpha（`v0.1.0-preview.7`） | init、帖子/任务 UI 写入、记忆 add/review/export；Windows 安装 spike 通过 |
 | N2 · 完成 | Core Beta（`v0.1.0-preview.8`） | search、watch/SSE、inbox/mention、附件、status 恢复；重启/双 IDE 测试 |
 | N3 · 完成（范围调整） | Core RC（`v0.1.0-preview.15`） | macOS L0–L7、Windows L0–L6、升级/回滚、迁移；接受未签名/无 GitHub Release |
-| **N4 · 当前** | soak 与冻结 | 不加功能；只修 bug；文档定稿 |
+| **N4 · 当前** | 场景验收与冻结 | macOS/Windows 确定性场景（[n4-acceptance](n4-acceptance.md)）；不挂机计时；不加功能 |
 
 Add-on 在 N4 之后开始。建议顺序：app host + 第一个 app、collab、sync、
 media/dist、social。

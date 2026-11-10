@@ -57,7 +57,7 @@ namespace, namespaced storage, and a single event/audit path.
 | N1 · done | Core Alpha (`v0.1.0-preview.7`) | init, post/task UI writes, memory add/review/export; Windows install spike passed |
 | N2 · done | Core Beta (`v0.1.0-preview.8`) | search, watch/SSE, inbox/mentions, attachments, status recovery; restart/replay tests |
 | N3 · done (scope adjusted) | Core RC (`v0.1.0-preview.15`) | macOS L0–L7, Windows L0–L6, upgrade/rollback, migration; unsigned/no GitHub Release accepted |
-| **N4 · current** | soak and freeze | no new features; only bugfix; docs final |
+| **N4 · current** | scenario suite and freeze | deterministic macOS/Windows scenarios ([n4-acceptance](n4-acceptance.md)); no wall-clock soak; no new features |
 
 Add-ons start only after N4. Suggested order: app host + first app, collab,
 sync, media/dist, social.
