@@ -138,3 +138,13 @@ v1. No add-on code before this.
 - Every upgrade has a rollback and an old-export import test.
 - Release only when the package, docs, and checksums agree.
 - Prefer deleting a feature to supporting two implementations.
+
+## Image policy
+
+- Core stores originals; hard attachment limit is 16MB.
+- No silent compression in Core or ui-shell; screenshots/code images keep
+  fidelity.
+- ui-shell warns above 8MB (planned) and accepts up to the Core limit.
+- `media` v0.2 may generate previews/thumbnails (target <=1MB) and optional
+  transcodes, but must keep the original unless the user explicitly deletes it.
+- Sharing/distribution compression is a media policy, not a Core contract.
