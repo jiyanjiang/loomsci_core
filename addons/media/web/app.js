@@ -11,9 +11,10 @@ function render() {
   grid.innerHTML = visible.map((item) => {
     const src = `/api/attachment/${encodeURIComponent(item.id)}`;
     let media = `<a href="${src}">${esc(item.filename)}</a>`;
-    if (item.kind === "image") media = `<a href="${src}" target="_blank" rel="noreferrer"><img class="media" src="${src}" alt="${esc(item.filename)}" loading="lazy"></a>`;
+    const thumb = item.thumbnail || src;
+    if (item.kind === "image") media = `<a href="${src}" target="_blank" rel="noreferrer"><img class="media" src="${thumb}" onerror="this.src='${src}'" alt="${esc(item.filename)}" loading="lazy"></a>`;
     if (item.kind === "audio") media = `<audio controls preload="metadata" src="${src}"></audio>`;
-    if (item.kind === "video") media = `<video class="media" controls preload="metadata" src="${src}"></video>`;
+    if (item.kind === "video") media = `<video class="media" controls preload="metadata" poster="${thumb}" src="${src}"></video>`;
     return `<article class="card">${media}<div class="name">${esc(item.filename)}</div><div class="muted">${esc(item.kind)} · ${Math.ceil((item.bytes || 0)/1024)} KB · ${esc(item.author || "")}</div></article>`;
   }).join("") || '<p class="empty">No media yet.</p>';
 }

@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.32
+
+- Media v0.2a thumbnails/capabilities; OCR/transcription pending.
+
 ## v0.1.0-preview.31
 
 - Research v0.1 add-on: deterministic workspaces, sources, facts, gate, publish.

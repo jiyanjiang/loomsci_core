@@ -3,7 +3,7 @@
 **你的个人 agent 的本地工作区。**
 数据归你、无登录、可迁移，支持 macOS 与 Windows。
 
-> **预览。** `v0.1.0-preview.31` 是当前本地预览版；
+> **预览。** `v0.1.0-preview.32` 是当前本地预览版；
 > 它不是生产版本。
 
 [English](README.md) · [文档](docs/zh-CN/quickstart.md) · [架构](docs/zh-CN/architecture.md) · [源码映射](docs/zh-CN/source-map.md) · [测试](docs/zh-CN/testing.md) · [Core 契约](docs/zh-CN/core-contract.md) · [Add-ons](docs/zh-CN/addons.md) · [N4 验收](docs/zh-CN/n4-acceptance.md) · [发布](docs/zh-CN/release.md) · [路线图](docs/zh-CN/roadmap.md) · [安全](SECURITY.md) · [许可证](LICENSE)
@@ -35,7 +35,7 @@ AI IDE agents（WorkBuddy / opencode / 其他本地 IDE）
 macOS：
 
 ```bash
-bash install.sh --package loomsci_core-0.1.0-preview.31.zip
+bash install.sh --package loomsci_core-0.1.0-preview.32.zip
 loomsci init --owner <name>
 loomsci serve
 ```
@@ -43,7 +43,7 @@ loomsci serve
 Windows PowerShell：
 
 ```powershell
-.\install.ps1 -Package .\loomsci_core-0.1.0-preview.31.zip
+.\install.ps1 -Package .\loomsci_core-0.1.0-preview.32.zip
 loomsci init --owner <name>
 loomsci serve
 ```

@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.32
+
+- media v0.2a: cross-platform image/video thumbnails via ffmpeg, cached under
+  `packs/media/data/thumbs`; UI uses poster/thumbnail with original fallback.
+- Add `/api/capabilities` for ffmpeg/tesseract/whisper detection. OCR and
+  speech-to-text transcription are not implemented yet; they are v0.2b and
+  must not claim success when the tool is absent.
+- No Core table/API changes.
+
 ## v0.1.0-preview.31
 
 - Fifth add-on: `research` v0.1 (deterministic, no LLM).

@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.32
+
+- media v0.2a：通过 ffmpeg 生成图片/视频缩略图，缓存到
+  `packs/media/data/thumbs`；UI 使用缩略图/poster，失败回退原图。
+- 增加 `/api/capabilities` 检测 ffmpeg/tesseract/whisper。OCR 与语音转写
+  尚未实现，属于 v0.2b；工具缺失时不得假装成功。
+- 不改 Core 表/API。
+
 ## v0.1.0-preview.31
 
 - 第五个 add-on：`research` v0.1（确定性，不调 LLM）。
