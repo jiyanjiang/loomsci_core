@@ -2,6 +2,7 @@ const app = document.getElementById("app");
 const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
 let view = "posts";
+let pendingFiles = [];
 
 function showError(message) { errorEl.hidden = !message; errorEl.textContent = message || ""; }
 function esc(value) { return String(value ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -109,27 +110,56 @@ function item(title, meta, body, actions = "", attachments = []) {
   return `<article class="item"><h3>${esc(title)}</h3><div class="meta">${esc(meta)}</div><div class="md">${markdown(body || "")}</div>${files}${actions}</article>`;
 }
 
+function renderPending() {
+  const target = document.getElementById("pending-files");
+  if (!target) return;
+  target.innerHTML = pendingFiles.map((file, index) =>
+    `<span class="chip">${esc(file.name)} <button type="button" data-remove="${index}" aria-label="Remove ${esc(file.name)}">×</button></span>`
+  ).join("");
+  target.querySelectorAll("button[data-remove]").forEach((button) => {
+    button.onclick = () => { pendingFiles.splice(Number(button.dataset.remove), 1); renderPending(); };
+  });
+}
+
+function addFiles(files) {
+  for (const file of files || []) if (file && file.size) pendingFiles.push(file);
+  renderPending();
+}
+
 async function loadPosts() {
   const status = await api("status");
   const since = Math.max(0, Number(status.last_seq || 0) - 100);
   const data = await api(`posts?since=${since}&limit=100`);
+  pendingFiles = [];
   const form = `<form class="compose" id="post-form">
     <input name="title" placeholder="Title" maxlength="200">
-    <textarea name="body" placeholder="Markdown + $LaTeX$ body" required></textarea>
-    <input type="file" name="file">
+    <textarea name="body" placeholder="Markdown + $LaTeX$ body; paste an image here" required></textarea>
+    <input type="file" name="file" multiple>
+    <div id="pending-files" class="pending"></div>
     <button type="submit">Post</button></form>
     <form class="compose" id="search-form"><input name="q" placeholder="Search posts, tasks, facts"><button type="submit">Search</button></form>`;
   const posts = (data.posts || []).slice().reverse().map((post) =>
     item(post.title || post.id, `#${post.seq} · ${post.author} · ${post.kind}`, post.body, "", post.attachments)
   ).join("");
   app.innerHTML = form + (posts || '<p class="muted">No posts yet.</p>');
+  const fileInput = document.querySelector('#post-form input[type="file"]');
+  fileInput.onchange = () => addFiles(fileInput.files);
+  const bodyInput = document.querySelector('#post-form textarea[name="body"]');
+  bodyInput.addEventListener("paste", (event) => {
+    const files = [...(event.clipboardData?.items || [])]
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile());
+    if (files.length) {
+      event.preventDefault();
+      addFiles(files);
+    }
+  });
   document.getElementById("post-form").onsubmit = async (event) => {
     event.preventDefault(); showError("");
     const formData = new FormData(event.target);
     try {
-      let attachments = [];
-      const file = formData.get("file");
-      if (file && file.size) {
+      const attachments = [];
+      for (const file of pendingFiles) {
         const base64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
@@ -139,7 +169,7 @@ async function loadPosts() {
         const uploaded = await api("attachments", {method: "POST", body: {
           filename: file.name, content_type: file.type || "application/octet-stream", content_base64: base64,
         }});
-        attachments = [uploaded.attachment.id];
+        attachments.push(uploaded.attachment.id);
       }
       await api("posts", {method: "POST", body: {
         title: formData.get("title") || "", body: formData.get("body") || "", attachments,

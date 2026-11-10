@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.26
+
+- `ui-shell` 0.3.1：可直接从剪贴板粘贴图片到正文编辑器；提交时上传并附加。
+- 这是 `ui-shell` 输入层能力，不属于 `media`；`media` 仍只做媒体库/预览。
+- 不改 Core 表/API。
+
 ## v0.1.0-preview.25
 
 - 第四个 add-on：`media` v0.1（基于 Core 附件的媒体库）。

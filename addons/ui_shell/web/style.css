@@ -160,3 +160,7 @@ textarea { min-height: 88px; resize: vertical; }
   nav button { flex: 1 1 auto; }
   .item { padding: var(--space-3); }
 }
+
+.pending { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px 4px 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; }
+.chip button { min-height: 24px; padding: 0 5px; border-radius: 999px; }

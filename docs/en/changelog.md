@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.26
+
+- `ui-shell` 0.3.1: paste an image from the clipboard directly into the post
+  editor; pasted files are uploaded and attached on submit.
+- This is an input-layer feature of `ui-shell`, not `media`; `media` remains
+  library/preview only.
+- No Core table/API changes.
+
 ## v0.1.0-preview.25
 
 - Fourth add-on: `media` v0.1 (media library over Core attachments).

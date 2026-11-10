@@ -22,6 +22,7 @@ Theme work is explicitly out of scope for this phase.
    - browser-supported audio/video render with controls
    - other files download
    - upload a local file and attach it to a post
+   - paste an image from the clipboard into the body editor
 
 4. **Search**
    - search posts/tasks/facts through `/v1/search`
