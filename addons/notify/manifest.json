@@ -1,0 +1,11 @@
+{
+  "name": "notify",
+  "version": "0.1.0",
+  "api": "core/1",
+  "requires": ["core/1"],
+  "routes": ["/"],
+  "storage": "addon.notify",
+  "jobs": [],
+  "nav": [{"label": "Notify", "href": "http://127.0.0.1:8793/"}],
+  "preserve": []
+}

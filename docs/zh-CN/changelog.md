@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.22
+
+- 第三个 add-on：`notify`（未读摘要、Markdown digest、一键已读）。
+- 通过 `/api/*` 读取 Core inbox/tasks/posts；无本地库，不改 Core 表/API。
+  可选桌面通知是尽力而为/诊断用途。
+- `personal` profile 现在安装 `ui-shell` + `notify`。
+- 默认端口 8793。
+
 ## v0.1.0-preview.21
 
 - 第二个 add-on：`collab` 房间/线程。

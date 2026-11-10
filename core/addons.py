@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 BUNDLED = ROOT / "addons"
 PROFILES = {
     "minimal": [],
-    "personal": ["ui-shell"],
+    "personal": ["ui-shell", "notify"],
 }
 
 

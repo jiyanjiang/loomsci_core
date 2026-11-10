@@ -35,7 +35,7 @@ class AddonHostTest(unittest.TestCase):
         self.assertTrue((data / "state.json").is_file())
         self.assertNotIn("ui-shell", addons.installed(self.home))
         installed = addons.install_profile(self.home, "personal")
-        self.assertEqual([item["name"] for item in installed], ["ui-shell"])
+        self.assertEqual([item["name"] for item in installed], ["ui-shell", "notify"])
         with self.assertRaises(addons.AddonError):
             addons.install(self.home, "missing")
 

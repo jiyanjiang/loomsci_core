@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.22
+
+- Third add-on: `notify` (unread summary, Markdown digest, mark-all-read).
+- Reads Core inbox/tasks/posts through `/api/*`; no local database, no Core
+  table/API changes. Optional desktop notification is best-effort/diagnostic.
+- `personal` profile now installs `ui-shell` + `notify`.
+- Default port 8793.
+
 ## v0.1.0-preview.21
 
 - Second add-on: `collab` rooms/threads.
