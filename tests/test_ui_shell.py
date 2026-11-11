@@ -4,6 +4,7 @@ import json
 import sys
 import tempfile
 import threading
+import unittest.mock
 import unittest
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -54,6 +55,11 @@ class UiShellTest(unittest.TestCase):
         self.upstream.shutdown()
         server.Handler.upstream_port, server.Handler.agent = self.old
         self.tmp.cleanup()
+
+    def test_server_bind_does_not_reverse_dns(self) -> None:
+        with unittest.mock.patch("socket.getfqdn", side_effect=RuntimeError("no dns")):
+            server_obj = server._LocalServer(("127.0.0.1", 0), server.Handler)
+            server_obj.server_close()
 
     def test_default_agent_and_proxy(self) -> None:
         self.assertEqual(server.default_agent(self.home), "alice.test")

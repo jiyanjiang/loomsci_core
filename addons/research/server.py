@@ -7,6 +7,7 @@ checks the gate, and can publish a gated draft to Core.
 from __future__ import annotations
 
 import argparse
+import socketserver
 import http.client
 import json
 import mimetypes
@@ -37,6 +38,16 @@ def default_agent(home: Path | None = None) -> str:
             except (OSError, ValueError, KeyError):
                 pass
     return "alice.owner"
+
+
+class _LocalServer(ThreadingHTTPServer):
+    """Avoid HTTPServer's reverse-DNS lookup in server_bind()."""
+
+    def server_bind(self) -> None:
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = host
+        self.server_port = port
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -267,7 +278,7 @@ def main() -> int:
     Handler.agent = args.agent or default_agent(home)
     Handler.data_root = base / "packs" / "research" / "data"
     Handler.home = base
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    server = _LocalServer(("127.0.0.1", args.port), Handler)
     print(f"research on http://127.0.0.1:{args.port} (agent={Handler.agent})", flush=True)
     server.serve_forever()
     return 0

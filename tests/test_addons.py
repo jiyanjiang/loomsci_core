@@ -94,8 +94,14 @@ class AddonHostTest(unittest.TestCase):
         (source / "manifest.json").write_text(json.dumps(_manifest("demo", port=port)))
         (source / "__init__.py").write_text("")
         (source / "server.py").write_text(
-            "import argparse, json\n"
+            "import argparse, json, socketserver\n"
             "from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer\n"
+            "class S(ThreadingHTTPServer):\n"
+            "    def server_bind(self):\n"
+            "        socketserver.TCPServer.server_bind(self)\n"
+            "        host, port = self.server_address[:2]\n"
+            "        self.server_name = host\n"
+            "        self.server_port = port\n"
             "class H(BaseHTTPRequestHandler):\n"
             "    def do_GET(self):\n"
             "        data = json.dumps({'ok': True}).encode()\n"
@@ -110,7 +116,7 @@ class AddonHostTest(unittest.TestCase):
             "p.add_argument('--port', type=int, default=0)\n"
             "p.add_argument('--home')\n"
             "a = p.parse_args()\n"
-            "ThreadingHTTPServer(('127.0.0.1', a.port), H).serve_forever()\n"
+            "S(('127.0.0.1', a.port), H).serve_forever()\n"
         )
         with mock.patch.object(addons, "BUNDLED", bundled):
             addons.install(self.home, "demo")

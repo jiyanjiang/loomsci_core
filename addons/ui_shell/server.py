@@ -7,6 +7,7 @@ default agent header. Core is not imported; the shell only consumes /v1.
 from __future__ import annotations
 
 import argparse
+import socketserver
 import http.client
 import json
 import mimetypes
@@ -36,6 +37,16 @@ def default_agent(home: Path | None = None) -> str:
             except (OSError, ValueError, KeyError):
                 pass
     return "alice.owner"
+
+
+class _LocalServer(ThreadingHTTPServer):
+    """Avoid HTTPServer's reverse-DNS lookup in server_bind()."""
+
+    def server_bind(self) -> None:
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = host
+        self.server_port = port
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -137,7 +148,7 @@ def main() -> int:
     Handler.upstream = args.upstream
     Handler.upstream_port = args.upstream_port
     Handler.agent = args.agent or default_agent(home)
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    server = _LocalServer(("127.0.0.1", args.port), Handler)
     print(f"ui-shell on http://127.0.0.1:{args.port} (agent={Handler.agent})", flush=True)
     server.serve_forever()
     return 0

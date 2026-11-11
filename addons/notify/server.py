@@ -7,6 +7,7 @@ notifications are best-effort and optional (macOS osascript, Windows msg.exe).
 from __future__ import annotations
 
 import argparse
+import socketserver
 import http.client
 import json
 import mimetypes
@@ -48,6 +49,16 @@ def desktop_notify(title: str, message: str) -> bool:
     except (OSError, subprocess.SubprocessError):
         return False
     return False
+
+
+class _LocalServer(ThreadingHTTPServer):
+    """Avoid HTTPServer's reverse-DNS lookup in server_bind()."""
+
+    def server_bind(self) -> None:
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = host
+        self.server_port = port
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -186,7 +197,7 @@ def main() -> int:
     if args.desktop:
         # One-shot diagnostic; a polling loop belongs to the user's launcher.
         print("desktop_notify available:", desktop_notify("loomsci notify", "desktop notifications enabled"), flush=True)
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    server = _LocalServer(("127.0.0.1", args.port), Handler)
     print(f"notify on http://127.0.0.1:{args.port} (agent={Handler.agent})", flush=True)
     server.serve_forever()
     return 0
