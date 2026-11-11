@@ -9,6 +9,14 @@ reported: 2026-11-11
 
 # BUG-0001 · Ordered lists collapse into a paragraph
 
+## Terminology
+
+- **Ordered list**: `1.`, `2.`, `3.` → semantic `<ol>`.
+- **Unordered list**: `-`, `*`, `+` → semantic `<ul>`.
+
+This report is only about ordered lists. The unordered-list path works in the
+same renderer; see the live checks below.
+
 ## Reproduction
 
 Input:
@@ -61,6 +69,9 @@ The numbers are not list markers and the items are not separate rows.
 - Live check: `markdown(...)` in the notify page at `http://127.0.0.1:8793/`
 - Both returned the paragraph form above.
 - `ui-shell` at `http://127.0.0.1:8790/` returned `<ol>`.
+- Unordered control on collab:
+  `markdown("- 第一个\n- 第二个")` returned
+  `<ul><li>第一个</li><li>第二个</li></ul>`.
 
 ## Root cause
 
