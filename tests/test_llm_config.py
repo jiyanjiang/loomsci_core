@@ -39,8 +39,9 @@ class LlmConfigTest(unittest.TestCase):
         text = (self.home / "config.yaml").read_text(encoding="utf-8")
         self.assertIn("new-key", text)
         self.assertNotIn("deepseek_api_key", text)
-        mode = stat.S_IMODE((self.home / "config.yaml").stat().st_mode)
-        self.assertEqual(mode & 0o077, 0)
+        if os.name != "nt":
+            mode = stat.S_IMODE((self.home / "config.yaml").stat().st_mode)
+            self.assertEqual(mode & 0o077, 0)
         self.assertEqual(llm_config.get_key(self.home, "deepseek"), "new-key")
         llm_config.set_key(self.home, "deepseek", "")
         self.assertFalse(llm_config.public(self.home, "deepseek")["configured"])
