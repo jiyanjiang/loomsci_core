@@ -70,16 +70,14 @@ def ides() -> dict[str, dict[str, Any]]:
 
 
 def _config_check(home: Path) -> dict[str, Any]:
-    env_key = bool(os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("DS_KEY"))
-    config = home / "config.yaml"
-    configured = env_key
-    if config.is_file():
-        try:
-            text = config.read_text(encoding="utf-8", errors="replace")
-            configured = configured or "deepseek_api_key" in text
-        except OSError:
-            pass
-    return {"ok": True, "deepseek_configured": configured}
+    from core import llm_config
+
+    configured = bool(llm_config.get_key(home, "deepseek"))
+    return {
+        "ok": True,
+        "deepseek_configured": configured,
+        "providers": {name: llm_config.public(home, name) for name in ("deepseek",)},
+    }
 
 
 def run(home: str | Path, *, port: int = 8787) -> dict[str, Any]:

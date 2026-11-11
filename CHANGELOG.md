@@ -1,3 +1,12 @@
+# v0.1.0-beta.6 — DeepSeek provider settings
+
+- Add `GET/PUT /v1/settings/llm/deepseek` and `POST .../test`.
+- Add a one-field DeepSeek key form at `/app/settings`.
+- Keys are written to `config.yaml` (0600), never returned by the API, logs,
+  backups, or exports.
+- Summaries and the research add-on share the same provider config.
+- Legacy `llm.deepseek_api_key` is read and migrated on save.
+
 # v0.1.0-beta.5 — Runtime control
 
 - Add `loomsci up --detach`, `loomsci status`, `loomsci down`, and `loomsci open`.

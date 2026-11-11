@@ -51,7 +51,10 @@ def deepseek_key(home: Path | None = None) -> str:
     if yaml and config.is_file():
         try:
             data = yaml.safe_load(config.read_text(encoding="utf-8")) or {}
-            value = (data.get("llm") or {}).get("deepseek_api_key")
+            llm = data.get("llm") or {}
+            providers = llm.get("providers") or {}
+            deepseek = providers.get("deepseek") or {}
+            value = deepseek.get("api_key") or llm.get("deepseek_api_key")
             if value:
                 return str(value).strip()
         except Exception:

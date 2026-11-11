@@ -1,3 +1,12 @@
+# v0.1.0-beta.6 — DeepSeek 服务商设置
+
+- Add a one-field DeepSeek API key form at `/app/settings`.
+- Add `/v1/settings/llm/deepseek` and test-connection endpoints.
+- Key storage is `config.yaml` 0600; keys are never returned by the API,
+  written to logs, or included in backups/exports.
+- Summaries and research read the same provider configuration.
+- Legacy `llm.deepseek_api_key` remains readable and migrates on save.
+
 # v0.1.0-beta.5 — 运行时控制
 
 - 新增 `up --detach`、`status`、`down`、`open`。

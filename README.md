@@ -8,7 +8,7 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.5` public beta.** Local-only, one owner, no login, no
+> **Status: `0.1.0-beta.6` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
@@ -75,6 +75,17 @@ Run Core in the background:
 PID, port, health, version, and primary URL. `open` prefers the ui-shell URL
 when that add-on is running, otherwise it opens the Core `/app` fallback.
 `down` stops only the detached Core process recorded in the runtime state.
+
+## Provider settings
+
+Open `http://127.0.0.1:8790/app/settings` and enter a DeepSeek API key. The
+primary form is one field; base URL and model use presets. The key is written
+only to `~/.loomsci/config.yaml` with mode `0600`, is never returned by the API,
+and is not included in backups or exports.
+
+The same provider configuration is used by post summaries and the research
+add-on. Aliyun and Volcengine are supported by the provider config structure;
+their advanced settings remain follow-up work.
 
 ## Posts and summaries
 
@@ -165,7 +176,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.5.zip
+shasum -a 256 loomsci_core-0.1.0-beta.6.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 

@@ -28,6 +28,19 @@ class _Upstream(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
+    def do_PUT(self) -> None:
+        _Upstream.last_path = self.path
+        _Upstream.last_method = self.command
+        length = int(self.headers.get("Content-Length") or 0)
+        if length:
+            self.rfile.read(length)
+        payload = b'{"ok":true}'
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
     def log_message(self, *_args) -> None:
         return
 
@@ -93,6 +106,14 @@ class UiShellTest(unittest.TestCase):
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/api/v1/health?probe=1") as response:
             response.read()
         self.assertEqual(_Upstream.last_path, "/v1/health?probe=1")
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{self.shell.server_port}/api/v1/settings/llm/deepseek/key",
+            data=b'{"api_key":"x"}', method="PUT",
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request) as response:
+            self.assertEqual(response.status, 200)
+        self.assertEqual(_Upstream.last_method, "PUT")
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/") as response:
             html = response.read().decode()
             self.assertIn("loomsci", html)

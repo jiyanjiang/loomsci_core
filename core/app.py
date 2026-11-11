@@ -13,7 +13,7 @@ from typing import Mapping
 
 from flask import Flask, Response, g, jsonify, redirect, request
 
-from core import alice, handoff, storage, summaries
+from core import alice, handoff, llm_config, storage, summaries
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -479,6 +479,45 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "post": post}), 201
+
+    def _provider(provider: str):
+        if provider not in llm_config.PROVIDERS:
+            return None
+        return provider
+
+    @app.get("/v1/settings/llm/<provider>")
+    def settings_provider_get(provider: str):
+        if _provider(provider) is None:
+            return jsonify({"ok": False, "error": "unknown_provider"}), 404
+        return jsonify({"ok": True, "provider": llm_config.public(layout.root, provider)})
+
+    @app.put("/v1/settings/llm/<provider>/key")
+    def settings_provider_key(provider: str):
+        if _provider(provider) is None:
+            return jsonify({"ok": False, "error": "unknown_provider"}), 404
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or not isinstance(body.get("api_key"), str):
+            return jsonify({"ok": False, "error": "api_key_required"}), 400
+        return jsonify({"ok": True, "provider": llm_config.set_key(layout.root, provider, body["api_key"])})
+
+    @app.put("/v1/settings/llm/<provider>")
+    def settings_provider_put(provider: str):
+        if _provider(provider) is None:
+            return jsonify({"ok": False, "error": "unknown_provider"}), 404
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        return jsonify({"ok": True, "provider": llm_config.set_fields(
+            layout.root, provider,
+            base_url=body.get("base_url") if isinstance(body.get("base_url"), str) else None,
+            model=body.get("model") if isinstance(body.get("model"), str) else None,
+        )})
+
+    @app.post("/v1/settings/llm/<provider>/test")
+    def settings_provider_test(provider: str):
+        if _provider(provider) is None:
+            return jsonify({"ok": False, "error": "unknown_provider"}), 404
+        return jsonify(llm_config.test_connection(layout.root, provider))
 
     @app.get("/v1/search")
     def search_all():

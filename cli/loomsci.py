@@ -162,26 +162,8 @@ def _cmd_serve(args: argparse.Namespace) -> int:
 
 
 def _save_deepseek_key(home: Path, key: str) -> None:
-    import yaml
-    path = home / "config.yaml"
-    data = {}
-    if path.is_file():
-        try:
-            loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-            if isinstance(loaded, dict):
-                data = loaded
-        except (OSError, ValueError):
-            data = {}
-    llm = data.get("llm")
-    if not isinstance(llm, dict):
-        llm = {}
-    llm["deepseek_api_key"] = key
-    data["llm"] = llm
-    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
+    from core import llm_config
+    llm_config.set_key(home, "deepseek", key)
 
 
 def _cmd_setup(args: argparse.Namespace) -> int:

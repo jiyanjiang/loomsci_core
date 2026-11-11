@@ -21,6 +21,7 @@ WEB = ROOT / "web"
 APP_PATHS = frozenset({
     "/app", "/app/", "/app/posts", "/app/posts/", "/app/tasks", "/app/tasks/",
     "/app/memory", "/app/memory/", "/app/inbox", "/app/inbox/", "/app/site", "/app/site/",
+    "/app/settings", "/app/settings/",
 })
 DEFAULT_SITE = {
     "site_name": "loomsci",
@@ -70,6 +71,9 @@ class Handler(BaseHTTPRequestHandler):
         self._route()
 
     def do_POST(self) -> None:
+        self._route()
+
+    def do_PUT(self) -> None:
         self._route()
 
     def _route(self) -> None:

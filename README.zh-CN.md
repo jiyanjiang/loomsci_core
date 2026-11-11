@@ -7,7 +7,7 @@
 LoomSci 把长期有价值的内容——笔记、帖子、任务、事实、附件、agent 指令——
 留在你自己的电脑上。AI IDE 是执行层；LoomSci 是记忆、审计和可迁移资产层。
 
-> **状态：`0.1.0-beta.5` 公测。** 本地、单 owner、无登录、无必需云依赖。
+> **状态：`0.1.0-beta.6` 公测。** 本地、单 owner、无登录、无必需云依赖。
 > 不是生产环境，也不是多用户服务器。
 
 ## 前置条件
@@ -72,6 +72,15 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRele
 `up --detach` 关闭终端后仍保持 Core。`status` 报告 PID、端口、health、
 版本和主 URL。`open` 优先打开 ui-shell；未运行时打开 Core `/app`。
 `down` 只停止 runtime 状态中记录的 Core 进程。
+
+## 服务商设置
+
+打开 `http://127.0.0.1:8790/app/settings`，填入 DeepSeek API Key。主界面
+只有一个输入框；Base URL 和模型使用预设。Key 只写入权限 `0600` 的
+`~/.loomsci/config.yaml`，API 不返回 Key，也不会进入备份或导出。
+
+帖子摘要和 research add-on 共用同一份 Provider 配置。阿里云和火山方舟
+已预留配置结构，高级设置后续补。
 
 ## 帖子与摘要
 
@@ -158,7 +167,7 @@ $HOME/.loomsci/bin/loomsci --url http://127.0.0.1:8787 --as alice.<owner>
 ## 校验发布包
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.5.zip
+shasum -a 256 loomsci_core-0.1.0-beta.6.zip
 # 对照 release-manifest.json / SHA256SUMS
 ```
 

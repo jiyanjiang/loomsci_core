@@ -3,7 +3,7 @@ const app = document.getElementById("app");
 const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
 function viewFromPath(pathname) {
-  const match = String(pathname || "").match(/^\/app\/(posts|tasks|memory|inbox|site)\/?$/);
+  const match = String(pathname || "").match(/^\/app\/(posts|tasks|memory|inbox|site|settings)\/?$/);
   return match ? match[1] : "posts";
 }
 function viewPath(next) {
@@ -462,7 +462,58 @@ async function loadInbox() {
   renderMath(app);
 }
 
-const views = {posts: loadPosts, tasks: loadTasks, memory: loadMemory, inbox: loadInbox, site: loadSiteView};
+async function loadSettings() {
+  const data = await api("settings/llm/deepseek");
+  const provider = data.provider;
+  const configured = Boolean(provider.configured);
+  app.innerHTML = `<section class="settings">
+    <h2>${esc(t("settings.provider"))}</h2>
+    <article class="item">
+      <h3>${esc(provider.label)}</h3>
+      <div class="meta">${configured ? esc(t("settings.configured")) : esc(t("settings.notConfigured"))}</div>
+      <form class="compose" id="key-form">
+        <label>${esc(t("settings.keyLabel"))}
+          <input type="password" name="api_key" autocomplete="off" spellcheck="false"
+            placeholder="${configured ? esc(t("settings.keepKey")) : "sk-..."}">
+        </label>
+        <button type="submit">${esc(t("settings.save"))}</button>
+        ${configured ? `<button type="button" id="clear-key">${esc(t("settings.clear"))}</button>` : ""}
+        <button type="button" id="test-key">${esc(t("settings.test"))}</button>
+      </form>
+      <p class="meta" id="settings-status"></p>
+    </article>
+  </section>`;
+  const form = document.getElementById("key-form");
+  const status = document.getElementById("settings-status");
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+    const key = String(new FormData(form).get("api_key") || "").trim();
+    if (!key) { status.textContent = t("settings.enterKey"); return; }
+    try {
+      await api("settings/llm/deepseek/key", {method: "PUT", body: {api_key: key}});
+      await loadSettings();
+    } catch (err) { status.textContent = err.message; }
+  };
+  document.getElementById("test-key").onclick = async () => {
+    status.textContent = t("settings.testing");
+    try {
+      const result = await api("settings/llm/deepseek/test", {method: "POST", body: {}});
+      status.textContent = result.ok
+        ? t("settings.testOk", {ms: result.latency_ms})
+        : t("settings.testFailed", {error: result.error});
+    } catch (err) { status.textContent = err.message; }
+  };
+  const clear = document.getElementById("clear-key");
+  if (clear) clear.onclick = async () => {
+    if (!confirm(t("settings.confirmClear"))) return;
+    try {
+      await api("settings/llm/deepseek/key", {method: "PUT", body: {api_key: ""}});
+      await loadSettings();
+    } catch (err) { status.textContent = err.message; }
+  };
+}
+
+const views = {posts: loadPosts, tasks: loadTasks, memory: loadMemory, inbox: loadInbox, site: loadSiteView, settings: loadSettings};
 
 async function render(next = view) {
   view = next; showError("");

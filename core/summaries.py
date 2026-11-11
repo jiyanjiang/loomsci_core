@@ -13,7 +13,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from core import storage
+from core import llm_config, storage
 
 SHORT_POST_MAX = 800
 SUMMARY_MIN = 300
@@ -89,8 +89,7 @@ def _settings(home: Path | None) -> tuple[str, str]:
     posts = data.get("posts") if isinstance(data.get("posts"), dict) else {}
     summary = posts.get("summary") if isinstance(posts.get("summary"), dict) else {}
     mode = str(summary.get("mode") or "ai").strip().lower()
-    llm = data.get("llm") if isinstance(data.get("llm"), dict) else {}
-    key = str(llm.get("deepseek_api_key") or "").strip()
+    key = llm_config.get_key(home, "deepseek")
     return ("ai" if mode == "ai" and key else "extractive"), key
 
 
