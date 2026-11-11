@@ -94,6 +94,8 @@ def _attachment_meta(home: Path) -> dict[str, dict[str, Any]]:
             "rights": str(meta.get("rights") or "unknown"),
             "source_url": str(meta.get("source_url") or ""),
             "asset_kind": str(meta.get("asset_kind") or ""),
+            "backup": str(meta.get("backup") or "include"),
+            "reference_only": bool(meta.get("reference_only")),
         }
     return result
 
@@ -111,15 +113,9 @@ def _category(path: Path, home: Path, attachment_meta: dict[str, dict[str, Any]]
         return "asset", "agent persona"
     if rel.parts[:2] == ("data", "blobs"):
         meta = (attachment_meta or {}).get(path.name, {})
-        origin = str(meta.get("origin") or "unknown")
-        suffix = str(meta.get("suffix") or suffix)
-        if origin == "downloaded":
-            return "reference", "downloaded reference"
-        if origin in {"generated", "authored"}:
-            return "asset", "authored/generated asset"
-        if suffix in REFERENCE_SUFFIXES:
-            return "unknown", "unclassified document"
-        return "asset", "attachment"
+        if str(meta.get("backup") or "include") == "reference" or bool(meta.get("reference_only")):
+            return "reference", "explicit reference"
+        return "asset", "workspace attachment"
     if rel.parts[:1] in {("assets",), ("programs",)}:
         return "asset", "user/AI program asset"
     if rel.parts[:1] == ("packs",):
@@ -528,9 +524,13 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
                 except (TypeError, ValueError):
                     meta = {}
                 origin = str(meta.get("origin") or "unknown")
-                is_reference = origin == "downloaded"
+                is_reference = (
+                    str(meta.get("backup") or "include") == "reference"
+                    or bool(meta.get("reference_only"))
+                )
                 is_unknown_document = (
-                    origin == "unknown"
+                    not is_reference
+                    and origin == "unknown"
                     and (suffix in REFERENCE_SUFFIXES or content_type in {
                         "application/pdf", "application/epub+zip", "application/zip",
                         "application/vnd.openxmlformats-officedocument.presentationml.presentation",
@@ -550,9 +550,9 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
                         "bytes": int(row.get("bytes") or blob.stat().st_size),
                         "sha256": row.get("sha256"),
                         "origin": origin,
-                        "rights": str(meta.get("rights") or ("third_party" if origin == "downloaded" else "unknown")),
+                        "rights": str(meta.get("rights") or "unknown"),
                         "source_url": str(meta.get("source_url") or ""),
-                        "reason": "third_party_reference" if origin == "downloaded" else "unclassified_document",
+                        "reason": "explicit_reference" if is_reference else "unclassified_document",
                     })
                     continue
                 digest = _sha256(blob)

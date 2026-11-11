@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.44
+
+- Asset boundary correction: submitted attachments are included by default;
+  exclusion requires explicit reference metadata.
+
 ## v0.1.0-preview.43
 
 - P3 target contract: sync inspect/import into an installed empty workspace;

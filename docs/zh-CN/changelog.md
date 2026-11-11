@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.44
+
+- 修正资产边界：凡提交到 Core 的附件默认都属于工作区资产，不再按来源或
+  扩展名排除。
+- Core 之外的下载文件不在扫描范围；若用户下载后提交到 Core，则默认迁移，
+  除非显式标记 `backup=reference` / `reference_only=true`。
+- `asset classify --backup include|reference` 将排除权交还给用户。
+
 ## v0.1.0-preview.43
 
 - P3 v0.1 目标契约：`sync inspect`、`sync import`。

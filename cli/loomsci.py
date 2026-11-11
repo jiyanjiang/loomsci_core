@@ -912,6 +912,8 @@ def _cmd_asset_classify(args: argparse.Namespace) -> int:
             meta["rights"] = args.rights
         if args.source_url:
             meta["source_url"] = args.source_url
+        if args.backup:
+            meta["backup"] = args.backup
         updated = storage.update_attachment_meta(conn, args.attachment_id, meta)
     finally:
         conn.close()
@@ -1344,6 +1346,7 @@ def build_parser() -> argparse.ArgumentParser:
     asset_classify.add_argument("--asset-kind")
     asset_classify.add_argument("--rights")
     asset_classify.add_argument("--source-url")
+    asset_classify.add_argument("--backup", choices=["include", "reference"])
     asset_classify.add_argument("--json", action="store_true")
     asset_classify.set_defaults(func=_cmd_asset_classify)
 

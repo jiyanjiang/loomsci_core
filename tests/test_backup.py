@@ -39,7 +39,7 @@ class BackupInspectTest(unittest.TestCase):
             storage.add_attachment(
                 conn, filename="paper.pdf", content_type="application/pdf",
                 data=b"%PDF-1.4 reference", blob_dir=self.layout.blobs,
-                meta={"origin": "downloaded", "asset_kind": "document", "rights": "third_party", "source_url": "https://example.test/paper"},
+                meta={"origin": "downloaded", "asset_kind": "document", "rights": "third_party", "backup": "reference", "source_url": "https://example.test/paper"},
             )
             storage.add_attachment(
                 conn, filename="generated-report.pdf", content_type="application/pdf",
@@ -144,6 +144,11 @@ class BackupInspectTest(unittest.TestCase):
                 data=b"downloaded-video", blob_dir=self.layout.blobs,
                 meta={"origin": "downloaded", "asset_kind": "video", "rights": "third_party"},
             )
+            storage.add_attachment(
+                conn, filename="external.mp4", content_type="video/mp4",
+                data=b"external-video", blob_dir=self.layout.blobs,
+                meta={"origin": "downloaded", "asset_kind": "video", "rights": "third_party", "backup": "reference"},
+            )
         finally:
             conn.close()
         out = Path(self.tmp.name) / "media.zip"
@@ -152,8 +157,9 @@ class BackupInspectTest(unittest.TestCase):
             names = set(zf.namelist())
             references = json.loads(zf.read("references.json"))
         self.assertTrue(any(name.endswith("generated.mp3") for name in names))
-        self.assertFalse(any(name.endswith("downloaded.mp4") for name in names))
-        self.assertTrue(any(item["filename"] == "downloaded.mp4" for item in references))
+        self.assertTrue(any(name.endswith("downloaded.mp4") for name in names))
+        self.assertFalse(any(name.endswith("external.mp4") for name in names))
+        self.assertTrue(any(item["filename"] == "external.mp4" for item in references))
 
     def test_backup_retention(self) -> None:
         first = Path(self.tmp.name) / "one.zip"

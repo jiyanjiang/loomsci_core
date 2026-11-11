@@ -63,3 +63,9 @@ loomsci asset classify <attachment-id> --origin downloaded
 
 `origin=generated|authored` 的二进制包含在备份中；`origin=downloaded` 只保留
 引用；未知文档为迁移安全默认包含。
+
+## 提交即意图
+
+所有提交到 Core 的附件默认都是工作区资产；Core 之外的下载文件不扫描。
+已提交的 PDF/媒体默认迁移，除非显式标记 `backup=reference` 或
+`reference_only=true`。

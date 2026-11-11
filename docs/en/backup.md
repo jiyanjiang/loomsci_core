@@ -68,3 +68,9 @@ loomsci asset classify <attachment-id> --origin downloaded
 `origin=generated|authored` binaries are included, `origin=downloaded` binaries
 are references only, and unknown documents default to inclusion for migration
 safety.
+
+## Submission is intent
+
+All attachments submitted to Core are workspace assets by default. External
+downloads kept outside Core are not scanned. A submitted PDF/media is included
+unless explicitly marked `backup=reference` or `reference_only=true`.

@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.44
+
+- Corrections to the asset boundary: every attachment submitted to Core is a
+  workspace asset by default, regardless of origin or extension.
+- External downloads left outside Core are out of scope; if a downloaded PDF is
+  submitted, it is included unless explicitly marked `backup=reference` or
+  `reference_only=true`.
+- `asset classify --backup include|reference` makes exclusion an explicit user
+  decision.
+
 ## v0.1.0-preview.43
 
 - P3 v0.1 target contract: `sync inspect` and `sync import`.
