@@ -21,6 +21,8 @@ suffix.
 - Add-ons expose a local `/api/health` endpoint; runtime status is independent of
   Core availability. Windows add-ons detach from the SSH job and are tracked by
   the actual listening PID.
+- Add-on servers no longer call `socket.getfqdn()` during bind; this removes a
+  macOS CI reverse-DNS stall. Launchers insert the home path explicitly.
 
 ## v0.1.0-preview.34
 

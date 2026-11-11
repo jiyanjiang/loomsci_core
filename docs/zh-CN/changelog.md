@@ -19,6 +19,8 @@
   运行也可用，不再只依赖源码目录。
 - add-on 提供本地 `/api/health`，运行状态不依赖 Core 是否在线；Windows
   add-on 从 SSH job 脱离，并按实际监听 PID 跟踪。
+- add-on server 绑定端口时不再调用 `socket.getfqdn()`，消除 macOS CI
+  反向 DNS 卡顿；launcher 显式插入 home 路径。
 
 ## v0.1.0-preview.34
 
