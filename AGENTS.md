@@ -13,6 +13,16 @@ host yet. Do not invent installation commands or claim features are shipped.
 - Keep user-facing text bilingual (`zh-CN` and `en`).
 - Run `python scripts/check_public_tree.py` before proposing a change.
 
+## Bug intake
+
+Record every user-visible defect in `bugs/` before changing code. Do not start
+a bug-fix batch until `python scripts/buglog.py gate` reports at least 10 open
+reports. Record reproduction, expected/actual output, surface, evidence, and
+root cause; do not suppress the symptom or re-pin tests to make it pass.
+
+Security and data-loss reports may bypass the threshold only with explicit
+owner approval in the report.
+
 ## Future runtime contract (planned)
 
 When the host exists, agents will interact through the `loomsci` CLI or local

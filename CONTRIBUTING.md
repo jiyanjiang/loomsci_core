@@ -60,6 +60,13 @@ A push without a passing check is not allowed.
 - By contributing, you agree that your contribution is licensed under
   Apache-2.0.
 
+## Bug intake
+
+Record reproduced defects in [`bugs/`](bugs/README.md) with
+`python scripts/buglog.py new` and include the exact input, expected/actual
+output, surface, and evidence. Do not start a bug-fix batch until
+`python scripts/buglog.py gate` reports at least 10 open reports.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md). Do not report vulnerabilities in public issues.

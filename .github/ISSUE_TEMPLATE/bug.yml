@@ -8,6 +8,7 @@ body:
       value: |
         Do not include credentials, tokens, private keys, real user data, or
         internal network addresses. For security issues, use SECURITY.md.
+        Reproduced defects are recorded in `bugs/`; see `bugs/README.md`.
   - type: input
     id: version
     attributes:
