@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.7` | `releases/loomsci_core-0.1.0-beta.7.zip` | Login service |
 | `0.1.0-beta.6` | `releases/loomsci_core-0.1.0-beta.6.zip` | DeepSeek settings |
 | `0.1.0-beta.5` | `releases/loomsci_core-0.1.0-beta.5.zip` | Detached runtime control |
 | `0.1.0-beta.4` | `releases/loomsci_core-0.1.0-beta.4.zip` | UI /app route hotfix |

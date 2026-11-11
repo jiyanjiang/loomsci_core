@@ -18,6 +18,7 @@ from pathlib import Path
 
 from core import addon_runtime
 from core import core_runtime
+from core import service as service_mod
 from core import backup as backup_mod
 from core import doctor as doctor_mod
 from core import migration as migration_mod
@@ -841,6 +842,44 @@ def _cmd_watch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_service_install(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = service_mod.install(layout.root)
+    except service_mod.ServiceError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"service installed: {result['path']}")
+    return 0
+
+
+def _cmd_service_uninstall(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = service_mod.uninstall(layout.root)
+    except service_mod.ServiceError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(result)
+    else:
+        print("service uninstalled")
+    return 0
+
+
+def _cmd_service_status(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = service_mod.status(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"service installed: {result.get('installed')} loaded: {result.get('loaded')}")
+    return 0 if result.get("ok") else 1
+
+
 def _cmd_status(args: argparse.Namespace) -> int:
     if not getattr(args, "agent", None):
         layout = _layout(args)
@@ -1481,6 +1520,18 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--timeout", type=int, default=60)
     watch.add_argument("--json", action="store_true")
     watch.set_defaults(func=_cmd_watch)
+
+    service = sub.add_parser("service", help="manage login-time Core startup")
+    service_sub = service.add_subparsers(dest="service_command", required=True)
+    service_install = service_sub.add_parser("install", help="install login startup")
+    service_install.add_argument("--json", action="store_true")
+    service_install.set_defaults(func=_cmd_service_install)
+    service_uninstall = service_sub.add_parser("uninstall", help="remove login startup")
+    service_uninstall.add_argument("--json", action="store_true")
+    service_uninstall.set_defaults(func=_cmd_service_uninstall)
+    service_status = service_sub.add_parser("status", help="show login startup state")
+    service_status.add_argument("--json", action="store_true")
+    service_status.set_defaults(func=_cmd_service_status)
 
     status = sub.add_parser("status", help="show runtime, health, integrity, and counts")
     status.add_argument("--port", type=int, default=8787)

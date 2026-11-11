@@ -1,3 +1,10 @@
+# v0.1.0-beta.7 — Login service
+
+- Add `loomsci service install/uninstall/status`.
+- macOS installs a LaunchAgent that runs `up --detach` at login.
+- Windows installs a current-user Startup folder wrapper.
+- No silent resident daemon; Core keeps the detached runtime state.
+
 # v0.1.0-beta.6 — DeepSeek provider settings
 
 - Add `GET/PUT /v1/settings/llm/deepseek` and `POST .../test`.

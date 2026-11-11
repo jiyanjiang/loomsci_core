@@ -1,18 +1,15 @@
-# loomsci_core 0.1.0-beta.6 · Public Beta
+# loomsci_core 0.1.0-beta.7 · Public Beta
 
-- Version: `0.1.0-beta.6`
-- Package: `releases/loomsci_core-0.1.0-beta.6.zip`
-- SHA256: `a3557acd86e0616ea33bf566833d21bf1cf6c70c6869d1b2aef1f30808353498`
+- Version: `0.1.0-beta.7`
+- Package: `releases/loomsci_core-0.1.0-beta.7.zip`
+- SHA256: `1578f840edc7d0864f71a18e52a25e7a60df2818aaf57b610d0cd71bfeb43bcb`
 
-## DeepSeek settings
+## Login service
 
-- `/app/settings` provides a one-field DeepSeek API key form.
-- `GET /v1/settings/llm/deepseek` returns status without the key.
-- `PUT /v1/settings/llm/deepseek/key` saves or clears the key.
-- `POST /v1/settings/llm/deepseek/test` tests the connection.
-- Keys are stored in `config.yaml` with mode 0600 and are never returned by the
-  API, logs, backups, or exports.
-- Summaries and the research add-on share the same configuration.
+- `loomsci service install/uninstall/status`.
+- macOS LaunchAgent runs `loomsci up --detach` at login.
+- Windows current-user Startup folder runs the same command through a wrapper.
+- No silent resident daemon; Core keeps the detached runtime state.
 
-This release carries beta.5 runtime control, beta.4 `/app` routes, beta.3
-loose-list fix, and the beta.2 post model.
+This release carries beta.6 DeepSeek settings, beta.5 runtime control, beta.4
+`/app` routes, and the beta.2 post model.

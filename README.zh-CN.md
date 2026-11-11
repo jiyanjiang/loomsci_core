@@ -7,7 +7,7 @@
 LoomSci 把长期有价值的内容——笔记、帖子、任务、事实、附件、agent 指令——
 留在你自己的电脑上。AI IDE 是执行层；LoomSci 是记忆、审计和可迁移资产层。
 
-> **状态：`0.1.0-beta.6` 公测。** 本地、单 owner、无登录、无必需云依赖。
+> **状态：`0.1.0-beta.7` 公测。** 本地、单 owner、无登录、无必需云依赖。
 > 不是生产环境，也不是多用户服务器。
 
 ## 前置条件
@@ -67,7 +67,13 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRele
 ~/.loomsci/bin/loomsci status
 ~/.loomsci/bin/loomsci open       # 打开主 UI
 ~/.loomsci/bin/loomsci down
+~/.loomsci/bin/loomsci service install
+~/.loomsci/bin/loomsci service status
+~/.loomsci/bin/loomsci service uninstall
 ```
+
+`service install` 安装登录启动项，在登录时执行 `up --detach`；不静默安装常驻
+服务，Core 仍使用同一套 detached runtime 状态。
 
 `up --detach` 关闭终端后仍保持 Core。`status` 报告 PID、端口、health、
 版本和主 URL。`open` 优先打开 ui-shell；未运行时打开 Core `/app`。
@@ -167,7 +173,7 @@ $HOME/.loomsci/bin/loomsci --url http://127.0.0.1:8787 --as alice.<owner>
 ## 校验发布包
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.6.zip
+shasum -a 256 loomsci_core-0.1.0-beta.7.zip
 # 对照 release-manifest.json / SHA256SUMS
 ```
 

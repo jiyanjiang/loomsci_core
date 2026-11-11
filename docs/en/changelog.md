@@ -1,3 +1,10 @@
+# v0.1.0-beta.7 — Login service
+
+- Add `loomsci service install/uninstall/status`.
+- macOS uses a LaunchAgent; Windows uses the current-user Startup folder.
+- The login item runs `loomsci up --detach`; no silent resident service.
+- Core keeps using the same detached runtime state.
+
 # v0.1.0-beta.6 — DeepSeek provider settings
 
 - Add a one-field DeepSeek API key form at `/app/settings`.
