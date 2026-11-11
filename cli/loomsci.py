@@ -16,6 +16,7 @@ from pathlib import Path
 
 from core import addon_runtime
 from core import backup as backup_mod
+from core import storage_ops
 from core import addons as addons_mod
 from core import export as export_mod
 from core import storage
@@ -834,6 +835,66 @@ def _cmd_addon_profile(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_storage_report(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = storage_ops.report(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"home: {result['home']}")
+        print(f"db: {result['db_bytes']} bytes")
+        print(f"blobs: {result['blob_bytes']} logical / {result['blob_disk_bytes']} disk bytes")
+        print(f"attachments: {result['attachments']['count']} / {result['attachments']['bytes']} bytes")
+        print(f"duplicates: {result['duplicates']['groups_count']} groups / {result['duplicates']['reclaimable_bytes']} reclaimable")
+        print(f"orphans: {result['orphans']['count']} / {result['orphans']['bytes']} bytes")
+        print(f"logs: {result['logs_bytes']} bytes; derived: {result['derived_cache_bytes']} bytes")
+    return 0
+
+
+def _cmd_storage_duplicates(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = storage_ops.duplicates(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"groups: {result['groups_count']} reclaimable={result['reclaimable_bytes']} bytes")
+        for group in result["groups"][:20]:
+            print(f"{group['sha256'][:12]} x{group['count']} {group['reclaimable_bytes']} bytes")
+    return 0
+
+
+def _cmd_storage_dedupe(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = storage_ops.dedupe(layout.root, apply=args.apply)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"dedupe: replaced={result['replaced']} reclaimable={result['reclaimable_bytes']} bytes apply={result['apply']}")
+        for item in result["failed"]:
+            print("warning: " + item["path"] + ": " + item["error"])
+    return 0
+
+
+def _cmd_storage_prune(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = storage_ops.prune(layout.root, apply=args.apply, older_than=args.older_than)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"prune: candidates={len(result['candidates'])} bytes={result['bytes']} removed={result['removed']} apply={result['apply']}")
+    return 0
+
+
+def _cmd_storage_compact(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = storage_ops.compact(layout.root, apply=args.apply)
+    if args.json:
+        _json_print(result)
+    else:
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0 if result.get("ok") else 1
+
+
 def _cmd_backup_create(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
@@ -1141,6 +1202,28 @@ def build_parser() -> argparse.ArgumentParser:
     addon_profile.add_argument("--start", action="store_true", help="start installed add-ons")
     addon_profile.add_argument("--json", action="store_true")
     addon_profile.set_defaults(func=_cmd_addon_profile)
+
+    storage = sub.add_parser("storage", help="inspect and compact local storage")
+    storage_sub = storage.add_subparsers(dest="storage_command", required=True)
+    storage_report = storage_sub.add_parser("report", help="read-only storage report")
+    storage_report.add_argument("--json", action="store_true")
+    storage_report.set_defaults(func=_cmd_storage_report)
+    storage_duplicates = storage_sub.add_parser("duplicates", help="list duplicate attachment objects")
+    storage_duplicates.add_argument("--json", action="store_true")
+    storage_duplicates.set_defaults(func=_cmd_storage_duplicates)
+    storage_dedupe = storage_sub.add_parser("dedupe", help="hardlink duplicate attachment blobs")
+    storage_dedupe.add_argument("--apply", action="store_true")
+    storage_dedupe.add_argument("--json", action="store_true")
+    storage_dedupe.set_defaults(func=_cmd_storage_dedupe)
+    storage_prune = storage_sub.add_parser("prune", help="remove old orphan blobs")
+    storage_prune.add_argument("--apply", action="store_true")
+    storage_prune.add_argument("--older-than", type=int, default=3600)
+    storage_prune.add_argument("--json", action="store_true")
+    storage_prune.set_defaults(func=_cmd_storage_prune)
+    storage_compact = storage_sub.add_parser("compact", help="checkpoint WAL and VACUUM")
+    storage_compact.add_argument("--apply", action="store_true")
+    storage_compact.add_argument("--json", action="store_true")
+    storage_compact.set_defaults(func=_cmd_storage_compact)
 
     backup = sub.add_parser("backup", help="inspect backup asset boundaries")
     backup_sub = backup.add_subparsers(dest="backup_command", required=True)

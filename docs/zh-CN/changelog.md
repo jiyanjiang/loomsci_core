@@ -3,6 +3,14 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.40
+
+- P2.6 第一步：`storage report`、`storage duplicates`、`storage dedupe`、
+  `storage prune`、`storage compact`（破坏性操作默认 dry-run）。
+- dedupe 用 hardlink 合并重复附件 blob；报告逻辑与实际磁盘字节。
+- prune 只删除超过 `--older-than`（默认 3600s）的孤儿 blob。
+- compact 仅在 `--apply` 时执行 WAL checkpoint 和 `VACUUM`。
+
 ## v0.1.0-preview.39
 
 - P2.5 资产 bundle：`backup create`、`backup show`、`backup restore`。

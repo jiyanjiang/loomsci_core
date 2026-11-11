@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.40
+
+- P2.6 storage report/duplicates/dedupe/prune/compact; hardlink dedupe and
+  orphan cleanup dry-run by default.
+
 ## v0.1.0-preview.39
 
 - P2.5 asset bundle create/show/restore, Markdown projection, content-addressed

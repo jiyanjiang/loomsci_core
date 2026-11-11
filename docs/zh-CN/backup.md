@@ -32,3 +32,17 @@ loomsci backup restore assets.zip --to <empty-home> --apply
 - 第三方 PDF/论文（保留引用/索引）
 - API key、密码、私钥、token
 - 虚拟环境、node_modules、缓存、日志、runtime
+
+## 存储生命周期
+
+```bash
+loomsci storage report
+loomsci storage duplicates
+loomsci storage dedupe --apply
+loomsci storage prune --older-than 3600
+loomsci storage prune --older-than 3600 --apply
+loomsci storage compact --apply
+```
+
+`dedupe` 用 hardlink 合并重复 blob；`prune` 只删除超过阈值的孤儿 blob；
+`compact` 必须显式 `--apply`。破坏性维护前请先做 backup。

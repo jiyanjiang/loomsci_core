@@ -35,3 +35,18 @@ inventory never prints the secret value.
 - third-party PDFs/papers (cite/index instead)
 - API keys, passwords, private keys, tokens
 - virtualenvs, node_modules, caches, logs, runtime state
+
+## Storage lifecycle
+
+```bash
+loomsci storage report
+loomsci storage duplicates
+loomsci storage dedupe --apply
+loomsci storage prune --older-than 3600
+loomsci storage prune --older-than 3600 --apply
+loomsci storage compact --apply
+```
+
+`dedupe` replaces duplicate blobs with hardlinks; `prune` removes only orphan
+blobs older than the threshold; `compact` requires `--apply`. Run a backup
+before destructive maintenance.

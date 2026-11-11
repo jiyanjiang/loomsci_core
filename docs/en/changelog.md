@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.40
+
+- P2.6 first cut: `storage report`, `storage duplicates`, `storage dedupe`,
+  `storage prune`, `storage compact` (dry-run by default where destructive).
+- Dedupe hardlinks duplicate attachment blobs; reports logical and physical
+  blob bytes.
+- Prune removes only old orphan blobs (`--older-than`, default 3600s).
+- Compact performs WAL checkpoint and `VACUUM` only with `--apply`.
+
 ## v0.1.0-preview.39
 
 - P2.5 asset bundle: `backup create`, `backup show`, `backup restore`.
