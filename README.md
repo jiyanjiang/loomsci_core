@@ -8,7 +8,7 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.2` public beta.** Local-only, one owner, no login, no
+> **Status: `0.1.0-beta.3` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
@@ -149,7 +149,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.2.zip
+shasum -a 256 loomsci_core-0.1.0-beta.3.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 

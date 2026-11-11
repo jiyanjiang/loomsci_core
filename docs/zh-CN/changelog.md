@@ -1,3 +1,8 @@
+# v0.1.0-beta.3 — 列表修复
+
+- 有序列表项之间的空行不再关闭列表并重新从 1 编号；空行按 loose list 处理。
+- 同步修复 ui-shell、collab、notify（BUG-0002）。
+
 # v0.1.0-beta.2 — 帖子摘要
 
 - 帖子改为单一 Markdown 正文；移除 `title` 字段，旧数据库迁移时丢弃旧值。

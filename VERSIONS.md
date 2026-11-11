@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.3` | `releases/loomsci_core-0.1.0-beta.3.zip` | Loose-list hotfix |
 | `0.1.0-beta.2` | `releases/loomsci_core-0.1.0-beta.2.zip` | Unified Markdown posts and summaries |
 | `0.1.0-beta.1` | `releases/loomsci_core-0.1.0-beta.1.zip` | First public beta |
 | `0.1.0-preview.49` | `releases/loomsci_core-0.1.0-preview.49.zip` | Pre-beta hardening |

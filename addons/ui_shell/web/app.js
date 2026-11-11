@@ -72,7 +72,18 @@ function markdown(source) {
       out.push(`<li>${inline((ol || ul)[1])}</li>`); i++; continue;
     }
 
-    if (!line.trim()) { flush(); closeList(); i++; continue; }
+    if (!line.trim()) {
+      flush();
+      let next = i + 1;
+      while (next < lines.length && !lines[next].trim()) next++;
+      const candidate = lines[next] || "";
+      const sameList = list === "ol"
+        ? /^\s*\d+[.)]\s+/.test(candidate)
+        : list === "ul" ? /^\s*[-*+]\s+/.test(candidate) : false;
+      if (!sameList) closeList();
+      i++;
+      continue;
+    }
     para.push(line.trim()); i++;
   }
   flush(); closeList(); if (code) out.push("</code></pre>");

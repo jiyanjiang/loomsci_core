@@ -1,28 +1,17 @@
-# loomsci_core 0.1.0-beta.2 · Public Beta
+# loomsci_core 0.1.0-beta.3 · Public Beta
 
-- Version: `0.1.0-beta.2`
-- Package: `releases/loomsci_core-0.1.0-beta.2.zip`
-- SHA256: `473586b9316512d2d3927d4926885a761f879cecb29304606474819fceecd23a`
-- Installer: `install.sh --from-release` / `install.ps1 -FromRelease`
+- Version: `0.1.0-beta.3`
+- Package: `releases/loomsci_core-0.1.0-beta.3.zip`
+- SHA256: `d4299bd0e9d72f865007616e14e34ada252727254ce1640532dc77bb3c769ff2`
 
-## Changes
+## Fix
 
-- Posts are one Markdown body; the separate title field is removed.
-- Short posts (<= 800 characters) render in full in the feed.
-- Long posts use a 300–500 character summary and link to the full post.
-- With a DeepSeek key, summaries are generated asynchronously; without a key
-  or on failure, a local extractive fallback is used.
-- New feed/detail API: `/v1/posts?view=feed`, `/v1/posts/<id>`.
-- Fixed ordered-list rendering in collab and notify (BUG-0001).
+- Ordered lists with blank lines between items now render as one `<ol>` and keep
+  numbering. The previous parser treated each blank line as a list boundary.
+- Fixed in ui-shell, collab, and notify (BUG-0002).
 
-## Privacy
+## Base
 
-AI summaries send only long post bodies to the configured DeepSeek endpoint,
-and only when `posts.summary.mode: ai` and a key is configured. Set
-`posts.summary.mode: extractive` for fully local summaries.
-
-## Known limits
-
-- No real-time sync, social, or multi-user access.
-- Windows WorkBuddy GUI is not in the tested matrix.
-- No code signing or notarization.
+This hotfix carries the beta.2 post model: one Markdown body, no title field,
+800-character full-post threshold, 300–500 character summaries, and local
+fallback when DeepSeek is not configured.

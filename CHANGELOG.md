@@ -1,3 +1,8 @@
+# v0.1.0-beta.3 — Loose list hotfix
+
+- Fix ordered lists separated by blank lines: one `<ol>` instead of two numbered lists.
+- Same fix in ui-shell, collab, and notify (BUG-0002).
+
 # v0.1.0-beta.2 — Post summaries
 
 - Remove the separate post title. A post is one Markdown body.

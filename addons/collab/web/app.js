@@ -17,16 +17,22 @@ function inline(text) {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, l, u) => `<a href="${esc(safeUrl(u))}" rel="noreferrer noopener">${l}</a>`);
 }
 function markdown(source) {
-  const lines = esc(source).split("\n"); const out = []; let code = false, list = null, para = [];
+  const lines = esc(source).split("\n"); const out = []; let code = false, list = null, para = [], pendingBlank = false;
   const flush = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
   const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
   for (const line of lines) {
-    if (line.startsWith("```")) { flush(); closeList(); out.push(code ? "</code></pre>" : "<pre><code>"); code = !code; continue; }
+    if (line.startsWith("```")) { flush(); closeList(); pendingBlank = false; out.push(code ? "</code></pre>" : "<pre><code>"); code = !code; continue; }
     if (code) { out.push(line + "\n"); continue; }
-    const h = line.match(/^(#{1,3})\s+(.+)$/);
-    if (h) { flush(); closeList(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
+    if (!line.trim()) { flush(); pendingBlank = true; continue; }
     const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
     const ul = line.match(/^\s*[-*+]\s+(.*)$/);
+    if (pendingBlank) {
+      const same = (list === "ol" && ol) || (list === "ul" && ul);
+      if (!same) closeList();
+      pendingBlank = false;
+    }
+    const h = line.match(/^(#{1,3})\s+(.+)$/);
+    if (h) { flush(); closeList(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
     if (ol || ul) {
       flush();
       const kind = ol ? "ol" : "ul";
@@ -34,7 +40,6 @@ function markdown(source) {
       out.push(`<li>${inline((ol || ul)[1])}</li>`);
       continue;
     }
-    if (!line.trim()) { flush(); closeList(); continue; }
     para.push(line.trim());
   }
   flush(); closeList(); if (code) out.push("</code></pre>");

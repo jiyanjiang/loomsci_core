@@ -7,14 +7,20 @@ function inline(text) {
     .replace(/\*([^*]+)\*/g, "<em>$1</em>");
 }
 function markdown(source) {
-  const out = []; let list = null, para = [];
+  const out = []; let list = null, para = [], pendingBlank = false;
   const flush = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
   const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
   for (const line of esc(source).split("\n")) {
-    const h = line.match(/^(#{1,3})\s+(.+)$/);
-    if (h) { flush(); closeList(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
+    if (!line.trim()) { flush(); pendingBlank = true; continue; }
     const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
     const ul = line.match(/^\s*[-*+]\s+(.*)$/);
+    if (pendingBlank) {
+      const same = (list === "ol" && ol) || (list === "ul" && ul);
+      if (!same) closeList();
+      pendingBlank = false;
+    }
+    const h = line.match(/^(#{1,3})\s+(.+)$/);
+    if (h) { flush(); closeList(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
     if (ol || ul) {
       flush();
       const kind = ol ? "ol" : "ul";
@@ -22,7 +28,6 @@ function markdown(source) {
       out.push(`<li>${inline((ol || ul)[1])}</li>`);
       continue;
     }
-    if (!line.trim()) { flush(); closeList(); continue; }
     para.push(line.trim());
   }
   flush(); closeList();

@@ -1,3 +1,9 @@
+# v0.1.0-beta.3 — Loose list hotfix
+
+- Blank lines between ordered-list items no longer close the list and restart
+  numbering. The blank line is treated as a loose list, not a list boundary.
+- Applied to ui-shell, collab, and notify (BUG-0002).
+
 # v0.1.0-beta.2 — Post summaries
 
 - Posts now have one canonical Markdown body; the `title` field was removed and
