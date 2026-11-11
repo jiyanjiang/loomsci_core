@@ -135,14 +135,28 @@ def _port_pid_windows(port: int) -> int:
         return 0
 
 
-def _spawn_windows(python: str, module: str, home: Path, port: int, log, env: dict[str, str]) -> subprocess.Popen:
+def _write_launcher(home: Path, name: str, module: str, port: int) -> Path:
+    launcher = home / "runtime" / "addons" / f"{name}.launch.py"
+    launcher.parent.mkdir(parents=True, exist_ok=True)
+    launcher.write_text(
+        "import os, runpy, sys\n"
+        f"home = {str(home)!r}\n"
+        f"os.chdir(home)\n"
+        f"sys.path.insert(0, home)\n"
+        f"sys.argv = [{name!r}, '--home', home, '--port', '{port}']\n"
+        f"runpy.run_module({module!r}, run_name='__main__')\n",
+        encoding="utf-8",
+    )
+    return launcher
+
+
+def _spawn_windows(command: list[str], home: Path, log, env: dict[str, str]) -> subprocess.Popen:
     """Detach from the SSH/PowerShell job so the server survives the caller."""
-    base = [python, "-u", "-m", module, "--home", str(home), "--port", str(port)]
     last: OSError | None = None
     for flags in (0x00000008 | 0x00000200 | 0x01000000, 0x00000008 | 0x00000200):
         try:
             return subprocess.Popen(
-                base, cwd=str(home), env=env, stdin=subprocess.DEVNULL,
+                command, cwd=str(home), env=env, stdin=subprocess.DEVNULL,
                 stdout=log, stderr=subprocess.STDOUT, creationflags=flags, close_fds=True,
             )
         except OSError as exc:
@@ -167,6 +181,8 @@ def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
     log_path = log_dir / f"{name}.log"
     log = log_path.open("ab")
     module = f"packs.{manifest['package']}.{manifest['entry']}"
+    launcher = _write_launcher(home, name, module, port)
+    command = [_python(home), "-u", str(launcher)]
     env = {
         **os.environ,
         "PYTHONPATH": str(home),
@@ -180,12 +196,10 @@ def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
         kwargs["start_new_session"] = True
     try:
         if os.name == "nt":
-            process: subprocess.Popen = _spawn_windows(
-                _python(home), module, home, port, log, env
-            )
+            process: subprocess.Popen = _spawn_windows(command, home, log, env)
         else:
             process = subprocess.Popen(
-                [_python(home), "-u", "-m", module, "--home", str(home), "--port", str(port)],
+                command,
                 cwd=str(home),
                 env=env,
                 stdin=subprocess.DEVNULL,
@@ -221,13 +235,18 @@ def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
             _clear_state(home, name)
             raise AddonRuntimeError(f"{name} exited: {tail}")
         time.sleep(0.2)
+    alive_before = _alive(pid)
+    port_before = _port_open(port)
+    returncode = process.poll()
+    log_size = log_path.stat().st_size if log_path.exists() else 0
     _terminate(home, name, pid, process)
     _PROCESSES.pop(name, None)
     _clear_state(home, name)
     raise AddonRuntimeError(
         f"{name} did not become healthy on port {port}: "
-        f"pid={pid} alive={_alive(pid)} port_open={_port_open(port)} "
-        f"python={_python(home)} log={_tail(log_path)}"
+        f"pid={pid} alive_before={alive_before} port_before={port_before} "
+        f"returncode={returncode} log_size={log_size} python={_python(home)} "
+        f"log={_tail(log_path)}"
     )
 
 
