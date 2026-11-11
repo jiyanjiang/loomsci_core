@@ -21,3 +21,8 @@ This is a separate process; Core stays on 8787.
 
 English / Simplified Chinese UI. Strings live in `web/i18n.js`; locale is
 stored in localStorage and user content is never translated.
+
+## v0.5.0
+
+Site config: site name, logo, links, footer. Defaults live in the server;
+saved config lives under `packs/ui_shell/data/site.json`.

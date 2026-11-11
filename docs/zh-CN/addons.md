@@ -66,7 +66,7 @@ Core，也不由 add-on host 启动 Core。
 ```json
 {
   "name": "ui-shell",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "package": "ui_shell",
   "entry": "server",
   "port": 8790,

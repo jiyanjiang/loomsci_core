@@ -43,9 +43,11 @@ class UiShellTest(unittest.TestCase):
         self.upstream = ThreadingHTTPServer(("127.0.0.1", 0), _Upstream)
         self.thread = threading.Thread(target=self.upstream.serve_forever, daemon=True)
         self.thread.start()
-        self.old = (server.Handler.upstream_port, server.Handler.agent)
+        self.site_path = Path(self.tmp.name) / "site.json"
+        self.old = (server.Handler.upstream_port, server.Handler.agent, server.Handler.site_path)
         server.Handler.upstream_port = self.upstream.server_port
         server.Handler.agent = server.default_agent(self.home)
+        server.Handler.site_path = self.site_path
         self.shell = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
         self.shell_thread = threading.Thread(target=self.shell.serve_forever, daemon=True)
         self.shell_thread.start()
@@ -53,8 +55,28 @@ class UiShellTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.shell.shutdown()
         self.upstream.shutdown()
-        server.Handler.upstream_port, server.Handler.agent = self.old
+        server.Handler.upstream_port, server.Handler.agent, server.Handler.site_path = self.old
         self.tmp.cleanup()
+
+    def test_site_config_roundtrip(self) -> None:
+        url = f"http://127.0.0.1:{self.shell.server_port}/api/site"
+        with urllib.request.urlopen(url) as response:
+            default = json.loads(response.read())["site"]
+        self.assertEqual(default["logo_url"], "https://www.loomsci.com/nav-logo.png")
+        body = json.dumps({
+            "site_name": "Test Site",
+            "logo_url": "https://example.test/logo.png",
+            "links": [{"label": "Docs", "href": "https://example.test/docs"}],
+            "footer": "footer",
+        }).encode()
+        request = urllib.request.Request(url, data=body, method="POST", headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(request) as response:
+            saved = json.loads(response.read())["site"]
+        self.assertEqual(saved["site_name"], "Test Site")
+        self.assertTrue(self.site_path.is_file())
+        with urllib.request.urlopen(url) as response:
+            loaded = json.loads(response.read())["site"]
+        self.assertEqual(loaded, saved)
 
     def test_server_bind_does_not_reverse_dns(self) -> None:
         with unittest.mock.patch("socket.getfqdn", side_effect=RuntimeError("no dns")):
@@ -75,7 +97,7 @@ class UiShellTest(unittest.TestCase):
             html = response.read().decode()
             self.assertIn("loomsci", html)
             self.assertIn('data-i18n="nav.posts"', html)
-            self.assertIn("/i18n.js?v=0.4.0", html)
+            self.assertIn("/i18n.js?v=0.5.0", html)
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/i18n.js") as response:
             script = response.read().decode()
             self.assertIn('"zh-CN"', script)

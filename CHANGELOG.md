@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.37
+
+- ui-shell v0.5.0 site config: name, logo, links, footer; defaults and local JSON.
+
 ## v0.1.0-preview.36
 
 - ui-shell v0.4.0 i18n: English / Simplified Chinese, locale selector.

@@ -72,7 +72,7 @@ Core is not imported and is not started by the add-on host.
 ```json
 {
   "name": "ui-shell",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "package": "ui_shell",
   "entry": "server",
   "port": 8790,

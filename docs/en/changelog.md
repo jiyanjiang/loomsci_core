@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.37
+
+- ui-shell v0.5.0: editable site name, logo, links, and footer.
+- Defaults: site name `loomsci`, logo
+  `https://www.loomsci.com/nav-logo.png`; config is stored in
+  `packs/ui_shell/data/site.json`.
+- `GET /api/site` returns the effective config; `POST /api/site` persists it.
+  No Core table or API changes.
+- Header/footer render the saved branding; settings are available in the shell.
+
 ## v0.1.0-preview.36
 
 - ui-shell v0.4.0: English / Simplified Chinese UI, locale detection and a

@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.37
+
+- ui-shell v0.5.0：可编辑站点名称、logo、链接和页脚。
+- 缺省值：站点名 `loomsci`，logo
+  `https://www.loomsci.com/nav-logo.png`；配置存
+  `packs/ui_shell/data/site.json`。
+- `GET /api/site` 返回生效配置；`POST /api/site` 持久化。不改 Core 表/API。
+- 页头和页脚使用保存后的品牌信息；壳层内提供设置页。
+
 ## v0.1.0-preview.36
 
 - ui-shell v0.4.0：英文 / 简体中文界面，自动检测语言并提供语言选择；选择

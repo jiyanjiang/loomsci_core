@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "loomsci_core"
-version = "0.1.0-preview.36"
+version = "0.1.0-preview.37"
 description = "Local-first workspace for your personal AI agent."
 readme = "README.md"
 requires-python = ">=3.12"

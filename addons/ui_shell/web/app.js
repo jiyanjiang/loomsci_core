@@ -5,6 +5,7 @@ const errorEl = document.getElementById("error");
 let view = "posts";
 let pendingFiles = [];
 let documentPasteBound = false;
+let site = {site_name: "loomsci", logo_url: "https://www.loomsci.com/nav-logo.png", links: [], footer: ""};
 
 function showError(message) { errorEl.hidden = !message; errorEl.textContent = message || ""; }
 function stateLabel(prefix, value) {
@@ -148,6 +149,83 @@ function normalizeFile(file) {
 function addFiles(files) {
   for (const file of files || []) if (file && file.size) pendingFiles.push(normalizeFile(file));
   renderPending();
+}
+
+async function siteRequest(method = "GET", body = null) {
+  const response = await fetch("/api/site", {
+    method,
+    headers: body ? {"Content-Type": "application/json"} : {},
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await response.json();
+  if (!response.ok || data.ok === false) throw new Error(data.error || `HTTP ${response.status}`);
+  return data.site;
+}
+
+function applySite() {
+  const name = document.getElementById("brand-name");
+  const logo = document.getElementById("brand-logo");
+  const links = document.getElementById("site-links");
+  const footer = document.getElementById("site-footer");
+  if (name) name.textContent = site.site_name || "loomsci";
+  if (logo) {
+    if (site.logo_url) {
+      logo.hidden = false;
+      logo.alt = site.site_name || "loomsci";
+      logo.onerror = () => { logo.hidden = true; };
+      if (logo.getAttribute("src") !== site.logo_url) logo.src = site.logo_url;
+    } else {
+      logo.hidden = true;
+      logo.removeAttribute("src");
+    }
+  }
+  if (links) links.innerHTML = (site.links || []).map((link) => {
+    const href = String(link.href || "");
+    const safe = href.startsWith("/") ? href : safeUrl(href);
+    return `<a href="${esc(safe)}" target="_blank" rel="noreferrer noopener">${esc(link.label)}</a>`;
+  }).join("");
+  if (footer) footer.textContent = site.footer || "";
+}
+
+async function loadSite() {
+  try { site = await siteRequest(); }
+  catch { /* keep defaults when the shell starts without a saved site */ }
+  applySite();
+}
+
+async function loadSiteView() {
+  const links = (site.links || []).map((link) => `${link.label} | ${link.href}`).join("\n");
+  app.innerHTML = `<form class="compose" id="site-form">
+    <h2>${esc(t("site.title"))}</h2>
+    <label>${esc(t("site.nameLabel"))}<input name="site_name" value="${esc(site.site_name)}" maxlength="80"></label>
+    <label>${esc(t("site.logoLabel"))}<input name="logo_url" value="${esc(site.logo_url)}" maxlength="500"></label>
+    <label>${esc(t("site.linksLabel"))}<textarea name="links" rows="4">${esc(links)}</textarea></label>
+    <label>${esc(t("site.footerLabel"))}<textarea name="footer" rows="2" maxlength="300">${esc(site.footer)}</textarea></label>
+    <p id="site-status" class="muted"></p>
+    <button type="submit">${esc(t("site.save"))}</button></form>`;
+  document.getElementById("site-form").onsubmit = async (event) => {
+    event.preventDefault();
+    const form = new FormData(event.target);
+    const parsed = [];
+    for (const line of String(form.get("links") || "").split("\n")) {
+      const index = line.indexOf("|");
+      if (index < 0) continue;
+      const label = line.slice(0, index).trim();
+      const href = line.slice(index + 1).trim();
+      if (label && href) parsed.push({label, href});
+    }
+    try {
+      site = await siteRequest("POST", {
+        site_name: form.get("site_name") || "loomsci",
+        logo_url: form.get("logo_url") || "",
+        links: parsed,
+        footer: form.get("footer") || "",
+      });
+      applySite();
+      document.getElementById("site-status").textContent = t("site.saved");
+    } catch (err) { showError(err.message); }
+  };
+  renderMath(app);
 }
 
 async function refreshHealth() {
@@ -335,7 +413,7 @@ async function loadInbox() {
   renderMath(app);
 }
 
-const views = {posts: loadPosts, tasks: loadTasks, memory: loadMemory, inbox: loadInbox};
+const views = {posts: loadPosts, tasks: loadTasks, memory: loadMemory, inbox: loadInbox, site: loadSiteView};
 
 async function render(next = view) {
   view = next; showError("");
@@ -348,6 +426,7 @@ const localeSelect = document.getElementById("locale");
 if (localeSelect) {
   localeSelect.onchange = () => {
     window.LS_I18N.setLocale(localeSelect.value);
+    applySite();
     refreshHealth();
     render();
   };
@@ -355,6 +434,7 @@ if (localeSelect) {
 (async () => {
   window.LS_I18N.applyStatic();
   statusEl.textContent = t("status.connecting");
+  await loadSite();
   await refreshHealth();
-  render();
+  render(view);
 })();
