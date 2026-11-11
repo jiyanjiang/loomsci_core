@@ -142,8 +142,13 @@ def _cmd_serve(args: argparse.Namespace) -> int:
         print(f"error: port {args.port} is already in use on {args.host}", file=sys.stderr)
         return 2
     from core.app import create_app
+    from core import summaries
+    import atexit
 
+    layout = _layout(args)
     app = create_app(home=args.home)
+    worker = summaries.start_worker(layout.db, layout.root)
+    atexit.register(worker.stop)
     app.run(
         host=args.host,
         port=args.port,
@@ -312,7 +317,6 @@ def _cmd_post(args: argparse.Namespace) -> int:
         attachment_ids.append(uploaded["attachment"]["id"])
     payload = {
         "kind": args.kind,
-        "title": args.title or "",
         "body": args.body,
         "thread_id": args.thread,
         "parent_id": args.parent,
@@ -351,10 +355,9 @@ def _cmd_read(args: argparse.Namespace) -> int:
     else:
         for post in posts:
             body = " ".join(str(post.get("body") or "").split())
-            title = str(post.get("title") or "").strip()
             print(
                 f"{post.get('seq')} {post.get('id')} {post.get('author')} "
-                f"{post.get('kind')} {title} :: {body[:160]}".rstrip()
+                f"{post.get('kind')} :: {body[:160]}".rstrip()
             )
         if not posts:
             print("(no new posts)")
@@ -777,7 +780,8 @@ def _cmd_inbox(args: argparse.Namespace) -> int:
         _json_print(result)
     else:
         for post in result.get("inbox") or []:
-            print(f"{post.get('id')} @{post.get('author')} {post.get('title') or ''}")
+            label = " ".join(str(post.get("body") or "").split())[:80]
+            print(f"{post.get('id')} @{post.get('author')} {label}")
     return 0
 
 
@@ -798,7 +802,8 @@ def _cmd_watch(args: argparse.Namespace) -> int:
                 if args.json:
                     print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
                 else:
-                    print(f"#{payload.get('seq')} {payload.get('author')}: {payload.get('title') or payload.get('body', '')[:80]}")
+                    label = " ".join(str(payload.get("body") or "").split())[:80]
+                    print(f"#{payload.get('seq')} {payload.get('author')}: {label}")
     except urllib.error.HTTPError as exc:
         raise CliError(f"HTTP {exc.code}") from None
     except urllib.error.URLError as exc:
@@ -1283,7 +1288,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     post = sub.add_parser("post", help="create a post")
     post.add_argument("--kind", default="note")
-    post.add_argument("--title", default="")
     post.add_argument("--body", required=True)
     post.add_argument("--thread")
     post.add_argument("--parent")

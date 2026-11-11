@@ -1,3 +1,11 @@
+# v0.1.0-beta.2 — Post summaries
+
+- Remove the separate post title. A post is one Markdown body.
+- Long posts (>800 chars) show a 300–500 character summary; short posts render in full.
+- Add `post_summaries`, asynchronous DeepSeek summaries, and a local extractive fallback.
+- Add `/v1/posts?view=feed` and `/v1/posts/<id>`; the feed omits long bodies.
+- Fix ordered lists in collab and notify (BUG-0001).
+
 # v0.1.0-beta.1 — Public Beta
 
 First public beta. Local-only, single owner. See docs/en/changelog.md.

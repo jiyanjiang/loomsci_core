@@ -20,6 +20,19 @@ If private reporting is unavailable, open a minimal public issue asking for a
 private channel; do not include exploit details, credentials, personal data, or
 internal addresses.
 
+## Post summaries and model calls
+
+Posts are stored locally. AI summaries are optional and are the only automatic
+model upload in this beta:
+
+- only posts longer than 800 characters are eligible;
+- the long post body is sent to the configured DeepSeek endpoint;
+- no upload occurs without a configured key and `posts.summary.mode: ai`;
+- `posts.summary.mode: extractive` keeps summaries fully local;
+- a failed call falls back to a local excerpt and records only a short error.
+
+Do not put secrets in a post body if AI summaries are enabled.
+
 ## Scope
 
 In scope:

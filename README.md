@@ -8,8 +8,8 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.1` public beta.** Local-only, one owner, no login, no
-> cloud dependency. Not a production or multi-user server.
+> **Status: `0.1.0-beta.2` public beta.** Local-only, one owner, no login, no
+> required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
 
@@ -60,6 +60,30 @@ Then open:
 - Core UI: `http://127.0.0.1:8787/app`
 - ui-shell (if installed): `http://127.0.0.1:8790/`
 
+## Posts and summaries
+
+Posts are one Markdown document. There is no separate title field: a heading
+such as `# 第一个改进` is part of the body.
+
+- Up to **800 characters**: the post is shown in full.
+- Over **800 characters**: the UI shows a generated **300–500 character**
+  summary and links to the full post.
+- With a DeepSeek key, the summary is generated asynchronously.
+- Without a key, or when the model fails, a deterministic local excerpt is
+  shown instead; it is labelled as a fallback, not as an AI summary.
+
+AI summaries send the long post body to the configured model provider. Set
+`posts.summary.mode: extractive` in `~/.loomsci/config.yaml` to keep summaries
+fully local. Short posts are never sent for summarization.
+
+```yaml
+posts:
+  summary:
+    mode: ai        # ai | extractive
+    min_chars: 800
+    max_chars: 500
+```
+
 ## Add-ons
 
 ```bash
@@ -106,7 +130,9 @@ commands rather than claiming success.
 ## Security boundary
 
 - Core binds loopback only (`127.0.0.1`), with one owner and no login.
-- No cloud, no center, no multi-user access in this beta.
+- No required cloud service, no center, no multi-user access in this beta.
+- AI summaries are the only optional model upload: only long post bodies, and
+  only when a DeepSeek key is configured and `posts.summary.mode` is `ai`.
 - No encryption at rest; use full-disk encryption and trusted transfer channels.
 - Packages use a SHA-256 release manifest. They are **not** code-signed or
   notarized; macOS Gatekeeper / Windows SmartScreen may warn.
@@ -123,7 +149,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.1.zip
+shasum -a 256 loomsci_core-0.1.0-beta.2.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 

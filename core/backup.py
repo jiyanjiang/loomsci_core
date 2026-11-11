@@ -197,7 +197,8 @@ def _scan_db(db: Path) -> list[dict[str, str]]:
         conn = sqlite3.connect(f"file:{db.resolve().as_posix()}?mode=ro", uri=True)
         hits = []
         for table, columns in {
-            "posts": ("id", "title", "body"),
+            "posts": ("id", "body"),
+            "post_summaries": ("post_id", "summary", "error"),
             "tasks": ("id", "title", "description", "acceptance"),
             "facts": ("id", "claim", "evidence", "source"),
         }.items():
@@ -355,7 +356,7 @@ def _markdown_files(db: Path, attachments: dict[str, dict[str, Any]]) -> dict[st
             body = _md_front_matter({
                 "id": item["id"], "seq": item["seq"], "thread_id": item.get("thread_id"),
                 "parent_id": item.get("parent_id"), "author": item.get("author"),
-                "kind": item.get("kind"), "title": item.get("title"),
+                "kind": item.get("kind"),
                 "created_at": item.get("created_at"),
             }) + (item.get("body") or "") + ("\n\n## Attachments\n" + "\n".join(links) if links else "") + "\n"
             files[f"md/posts/{int(item['seq']):06d}-{_safe_name(item['id'])}.md"] = body
@@ -418,7 +419,8 @@ def _redact_db(db: Path) -> int:
     conn = sqlite3.connect(db)
     try:
         targets = {
-            "posts": ("title", "body"),
+            "posts": ("body",),
+            "post_summaries": ("summary", "error"),
             "tasks": ("title", "description", "acceptance"),
             "facts": ("claim", "evidence", "source"),
         }

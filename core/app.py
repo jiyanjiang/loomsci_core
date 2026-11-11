@@ -13,7 +13,7 @@ from typing import Mapping
 
 from flask import Flask, Response, g, jsonify, redirect, request
 
-from core import alice, handoff, storage
+from core import alice, handoff, storage, summaries
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -174,7 +174,6 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             )
             items.append(
                 '<div class="item">'
-                f'<div><b>{escape(str(post.get("title") or post.get("id") or ""))}</b></div>'
                 f'<div class="meta">#{post.get("seq")} · {escape(str(post.get("author") or ""))}'
                 f' · {escape(str(post.get("kind") or ""))}</div>'
                 f'<pre>{body}</pre>{files}</div>'
@@ -182,8 +181,7 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         author = _ui_agent()
         form = (
             '<form class="compose" method="post" action="/app/posts">'
-            '<input name="title" placeholder="Title" maxlength="200">'
-            '<textarea name="body" placeholder="Post body" required></textarea>'
+            '<textarea name="body" placeholder="Markdown body" required></textarea>'
             '<button type="submit">Post</button></form>'
             if author else '<p class="meta">Initialize an agent first: loomsci init</p>'
         )
@@ -238,12 +236,14 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         if not author:
             return redirect("/app")
         try:
-            storage.create_post(
+            post = storage.create_post(
                 get_db(),
                 author=author,
                 kind="note",
-                title=str(request.form.get("title") or ""),
                 body=str(request.form.get("body") or ""),
+            )
+            summaries.enqueue_for_post(
+                get_db(), post_id=post["id"], body=post["body"], home=layout.root
             )
         except ValueError:
             pass
@@ -366,7 +366,6 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             read = post.get("mention_read_at")
             items.append(
                 '<div class="item">'
-                f'<div><b>{escape(str(post.get("title") or post.get("id") or ""))}</b></div>'
                 f'<div class="meta">#{post.get("seq")} · {escape(str(post.get("author") or ""))}'
                 f' · {"read" if read else "unread"}</div>'
                 f'<pre>{escape(str(post.get("body") or ""))[:400]}</pre></div>'
@@ -433,7 +432,29 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             limit=limit,
             thread_id=request.args.get("thread"),
         )
+        if request.args.get("view") == "feed":
+            for post in posts:
+                if post["body_chars"] > summaries.SHORT_POST_MAX:
+                    if not post.get("summary"):
+                        post["summary"] = {
+                            "text": summaries.fallback(post["body"]),
+                            "status": "fallback",
+                            "model": "extractive",
+                            "error": None,
+                        }
+                    post["body"] = None
+                    post["has_more"] = True
+                else:
+                    post["has_more"] = False
         return jsonify({"ok": True, "posts": posts})
+
+    @app.get("/v1/posts/<post_id>")
+    def posts_detail(post_id: str):
+        post = storage.get_post(get_db(), post_id)
+        if post is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        post["has_more"] = False
+        return jsonify({"ok": True, "post": post})
 
     @app.post("/v1/posts")
     def posts_create():
@@ -445,13 +466,16 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 get_db(),
                 author=g.loomsci_agent,
                 kind=str(body.get("kind") or "note"),
-                title=str(body.get("title") or ""),
                 body=str(body.get("body") or ""),
                 thread_id=body.get("thread_id"),
                 parent_id=body.get("parent_id"),
                 meta=body.get("meta") if isinstance(body.get("meta"), dict) else {},
                 attachments=[str(item) for item in body.get("attachments") or []],
             )
+            summaries.enqueue_for_post(
+                get_db(), post_id=post["id"], body=post["body"], home=layout.root
+            )
+            post = storage.get_post(get_db(), post["id"]) or post
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "post": post}), 201
@@ -760,6 +784,10 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             post = handoff.create(
                 get_db(), author=g.loomsci_agent, payload=body
             )
+            summaries.enqueue_for_post(
+                get_db(), post_id=post["id"], body=post["body"], home=layout.root
+            )
+            post = storage.get_post(get_db(), post["id"]) or post
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "post": post}), 201

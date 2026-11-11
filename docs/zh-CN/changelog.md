@@ -1,3 +1,12 @@
+# v0.1.0-beta.2 — 帖子摘要
+
+- 帖子改为单一 Markdown 正文；移除 `title` 字段，旧数据库迁移时丢弃旧值。
+- 800 字符以内直接展示全文；超过 800 字符生成 300–500 字摘要，列表展示摘要
+  并提供全文入口。
+- 配置 DeepSeek key 时异步生成摘要；无 key 或模型失败时使用本地提取式 fallback。
+- 新增 `/v1/posts?view=feed`（长文不返回正文）和 `/v1/posts/<id>` 详情接口。
+- 修复 collab / notify 的 ordered list 渲染（BUG-0001）。
+
 # v0.1.0-beta.1 — 公测
 
 第一个公测版。本地、单 owner。范围：

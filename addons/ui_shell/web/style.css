@@ -172,3 +172,17 @@ footer { margin-top: var(--space-6); padding-top: var(--space-3); border-top: 1p
 .pending { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px 4px 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-size: 0.8rem; }
 .chip button { min-height: 24px; padding: 0 5px; border-radius: 999px; }
+
+.more {
+  display: inline-block;
+  margin-top: var(--space-2);
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.summary {
+  margin-top: var(--space-4);
+  color: var(--muted);
+}
+.summary summary { cursor: pointer; }
+.summary .md { color: var(--fg); }

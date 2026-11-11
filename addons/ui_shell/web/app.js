@@ -115,7 +115,39 @@ async function api(path, options = {}) {
 
 function item(title, meta, body, actions = "", attachments = []) {
   const files = (attachments || []).map((a) => `<div class="attachment">${attachmentHtml(a)}</div>`).join("");
-  return `<article class="item"><h3>${esc(title)}</h3><div class="meta">${esc(meta)}</div><div class="md">${markdown(body || "")}</div>${files}${actions}</article>`;
+  const heading = title ? `<h3>${esc(title)}</h3>` : "";
+  return `<article class="item">${heading}<div class="meta">${esc(meta)}</div><div class="md">${markdown(body || "")}</div>${files}${actions}</article>`;
+}
+
+function postItem(post) {
+  const summary = post.summary || {};
+  const long = Boolean(post.has_more);
+  const text = long ? (summary.text || "") : (post.body || "");
+  const state = long && summary.status === "pending"
+    ? ` · ${t("posts.summaryPending")}`
+    : long && summary.status === "failed"
+      ? ` · ${t("posts.summaryFailed")}`
+      : long && summary.status === "fallback" ? ` · ${t("posts.summaryFallback")}` : "";
+  const meta = `#${post.seq} · ${post.author} · ${post.kind}` + state;
+  const more = long
+    ? `<a class="more" href="?post=${encodeURIComponent(post.id)}">${esc(t("posts.full"))}</a>`
+    : "";
+  return `<article class="item"><div class="meta">${esc(meta)}</div><div class="md">${markdown(text)}</div>${more}</article>`;
+}
+
+async function loadPost(id) {
+  const data = await api(`posts/${encodeURIComponent(id)}`);
+  const post = data.post;
+  const summary = post.summary || {};
+  const files = (post.attachments || []).map((a) => `<div class="attachment">${attachmentHtml(a)}</div>`).join("");
+  const summaryLabel = summary.status === "fallback" ? t("posts.summaryFallback") : t("posts.summary");
+  const summaryBlock = summary.text
+    ? `<details class="summary"><summary>${esc(summaryLabel)}</summary><div class="md">${markdown(summary.text)}</div></details>`
+    : "";
+  app.innerHTML = `<p><a href="/app/posts">← ${esc(t("posts.back"))}</a></p>
+    <article class="item"><div class="meta">#${post.seq} · ${esc(post.author)} · ${esc(post.kind)}</div>
+    <div class="md">${markdown(post.body || "")}</div>${files}</article>${summaryBlock}`;
+  renderMath(app);
 }
 
 function renderPending() {
@@ -240,21 +272,20 @@ async function refreshHealth() {
 }
 
 async function loadPosts() {
+  const postId = new URLSearchParams(location.search).get("post");
+  if (postId) return loadPost(postId);
   const status = await api("status");
   const since = Math.max(0, Number(status.last_seq || 0) - 100);
-  const data = await api(`posts?since=${since}&limit=100`);
+  const data = await api(`posts?since=${since}&limit=100&view=feed`);
   pendingFiles = [];
   const form = `<form class="compose" id="post-form">
-    <input name="title" placeholder="${esc(t("posts.titlePlaceholder"))}" maxlength="200">
     <textarea name="body" placeholder="${esc(t("posts.bodyPlaceholder"))}" required></textarea>
     <input type="file" name="file" multiple>
     <button type="button" id="paste-image">${esc(t("posts.pasteImage"))}</button>
     <div id="pending-files" class="pending"></div>
     <button type="submit">${esc(t("posts.post"))}</button></form>
     <form class="compose" id="search-form"><input name="q" placeholder="${esc(t("posts.searchPlaceholder"))}"><button type="submit">${esc(t("posts.search"))}</button></form>`;
-  const posts = (data.posts || []).slice().reverse().map((post) =>
-    item(post.title || post.id, `#${post.seq} · ${post.author} · ${post.kind}`, post.body, "", post.attachments)
-  ).join("");
+  const posts = (data.posts || []).slice().reverse().map(postItem).join("");
   app.innerHTML = form + (posts || `<p class="muted">${esc(t("posts.empty"))}</p>`);
   const fileInput = document.querySelector('#post-form input[type="file"]');
   fileInput.onchange = () => addFiles(fileInput.files);
@@ -321,7 +352,7 @@ async function loadPosts() {
         attachments.push(uploaded.attachment.id);
       }
       await api("posts", {method: "POST", body: {
-        title: formData.get("title") || "", body: formData.get("body") || "", attachments,
+        body: String(formData.get("body") || ""), attachments,
       }});
       await loadPosts();
     } catch (err) { showError(err.message); }
@@ -400,7 +431,7 @@ async function loadMemory() {
 async function loadInbox() {
   const data = await api("inbox?limit=100");
   const posts = (data.inbox || []).map((post) =>
-    item(post.title || post.id, `#${post.seq} · ${post.author} · ${post.mention_read_at ? t("inbox.read") : t("inbox.unread")}`, post.body,
+    item("", `#${post.seq} · ${post.author} · ${post.mention_read_at ? t("inbox.read") : t("inbox.unread")}`, post.body,
       `<div class="actions"><button data-post="${esc(post.id)}">${esc(t("inbox.markRead"))}</button></div>`)
   ).join("");
   app.innerHTML = posts || `<p class="muted">${esc(t("inbox.empty"))}</p>`;

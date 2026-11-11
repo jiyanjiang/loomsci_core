@@ -51,6 +51,14 @@ def desktop_notify(title: str, message: str) -> bool:
     return False
 
 
+def _post_label(item: dict) -> str:
+    summary = item.get("summary") if isinstance(item.get("summary"), dict) else {}
+    text = str(summary.get("text") or "").strip()
+    if not text:
+        text = " ".join(str(item.get("body") or "").split())[:80]
+    return text or str(item.get("id") or "")
+
+
 class _LocalServer(ThreadingHTTPServer):
     """Avoid HTTPServer's reverse-DNS lookup in server_bind()."""
 
@@ -145,7 +153,7 @@ class Handler(BaseHTTPRequestHandler):
             "## Unread",
         ]
         unread_lines = [
-            f"- #{item.get('seq')} **{item.get('title') or item.get('id')}** · {item.get('author')}"
+            f"- #{item.get('seq')} **{_post_label(item)}** · {item.get('author')}"
             for item in unread[:10]
         ]
         lines.extend(unread_lines or ["- (none)"])

@@ -117,14 +117,14 @@ class CliHttpTest(unittest.TestCase):
 
     def test_search_inbox_watch_status_attachment(self) -> None:
         code, output = self._run(
-            "post", "--body", "ping @bob.jiyanjiang", "--title", "Review", "--json"
+            "post", "--body", "review ping @bob.jiyanjiang", "--json"
         )
         self.assertEqual(code, 0, output)
         post_id = json.loads(output)["post"]["id"]
 
         code, output = self._run("search", "Review", "--json")
         self.assertEqual(code, 0, output)
-        self.assertIn("Review", output)
+        self.assertIn("review", output)
 
         code, output = self._run("inbox", "--json", agent=OTHER)
         self.assertEqual(code, 0, output)
@@ -139,7 +139,7 @@ class CliHttpTest(unittest.TestCase):
 
         code, output = self._run("watch", "--since", "0", "--once", "--json")
         self.assertEqual(code, 0, output)
-        self.assertIn("Review", output)
+        self.assertIn("review", output)
 
         attachment = Path(self.tmp.name) / "note.txt"
         attachment.write_text("hello", encoding="utf-8")

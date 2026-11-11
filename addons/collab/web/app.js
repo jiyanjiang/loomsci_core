@@ -17,18 +17,27 @@ function inline(text) {
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, l, u) => `<a href="${esc(safeUrl(u))}" rel="noreferrer noopener">${l}</a>`);
 }
 function markdown(source) {
-  const lines = esc(source).split("\n"); const out = []; let code = false, list = false, para = [];
+  const lines = esc(source).split("\n"); const out = []; let code = false, list = null, para = [];
   const flush = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
   for (const line of lines) {
-    if (line.startsWith("```")) { flush(); if (list) { out.push("</ul>"); list = false; } out.push(code ? "</code></pre>" : "<pre><code>"); code = !code; continue; }
+    if (line.startsWith("```")) { flush(); closeList(); out.push(code ? "</code></pre>" : "<pre><code>"); code = !code; continue; }
     if (code) { out.push(line + "\n"); continue; }
     const h = line.match(/^(#{1,3})\s+(.+)$/);
-    if (h) { flush(); if (list) { out.push("</ul>"); list = false; } const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
-    if (/^\s*[-*]\s+/.test(line)) { flush(); if (!list) { out.push("<ul>"); list = true; } out.push(`<li>${inline(line.replace(/^\s*[-*]\s+/, ""))}</li>`); continue; }
-    if (!line.trim()) { flush(); if (list) { out.push("</ul>"); list = false; } continue; }
+    if (h) { flush(); closeList(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
+    const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const ul = line.match(/^\s*[-*+]\s+(.*)$/);
+    if (ol || ul) {
+      flush();
+      const kind = ol ? "ol" : "ul";
+      if (list !== kind) { closeList(); out.push(`<${kind}>`); list = kind; }
+      out.push(`<li>${inline((ol || ul)[1])}</li>`);
+      continue;
+    }
+    if (!line.trim()) { flush(); closeList(); continue; }
     para.push(line.trim());
   }
-  flush(); if (list) out.push("</ul>"); if (code) out.push("</code></pre>");
+  flush(); closeList(); if (code) out.push("</code></pre>");
   return out.join("");
 }
 async function api(path, options = {}) {

@@ -183,7 +183,6 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"ok": False, "error": "body_required"})
         payload = {
             "kind": "note",
-            "title": str(body.get("title") or ""),
             "body": text,
             "thread_id": f"room:{room_id}",
         }

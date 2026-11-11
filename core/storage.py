@@ -41,13 +41,24 @@ CREATE TABLE IF NOT EXISTS posts (
   parent_id  TEXT,
   author     TEXT NOT NULL,
   kind       TEXT NOT NULL,
-  title      TEXT,
   body       TEXT NOT NULL,
   meta_json  TEXT,
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS posts_seq ON posts(seq);
 CREATE INDEX IF NOT EXISTS posts_thread ON posts(thread_id, seq);
+
+CREATE TABLE IF NOT EXISTS post_summaries (
+  post_id     TEXT PRIMARY KEY,
+  summary     TEXT,
+  status      TEXT NOT NULL,
+  model       TEXT,
+  source_hash TEXT,
+  error       TEXT,
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS post_summaries_status ON post_summaries(status);
 
 CREATE TABLE IF NOT EXISTS tasks (
   id            TEXT PRIMARY KEY,
@@ -171,6 +182,14 @@ def init_db(db_path: str | Path) -> None:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(attachments)")}
         if "meta_json" not in columns:
             conn.execute("ALTER TABLE attachments ADD COLUMN meta_json TEXT NOT NULL DEFAULT '{}'")
+        post_columns = {row[1] for row in conn.execute("PRAGMA table_info(posts)")}
+        if "title" in post_columns:
+            # Title is no longer part of the post model. Old values are discarded
+            # by owner decision; SQLite before 3.35 keeps the dead column.
+            try:
+                conn.execute("ALTER TABLE posts DROP COLUMN title")
+            except sqlite3.OperationalError:
+                pass
         conn.commit()
     finally:
         conn.close()
@@ -364,6 +383,13 @@ def list_attachments(conn: sqlite3.Connection, *, post_id: str) -> list[dict[str
     return [dict(row) for row in rows]
 
 
+POST_SELECT = (
+    "SELECT p.*, s.summary AS summary_text, s.status AS summary_status, "
+    "s.model AS summary_model, s.error AS summary_error "
+    "FROM posts p LEFT JOIN post_summaries s ON s.post_id = p.id"
+)
+
+
 def _post_dict(row: sqlite3.Row) -> dict[str, Any]:
     item = dict(row)
     raw = item.pop("meta_json", None)
@@ -371,6 +397,18 @@ def _post_dict(row: sqlite3.Row) -> dict[str, Any]:
         item["meta"] = json.loads(raw) if raw else {}
     except (TypeError, ValueError):
         item["meta"] = {}
+    summary_text = item.pop("summary_text", None)
+    summary_status = item.pop("summary_status", None)
+    summary_model = item.pop("summary_model", None)
+    summary_error = item.pop("summary_error", None)
+    if summary_status:
+        item["summary"] = {
+            "text": summary_text or "",
+            "status": summary_status,
+            "model": summary_model,
+            "error": summary_error,
+        }
+    item["body_chars"] = len(str(item.get("body") or ""))
     return item
 
 
@@ -379,7 +417,6 @@ def create_post(
     *,
     author: str,
     kind: str,
-    title: str = "",
     body: str,
     thread_id: str | None = None,
     parent_id: str | None = None,
@@ -401,15 +438,14 @@ def create_post(
     post_id = "p-" + secrets.token_hex(6)
     created = now()
     conn.execute(
-        "INSERT INTO posts(id, thread_id, parent_id, author, kind, title, body, meta_json, created_at) "
-        "VALUES (?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO posts(id, thread_id, parent_id, author, kind, body, meta_json, created_at) "
+        "VALUES (?,?,?,?,?,?,?,?)",
         (
             post_id,
             thread_id,
             parent_id,
             author,
             kind,
-            title,
             body,
             json.dumps(meta or {}, ensure_ascii=False),
             created,
@@ -417,7 +453,7 @@ def create_post(
     )
     conn.commit()
     seq = int(conn.execute("SELECT seq FROM posts WHERE id=?", (post_id,)).fetchone()[0])
-    for agent in sorted(set(_extract_mentions(f"{title} {body}"))):
+    for agent in sorted(set(_extract_mentions(body))):
         conn.execute(
             "INSERT OR IGNORE INTO mentions(post_seq, agent, created_at) VALUES (?,?,?)",
             (seq, agent, created),
@@ -425,10 +461,20 @@ def create_post(
     for attachment_id in attachment_ids:
         attach_to_post(conn, attachment_id=attachment_id, post_id=post_id)
     conn.commit()
-    row = conn.execute("SELECT * FROM posts WHERE id=?", (post_id,)).fetchone()
+    row = conn.execute(POST_SELECT + " WHERE p.id=?", (post_id,)).fetchone()
     item = _post_dict(row)
     item["mentions"] = list_mentions(conn, post_id=post_id)
     item["attachments"] = list_attachments(conn, post_id=post_id)
+    return item
+
+
+def get_post(conn: sqlite3.Connection, post_id: str) -> dict[str, Any] | None:
+    row = conn.execute(POST_SELECT + " WHERE p.id=?", (str(post_id),)).fetchone()
+    if row is None:
+        return None
+    item = _post_dict(row)
+    item["mentions"] = list_mentions(conn, post_id=item["id"])
+    item["attachments"] = list_attachments(conn, post_id=item["id"])
     return item
 
 
@@ -440,12 +486,12 @@ def list_posts(
     thread_id: str | None = None,
 ) -> list[dict[str, Any]]:
     limit = max(1, min(int(limit), 200))
-    sql = "SELECT * FROM posts WHERE seq > ?"
+    sql = POST_SELECT + " WHERE p.seq > ?"
     params: list[Any] = [max(0, int(since))]
     if thread_id:
-        sql += " AND thread_id=?"
+        sql += " AND p.thread_id=?"
         params.append(thread_id)
-    sql += " ORDER BY seq ASC LIMIT ?"
+    sql += " ORDER BY p.seq ASC LIMIT ?"
     params.append(limit)
     items = []
     for row in conn.execute(sql, params).fetchall():
@@ -715,14 +761,17 @@ def search(
     like = f"%{text}%"
     results: list[dict[str, Any]] = []
     for row in conn.execute(
-        "SELECT * FROM posts WHERE title LIKE ? OR body LIKE ? ORDER BY seq DESC LIMIT ?",
-        (like, like, limit),
+        POST_SELECT + " WHERE p.body LIKE ? ORDER BY p.seq DESC LIMIT ?",
+        (like, limit),
     ).fetchall():
         post = _post_dict(row)
+        label = str((post.get("summary") or {}).get("text") or "")
+        if not label:
+            label = " ".join(str(post.get("body") or "").split())[:80]
         results.append({
             "type": "post",
             "id": post["id"],
-            "title": post.get("title") or post["id"],
+            "title": label or post["id"],
             "snippet": str(post.get("body") or "")[:240],
             "created_at": post.get("created_at"),
         })

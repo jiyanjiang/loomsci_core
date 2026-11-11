@@ -26,7 +26,6 @@ class ExportTest(unittest.TestCase):
             self.conn,
             author="alice.owner",
             kind="note",
-            title="Hello",
             body="export me @bob.owner",
         )
         attachment = storage.add_attachment(

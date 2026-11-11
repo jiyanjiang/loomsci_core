@@ -38,7 +38,7 @@ class AppDataTest(unittest.TestCase):
     def test_post_roundtrip(self) -> None:
         response = self.client.post(
             "/v1/posts",
-            json={"kind": "note", "title": "Hello", "body": "First post"},
+            json={"kind": "note", "body": "First post"},
             headers=self.headers,
         )
         self.assertEqual(response.status_code, 201, response.get_data(as_text=True))
@@ -52,7 +52,7 @@ class AppDataTest(unittest.TestCase):
     def test_search_inbox_status_and_events(self) -> None:
         created = self.client.post(
             "/v1/posts",
-            json={"kind": "ask", "title": "Review", "body": "ping @bob.jiyanjiang"},
+            json={"kind": "ask", "body": "review ping @bob.jiyanjiang"},
             headers=self.headers,
         )
         self.assertEqual(created.status_code, 201)
@@ -272,7 +272,7 @@ class AppDataTest(unittest.TestCase):
     def test_data_pages_are_read_only_public(self) -> None:
         self.client.post(
             "/v1/posts",
-            json={"kind": "note", "title": "Visible", "body": "hello"},
+            json={"kind": "note", "body": "Visible hello"},
             headers=self.headers,
         )
         self.client.post(
@@ -282,7 +282,7 @@ class AppDataTest(unittest.TestCase):
         )
         posts = self.client.get("/app/posts")
         self.assertEqual(posts.status_code, 200)
-        self.assertIn("Visible", posts.get_data(as_text=True))
+        self.assertIn("Visible hello", posts.get_data(as_text=True))
         tasks = self.client.get("/app/tasks")
         self.assertEqual(tasks.status_code, 200)
         self.assertIn("Visible task", tasks.get_data(as_text=True))
@@ -315,10 +315,10 @@ class AppDataTest(unittest.TestCase):
         alice.ensure(self.home, "owner")
         posted = self.client.post(
             "/app/posts",
-            data={"title": "UI post", "body": "from form"},
+            data={"body": "UI post from form"},
         )
         self.assertEqual(posted.status_code, 302)
-        self.assertIn("UI post", self.client.get("/app/posts").get_data(as_text=True))
+        self.assertIn("UI post from form", self.client.get("/app/posts").get_data(as_text=True))
         task = self.client.post(
             "/app/tasks",
             data={"title": "UI task", "acceptance": "ok"},

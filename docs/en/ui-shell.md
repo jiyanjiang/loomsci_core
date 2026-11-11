@@ -27,13 +27,19 @@ Theme work is explicitly out of scope for this phase.
 4. **Search**
    - search posts/tasks/facts through `/v1/search`
 
-5. **Core operations**
+5. **Feed and summaries**
+   - one Markdown body per post; no title field
+   - posts <= 800 characters render in full
+   - longer posts show a 300–500 character summary and a full-post link
+   - summary status is visible; fallback text is not labelled as AI
+
+6. **Core operations**
    - create post
    - create task, claim, done with evidence
    - add/review memory
    - inbox list, mark one/all read
 
-6. **States**
+7. **States**
    - loading, empty, and error states
    - no silent failures
    - keyboard-accessible buttons/forms
@@ -44,7 +50,8 @@ Theme work is explicitly out of scope for this phase.
 - PDF/Office preview
 - media transcoding, thumbnails, OCR/transcription
 - auth, multi-user, center, sync
-- changing Core tables or `/v1` shapes
+- adding a separate post title field
+- changing canonical post content on render
 
 ## Acceptance
 

@@ -28,7 +28,6 @@ class StorageTest(unittest.TestCase):
             self.conn,
             author="alice.jiyanjiang",
             kind="note",
-            title="Hello",
             body="First post",
             meta={"tag": "test"},
         )
@@ -44,8 +43,7 @@ class StorageTest(unittest.TestCase):
             self.conn,
             author="alice.jiyanjiang",
             kind="ask",
-            title="Need review",
-            body="Please check @bob.jiyanjiang and @carol.jiyanjiang",
+            body="Please review @bob.jiyanjiang and @carol.jiyanjiang",
         )
         self.assertEqual(
             post["mentions"], ["bob.jiyanjiang", "carol.jiyanjiang"]
@@ -192,3 +190,28 @@ class StorageTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_legacy_post_title_is_dropped(self) -> None:
+        legacy = Path(self.tmp.name) / "legacy" / "data.db"
+        legacy.parent.mkdir(parents=True)
+        conn = storage.sqlite3.connect(legacy)
+        conn.execute(
+            "CREATE TABLE posts (seq INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT UNIQUE, "
+            "thread_id TEXT, parent_id TEXT, author TEXT, kind TEXT, title TEXT, "
+            "body TEXT NOT NULL, meta_json TEXT, created_at TEXT NOT NULL)"
+        )
+        conn.execute(
+            "INSERT INTO posts(id, author, kind, title, body, created_at) "
+            "VALUES ('p-old','alice','note','old title','old body','2026-01-01')"
+        )
+        conn.commit()
+        conn.close()
+        storage.init_db(legacy)
+        conn = storage.connect(legacy)
+        try:
+            columns = {row[1] for row in conn.execute("PRAGMA table_info(posts)")}
+            self.assertNotIn("title", columns)
+            row = conn.execute("SELECT body FROM posts WHERE id='p-old'").fetchone()
+            self.assertEqual(row["body"], "old body")
+        finally:
+            conn.close()

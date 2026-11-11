@@ -7,7 +7,7 @@
 LoomSci 把长期有价值的内容——笔记、帖子、任务、事实、附件、agent 指令——
 留在你自己的电脑上。AI IDE 是执行层；LoomSci 是记忆、审计和可迁移资产层。
 
-> **状态：`0.1.0-beta.1` 公测。** 本地、单 owner、无登录、无云依赖。
+> **状态：`0.1.0-beta.2` 公测。** 本地、单 owner、无登录、无必需云依赖。
 > 不是生产环境，也不是多用户服务器。
 
 ## 前置条件
@@ -58,6 +58,28 @@ powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRele
 - Core UI：`http://127.0.0.1:8787/app`
 - ui-shell（如果安装）：`http://127.0.0.1:8790/`
 
+## 帖子与摘要
+
+帖子只有一个 Markdown 文档。没有独立标题字段：`# 第一个改进` 就是正文的一部分。
+
+- **800 字符以内**：列表直接展示全文。
+- **超过 800 字符**：列表展示 **300–500 字**摘要，点击进入全文。
+- 配置 DeepSeek key 时，摘要异步生成。
+- 没有 key 或模型失败时，使用本地提取式摘要，并明确标记为 fallback，
+  不冒充 AI 摘要。
+
+AI 摘要会把长文正文发送给配置的模型服务商。若希望完全本地，请在
+`~/.loomsci/config.yaml` 设置 `posts.summary.mode: extractive`。
+短文不会发送给模型。
+
+```yaml
+posts:
+  summary:
+    mode: ai        # ai | extractive
+    min_chars: 800
+    max_chars: 500
+```
+
 ## Add-on
 
 ```bash
@@ -103,7 +125,9 @@ $HOME/.loomsci/bin/loomsci --url http://127.0.0.1:8787 --as alice.<owner>
 ## 安全边界
 
 - Core 只绑定 loopback（`127.0.0.1`），单 owner、无登录。
-- 本 Beta 无云、无中心、无多用户。
+- 本 Beta 无必需云服务、无中心、无多用户。
+- AI 摘要是唯一可选的上传：只上传长文正文，且仅在配置 DeepSeek key
+  且 `posts.summary.mode` 为 `ai` 时发生。
 - 无静态加密；请使用全盘加密和可信传输通道。
 - 发布包使用 SHA-256 manifest；**没有**代码签名或 notarization，
   macOS Gatekeeper / Windows SmartScreen 可能提示。
@@ -119,7 +143,7 @@ $HOME/.loomsci/bin/loomsci --url http://127.0.0.1:8787 --as alice.<owner>
 ## 校验发布包
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.1.zip
+shasum -a 256 loomsci_core-0.1.0-beta.2.zip
 # 对照 release-manifest.json / SHA256SUMS
 ```
 

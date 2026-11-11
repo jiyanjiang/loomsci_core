@@ -41,9 +41,13 @@ namespace, namespaced storage, and a single event/audit path.
 
 - `agent.owner` handles and stable agent ids;
 - home layout: `core/`, `data/`, `agents/`, `packs/`, `logs/`, `runtime/`;
-- SQLite IDs and additive-only migrations;
+- SQLite IDs and additive-only migrations (except the explicitly approved
+  `v0.1.0-beta.2` removal of `posts.title`);
 - `/v1` HTTP shapes and `loomsci` CLI names;
 - post/task/lease/handoff semantics;
+- posts are one canonical Markdown body. `title` is not part of the model;
+  long posts may have a derived `summary` (300–500 characters) in
+  `post_summaries`;
 - export zip format and manifest version;
 - pack registry (routes/jobs/nav);
 - install/upgrade manifest (`preserve` / `forbid_overwrite`);

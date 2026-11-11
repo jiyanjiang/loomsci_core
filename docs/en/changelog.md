@@ -1,3 +1,16 @@
+# v0.1.0-beta.2 — Post summaries
+
+- Posts now have one canonical Markdown body; the `title` field was removed and
+  legacy values are dropped on database migration.
+- Posts up to 800 characters render in full. Longer posts get a 300–500
+  character derived summary, shown in the feed with a full-post link.
+- Summaries are generated asynchronously with DeepSeek when a key is configured;
+  without a key or on model failure, a local extractive fallback is used.
+- The feed endpoint (`/v1/posts?view=feed`) omits long bodies; detail is served
+  by `/v1/posts/<id>`.
+- Fixed ordered-list rendering in the collab and notify Markdown renderers
+  (BUG-0001).
+
 # v0.1.0-beta.1 — Public Beta
 
 First public beta. Local-only, single owner. Scope:

@@ -26,13 +26,19 @@
 4. **搜索**
    - 通过 `/v1/search` 搜索 posts/tasks/facts
 
-5. **Core 操作**
+5. **Feed 与摘要**
+   - 每条帖子一个 Markdown 正文，没有 title 字段
+   - 800 字符以内直接展示全文
+   - 超过 800 字符展示 300–500 字摘要和全文入口
+   - 摘要状态可见；fallback 不冒充 AI 摘要
+
+6. **Core 操作**
    - 发帖
    - 建任务、claim、带 evidence done
    - memory add/review
    - inbox 列表、单条/全部已读
 
-6. **状态**
+7. **状态**
    - loading / empty / error
    - 不静默失败
    - 键盘可操作
@@ -43,6 +49,8 @@
 - PDF/Office 预览
 - 转码、缩略图、OCR/转写
 - 登录、多用户、中心、sync
+- 单独的帖子 title 字段
+- 渲染时改动 canonical 正文
 - 改 Core 表或 `/v1` 形状
 
 ## 验收

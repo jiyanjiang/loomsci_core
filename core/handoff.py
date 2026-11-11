@@ -78,7 +78,6 @@ def create(conn, *, author: str, payload: dict[str, Any]) -> dict[str, Any]:
         conn,
         author=author,
         kind="handoff",
-        title=f"Handoff {data['task_id']} -> {data['to']}",
         body=render(data),
         thread_id=f"task:{data['task_id']}",
         meta={"handoff": data, "to": data["to"]},

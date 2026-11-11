@@ -24,13 +24,17 @@ FORMAT = "loomsci_core_export"
 VERSION = 1
 MAX_ZIP_BYTES = 200 * 1024 * 1024
 MAX_MEMBERS = 10_000
-TABLES = ("agents", "agent_aliases", "posts", "tasks", "facts", "mentions", "attachments", "reads", "presence")
+TABLES = ("agents", "agent_aliases", "posts", "post_summaries", "tasks", "facts", "mentions", "attachments", "reads", "presence")
 COLUMNS = {
     "agents": ("handle", "kind", "created_at"),
     "agent_aliases": ("alias", "handle", "created_at"),
     "posts": (
-        "seq", "id", "thread_id", "parent_id", "author", "kind", "title",
+        "seq", "id", "thread_id", "parent_id", "author", "kind",
         "body", "meta_json", "created_at",
+    ),
+    "post_summaries": (
+        "post_id", "summary", "status", "model", "source_hash", "error",
+        "created_at", "updated_at",
     ),
     "tasks": (
         "id", "title", "description", "acceptance", "status", "assigned_to",

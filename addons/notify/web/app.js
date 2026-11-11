@@ -7,16 +7,25 @@ function inline(text) {
     .replace(/\*([^*]+)\*/g, "<em>$1</em>");
 }
 function markdown(source) {
-  const out = []; let list = false, para = [];
+  const out = []; let list = null, para = [];
   const flush = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
   for (const line of esc(source).split("\n")) {
     const h = line.match(/^(#{1,3})\s+(.+)$/);
-    if (h) { flush(); if (list) { out.push("</ul>"); list = false; } const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
-    if (/^\s*-\s+/.test(line)) { flush(); if (!list) { out.push("<ul>"); list = true; } out.push(`<li>${inline(line.replace(/^\s*-\s+/, ""))}</li>`); continue; }
-    if (!line.trim()) { flush(); if (list) { out.push("</ul>"); list = false; } continue; }
+    if (h) { flush(); closeList(); const n = h[1].length + 1; out.push(`<h${n}>${inline(h[2])}</h${n}>`); continue; }
+    const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const ul = line.match(/^\s*[-*+]\s+(.*)$/);
+    if (ol || ul) {
+      flush();
+      const kind = ol ? "ol" : "ul";
+      if (list !== kind) { closeList(); out.push(`<${kind}>`); list = kind; }
+      out.push(`<li>${inline((ol || ul)[1])}</li>`);
+      continue;
+    }
+    if (!line.trim()) { flush(); closeList(); continue; }
     para.push(line.trim());
   }
-  flush(); if (list) out.push("</ul>");
+  flush(); closeList();
   return out.join("");
 }
 async function get(path) {

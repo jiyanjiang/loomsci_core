@@ -48,7 +48,7 @@ class BackupInspectTest(unittest.TestCase):
             )
             secret = "sk-" + "1234567890abcdefghijklmnop"
             storage.create_post(
-                conn, author="alice", kind="note", title="note",
+                conn, author="alice", kind="note",
                 body="key " + secret,
                 attachments=[first["id"], second["id"]],
             )

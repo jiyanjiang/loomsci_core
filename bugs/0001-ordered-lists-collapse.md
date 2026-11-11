@@ -1,7 +1,7 @@
 ---
 id: BUG-0001
 title: Ordered lists collapse into a paragraph
-status: open
+status: fixed
 severity: P2
 surface: collab, notify
 reported: 2026-11-11
@@ -94,4 +94,16 @@ Do not merge a fix before the bug gate reaches 10 open reports.
 
 ## Status
 
-Open. Count: 1/10.
+Fixed with the post-summary change under explicit owner direction; the batch
+gate was waived for this report. The fix uses one active list type in both
+renderers and covers `1.` / `1)` ordered markers and `-` / `*` / `+`
+unordered markers.
+
+Verified live on a fresh Core/home:
+
+```text
+collab ordered: <p>这是一个列表</p><ol><li>第一个改进</li><li>第二个改进</li></ol>
+notify ordered: <p>这是一个列表</p><ol><li>第一个改进</li><li>第二个改进</li></ol>
+```
+
+Open count after fix: 0/10.
