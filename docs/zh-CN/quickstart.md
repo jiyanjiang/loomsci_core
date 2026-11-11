@@ -1,22 +1,24 @@
-# 快速开始（preview.45）
+# 快速开始（preview.46）
 
 ## 安装
 
 macOS / Linux：
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.45.zip
-unzip loomsci_core-0.1.0-preview.45.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.46.zip
+unzip loomsci_core-0.1.0-preview.46.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.45.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.46.zip
 ```
 
 Windows PowerShell：
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.45.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.46.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
+# if Python is not on PATH:
+# powershell -ExecutionPolicy Bypass -File .\install.ps1 -PythonExe C:\Path\python.exe
 ```
 
 ## 首次运行

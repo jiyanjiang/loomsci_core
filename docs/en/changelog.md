@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.46
+
+- Fix Windows clean install when `py`/`python` is not on PATH: accept
+  `-PythonExe` or search `python`/`python3.12`; fail with a clear message.
+- Clean-install sandbox verified on macOS and Windows: install -> init -> profile
+  -> doctor -> up -> health.
+
 ## v0.1.0-preview.45
 
 - G4.1 first slice: `loomsci doctor` checks home, database integrity, Core

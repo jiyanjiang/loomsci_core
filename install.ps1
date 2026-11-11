@@ -2,6 +2,7 @@
 param(
   [string]$Package = "",
   [string]$Destination = "$env:USERPROFILE\.loomsci",
+  [string]$PythonExe = "",
   [switch]$NoDeps
 )
 
@@ -31,14 +32,22 @@ try {
   $venv = Join-Path $Destination "venv"
   $python = Join-Path $venv "Scripts\python.exe"
   if (-not (Test-Path $python)) {
-    $versioned = Get-Command "py" -ErrorAction SilentlyContinue
-    if ($versioned) {
+    if ($PythonExe) {
+      & $PythonExe -m venv $venv
+    } elseif (Get-Command "py" -ErrorAction SilentlyContinue) {
       & py -3.12 -m venv $venv
-    } else {
+    } elseif (Get-Command "python" -ErrorAction SilentlyContinue) {
       & python -m venv $venv
+    } elseif (Get-Command "python3.12" -ErrorAction SilentlyContinue) {
+      & python3.12 -m venv $venv
+    } else {
+      throw "Python 3.12 not found; install Python 3.12 or rerun with -Python <path-to-python.exe>"
     }
   }
   $python = Join-Path $venv "Scripts\python.exe"
+  if (-not (Test-Path $python)) {
+    throw "virtualenv creation failed: $python"
+  }
 
   $newCore = Join-Path $Destination "core.new"
   Remove-Item -Recurse -Force $newCore -ErrorAction SilentlyContinue

@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.46
+
+- 修复 Windows 干净安装：`py`/`python` 不在 PATH 时可用 `-PythonExe`，
+  或自动搜索 `python`/`python3.12`；找不到时给出明确错误。
+- macOS/Windows 沙箱干净安装验证：安装 → init → profile → doctor → up → health。
+
 ## v0.1.0-preview.45
 
 - G4.1 第一步：`loomsci doctor` 检查 home、数据库完整性、Core 可达性、
