@@ -19,6 +19,10 @@
 ```bash
 loomsci backup inspect
 loomsci backup inspect --json
+loomsci backup create --out assets.zip
+loomsci backup show assets.zip
+loomsci backup restore assets.zip --to <empty-home>
+loomsci backup restore assets.zip --to <empty-home> --apply
 ```
 
 发现秘密会阻止未来的导出，或要求显式脱敏；清单不会打印秘密值。

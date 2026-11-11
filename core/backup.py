@@ -12,8 +12,13 @@ import json
 import os
 import re
 import sqlite3
+import tempfile
+import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
+
+from core.home import ensure_layout
 
 SKIP_PARTS = {
     ".git", ".cache", ".DS_Store", "__pycache__", "node_modules", "venv",
@@ -274,3 +279,446 @@ def inspect(home: str | Path) -> dict[str, Any]:
         "samples": samples,
         "warnings": warnings,
     }
+
+
+BUNDLE_FORMAT = "loomsci_asset_bundle"
+BUNDLE_VERSION = 1
+BACKUP_EXCLUDED_TOP = {
+    "core", "cli", "docs", "scripts", "releases", "venv", "logs", "runtime",
+    "bin", "node_modules", "__pycache__", ".git", ".cache",
+}
+
+
+class BackupError(RuntimeError):
+    pass
+
+
+def _safe_name(value: str, fallback: str = "file") -> str:
+    name = re.sub(r"[^A-Za-z0-9._ -]+", "_", str(value or "")).strip() or fallback
+    return name[:120]
+
+
+def _read_attachment_rows(db: Path) -> list[dict[str, Any]]:
+    if not db.is_file():
+        return []
+    conn = None
+    try:
+        conn = sqlite3.connect(f"file:{db.resolve().as_posix()}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT * FROM attachments ORDER BY id").fetchall()
+        return [dict(row) for row in rows]
+    except sqlite3.Error:
+        return []
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _md_front_matter(values: dict[str, Any]) -> str:
+    lines = ["---"]
+    for key, value in values.items():
+        if value is None:
+            continue
+        if isinstance(value, (dict, list)):
+            value = json.dumps(value, ensure_ascii=False)
+        text = str(value).replace("\n", " ")
+        lines.append(f"{key}: {text}")
+    lines.append("---")
+    return "\n".join(lines) + "\n\n"
+
+
+def _markdown_files(db: Path, attachments: dict[str, dict[str, Any]]) -> dict[str, str]:
+    files = {}
+    conn = None
+    try:
+        conn = sqlite3.connect(f"file:{db.resolve().as_posix()}?mode=ro", uri=True)
+        conn.row_factory = sqlite3.Row
+        posts = conn.execute("SELECT * FROM posts ORDER BY seq").fetchall()
+        for row in posts:
+            item = dict(row)
+            links = []
+            for attachment_id in [a["id"] for a in _read_attachment_rows(db) if a.get("post_id") == item["id"]]:
+                meta = attachments.get(attachment_id)
+                if meta:
+                    links.append(f"- [{meta['filename']}](../../{meta['path']})")
+            body = _md_front_matter({
+                "id": item["id"], "seq": item["seq"], "thread_id": item.get("thread_id"),
+                "parent_id": item.get("parent_id"), "author": item.get("author"),
+                "kind": item.get("kind"), "title": item.get("title"),
+                "created_at": item.get("created_at"),
+            }) + (item.get("body") or "") + ("\n\n## Attachments\n" + "\n".join(links) if links else "") + "\n"
+            files[f"md/posts/{int(item['seq']):06d}-{_safe_name(item['id'])}.md"] = body
+        tasks = conn.execute("SELECT * FROM tasks ORDER BY created_at").fetchall()
+        for row in tasks:
+            item = dict(row)
+            body = _md_front_matter({
+                "id": item["id"], "status": item.get("status"),
+                "assigned_to": item.get("assigned_to"), "created_at": item.get("created_at"),
+                "updated_at": item.get("updated_at"),
+            }) + f"# {item.get('title') or item['id']}\n\n{item.get('description') or ''}\n\n## Acceptance\n\n{item.get('acceptance') or ''}\n"
+            files[f"md/tasks/{_safe_name(item['id'])}.md"] = body
+        facts = conn.execute("SELECT * FROM facts ORDER BY created_at").fetchall()
+        for row in facts:
+            item = dict(row)
+            body = _md_front_matter({
+                "id": item["id"], "project": item.get("project"),
+                "status": item.get("status"), "source": item.get("source"),
+                "created_at": item.get("created_at"),
+            }) + f"# {item.get('claim')}\n\n{item.get('evidence') or ''}\n"
+            files[f"md/facts/{_safe_name(item['id'])}.md"] = body
+        return files
+    except sqlite3.Error:
+        return files
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def _snapshot_db(source: Path, target: Path) -> None:
+    src = sqlite3.connect(f"file:{source.resolve().as_posix()}?mode=ro", uri=True)
+    dst = sqlite3.connect(target)
+    try:
+        src.backup(dst)
+        dst.commit()
+    finally:
+        dst.close()
+        src.close()
+
+
+def _redact_text(text: str) -> str:
+    for _kind, pattern in SECRET_PATTERNS:
+        text = pattern.sub("[REDACTED]", text)
+    return text
+
+
+def _drop_attachment_rows(db: Path, ids: set[str]) -> None:
+    if not ids:
+        return
+    conn = sqlite3.connect(db)
+    try:
+        conn.executemany("DELETE FROM attachments WHERE id=?", [(item,) for item in ids])
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _redact_db(db: Path) -> int:
+    count = 0
+    conn = sqlite3.connect(db)
+    try:
+        targets = {
+            "posts": ("title", "body"),
+            "tasks": ("title", "description", "acceptance"),
+            "facts": ("claim", "evidence", "source"),
+        }
+        for table, columns in targets.items():
+            try:
+                rows = conn.execute(f"SELECT rowid, {', '.join(columns)} FROM {table}").fetchall()
+            except sqlite3.Error:
+                continue
+            for row in rows:
+                values = []
+                changed = False
+                for value in row[1:]:
+                    if isinstance(value, str):
+                        redacted = _redact_text(value)
+                        changed = changed or redacted != value
+                        values.append(redacted)
+                    else:
+                        values.append(value)
+                if changed:
+                    assignments = ", ".join(f"{column}=?" for column in columns)
+                    conn.execute(f"UPDATE {table} SET {assignments} WHERE rowid=?", (*values, row[0]))
+                    count += 1
+        conn.commit()
+    finally:
+        conn.close()
+    return count
+
+
+def _included_text_files(home: Path) -> Iterator[Path]:
+    for root in (home / "agents", home / "assets", home / "programs"):
+        for path in _walk(root):
+            if _is_secret_name(path):
+                continue
+            yield path
+    packs = home / "packs"
+    if packs.is_dir():
+        for pack in packs.iterdir():
+            data = pack / "data"
+            if not data.is_dir():
+                continue
+            for path in _walk(data):
+                if any(part in {"thumbs", "thumbnails", "cache", "ocr"} for part in path.relative_to(home).parts):
+                    continue
+                if _is_secret_name(path):
+                    continue
+                yield path
+
+
+def _included_secret_hits(home: Path) -> list[dict[str, str]]:
+    hits = []
+    for path in _included_text_files(home):
+        hits.extend(_scan_file(path, home))
+    db = home / "data" / "data.db"
+    hits.extend(_scan_db(db))
+    return hits
+
+
+def _zip_bytes(zf: zipfile.ZipFile, name: str, data: bytes) -> dict[str, Any]:
+    zf.writestr(name, data)
+    return {"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+
+
+def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allow_secrets: bool = False) -> dict[str, Any]:
+    home = Path(home).expanduser()
+    out = Path(out_path).expanduser()
+    db = home / "data" / "data.db"
+    if not db.is_file():
+        raise BackupError("database not found")
+    hits = _included_secret_hits(home)
+    if hits and not redact and not allow_secrets:
+        locations = ", ".join(sorted({hit["location"] for hit in hits})[:8])
+        raise BackupError(f"secret-like content found; use --redact or --allow-secrets: {locations}")
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=".loomsci-backup-", suffix=".zip", dir=out.parent)
+    os.close(fd)
+    tmp = Path(tmp_name)
+    files: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
+    references: list[dict[str, Any]] = []
+    attachments_meta: dict[str, dict[str, Any]] = {}
+    asset_paths: dict[str, str] = {}
+    try:
+        with tempfile.TemporaryDirectory() as workspace:
+            snapshot = Path(workspace) / "data.db"
+            _snapshot_db(db, snapshot)
+            redacted_rows = _redact_db(snapshot) if redact and hits else 0
+            attachment_rows = _read_attachment_rows(snapshot)
+            for row in attachment_rows:
+                attachment_id = row["id"]
+                filename = _safe_name(row.get("filename") or "file")
+                stem = Path(filename).stem or "file"
+                suffix = Path(filename).suffix.lower()
+                blob = home / "data" / "blobs" / attachment_id
+                if not blob.is_file():
+                    continue
+                content_type = str(row.get("content_type") or "").lower()
+                is_reference = suffix in REFERENCE_SUFFIXES or content_type in {
+                    "application/pdf", "application/epub+zip", "application/zip",
+                    "application/octet-stream",
+                }
+                if is_reference:
+                    references.append({
+                        "attachment_id": attachment_id,
+                        "filename": filename,
+                        "content_type": content_type,
+                        "bytes": int(row.get("bytes") or blob.stat().st_size),
+                        "sha256": row.get("sha256"),
+                        "reason": "third_party_reference",
+                    })
+                    continue
+                digest = _sha256(blob)
+                if digest not in asset_paths:
+                    asset_paths[digest] = f"assets/{digest}/{stem}{suffix}"
+                attachments_meta[attachment_id] = {
+                    "filename": filename,
+                    "content_type": content_type,
+                    "bytes": blob.stat().st_size,
+                    "sha256": digest,
+                    "path": asset_paths[digest],
+                }
+
+            reference_ids = {item["attachment_id"] for item in references}
+            _drop_attachment_rows(snapshot, reference_ids)
+
+            with zipfile.ZipFile(tmp, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+                for name, data in _markdown_files(snapshot, attachments_meta).items():
+                    files.append(_zip_bytes(zf, name, data.encode("utf-8")))
+                files.append(_zip_bytes(zf, "data/data.db", snapshot.read_bytes()))
+
+                for attachment_id, meta in attachments_meta.items():
+                    blob = home / "data" / "blobs" / attachment_id
+                    asset_path = meta["path"]
+                    if any(item["path"] == asset_path for item in files):
+                        continue
+                    files.append(_zip_bytes(zf, asset_path, blob.read_bytes()))
+
+                for path in _included_text_files(home):
+                    rel = path.relative_to(home).as_posix()
+                    if path.suffix.lower() not in TEXT_SUFFIXES:
+                        continue
+                    data = path.read_bytes()
+                    if redact and hits:
+                        text = data.decode("utf-8", errors="replace")
+                        data = _redact_text(text).encode("utf-8")
+                    files.append(_zip_bytes(zf, rel, data))
+
+                # Preserve agent/pack data that is not text/code (media under packs).
+                for root in (home / "agents", home / "assets", home / "programs"):
+                    for path in _walk(root):
+                        if _is_secret_name(path) or path.suffix.lower() in TEXT_SUFFIXES:
+                            continue
+                        rel = path.relative_to(home).as_posix()
+                        files.append(_zip_bytes(zf, rel, path.read_bytes()))
+                packs = home / "packs"
+                if packs.is_dir():
+                    for pack in packs.iterdir():
+                        data_root = pack / "data"
+                        if not data_root.is_dir():
+                            continue
+                        for path in _walk(data_root):
+                            rel = path.relative_to(home).as_posix()
+                            if any(part in {"thumbs", "thumbnails", "cache", "ocr"} for part in Path(rel).parts):
+                                excluded.append({"path": rel, "reason": "derived/cache"})
+                                continue
+                            if _is_secret_name(path):
+                                excluded.append({"path": rel, "reason": "secret filename"})
+                                continue
+                            if path.suffix.lower() in TEXT_SUFFIXES:
+                                continue
+                            files.append(_zip_bytes(zf, rel, path.read_bytes()))
+
+                for name in ("core", "cli", "docs", "scripts", "releases", "venv", "logs", "runtime", "bin"):
+                    if (home / name).exists():
+                        excluded.append({"path": name + "/", "reason": "runtime/code"})
+
+                policy = {
+                    "assets": ["data.db", "agents", "assets", "programs", "packs/*/data", "generated media"],
+                    "references": "metadata only; third-party binaries excluded",
+                    "derived": "excluded",
+                    "secrets": "never included; blocked or redacted",
+                }
+                counts = {
+                    "files": len(files),
+                    "assets": sum(1 for item in files if item["path"].startswith("assets/")),
+                    "markdown": sum(1 for item in files if item["path"].startswith("md/")),
+                    "references": len(references),
+                    "excluded": len(excluded),
+                    "redacted_rows": redacted_rows,
+                }
+                manifest = {
+                    "format": BUNDLE_FORMAT,
+                    "version": BUNDLE_VERSION,
+                    "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+                    "product_version": (home / "VERSION").read_text(encoding="utf-8").strip() if (home / "VERSION").is_file() else "",
+                    "counts": counts,
+                    "files": files,
+                    "redacted": bool(redact and hits),
+                    "allow_secrets": bool(allow_secrets),
+                }
+                zf.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+                zf.writestr("policy.json", json.dumps(policy, ensure_ascii=False, indent=2))
+                zf.writestr("references.json", json.dumps(references, ensure_ascii=False, indent=2))
+                zf.writestr("excluded.json", json.dumps(excluded, ensure_ascii=False, indent=2))
+                zf.writestr("attachments.json", json.dumps(attachments_meta, ensure_ascii=False, indent=2))
+        os.replace(tmp, out)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+    return {"ok": True, "path": str(out), "counts": counts, "sha256": _sha256(out), "bytes": out.stat().st_size}
+
+
+def _bundle_manifest(zf: zipfile.ZipFile) -> dict[str, Any]:
+    try:
+        data = json.loads(zf.read("manifest.json").decode("utf-8"))
+    except (KeyError, ValueError, OSError) as exc:
+        raise BackupError("invalid backup manifest") from exc
+    if data.get("format") != BUNDLE_FORMAT or int(data.get("version") or 0) != BUNDLE_VERSION:
+        raise BackupError("unsupported backup format")
+    return data
+
+
+def inspect_bundle(path: str | Path) -> dict[str, Any]:
+    source = Path(path).expanduser()
+    if not source.is_file():
+        raise BackupError("backup file not found")
+    try:
+        with zipfile.ZipFile(source) as zf:
+            manifest = _bundle_manifest(zf)
+            names = set(zf.namelist())
+            if len(names) > 20_000:
+                raise BackupError("too many bundle members")
+            for item in manifest.get("files", []):
+                name = item.get("path")
+                if not name or name not in names:
+                    raise BackupError(f"missing bundle member: {name}")
+                data = zf.read(name)
+                if hashlib.sha256(data).hexdigest() != item.get("sha256"):
+                    raise BackupError(f"hash mismatch: {name}")
+            return {
+                "ok": True,
+                "path": str(source),
+                "bytes": source.stat().st_size,
+                "counts": manifest.get("counts", {}),
+                "redacted": bool(manifest.get("redacted")),
+                "allow_secrets": bool(manifest.get("allow_secrets")),
+                "created_at": manifest.get("created_at"),
+                "files": len(manifest.get("files", [])),
+            }
+    except zipfile.BadZipFile as exc:
+        raise BackupError("invalid backup zip") from exc
+
+
+def _safe_member(name: str) -> bool:
+    if not name or name.startswith("/") or "\\" in name or ":" in name.split("/")[0]:
+        return False
+    parts = Path(name).parts
+    return ".." not in parts
+
+
+def restore_bundle(path: str | Path, destination: str | Path, *, apply: bool = False) -> dict[str, Any]:
+    source = Path(path).expanduser()
+    dest = Path(destination).expanduser()
+    if not source.is_file():
+        raise BackupError("backup file not found")
+    inspect_bundle(source)
+    with zipfile.ZipFile(source) as zf:
+        manifest = _bundle_manifest(zf)
+        names = zf.namelist()
+        for name in names:
+            if not _safe_member(name):
+                raise BackupError(f"unsafe bundle member: {name}")
+        if dest.exists() and any(dest.iterdir()):
+            raise BackupError(f"destination is not empty: {dest}")
+        attachments = json.loads(zf.read("attachments.json").decode("utf-8")) if "attachments.json" in names else {}
+        if not apply:
+            return {
+                "ok": True, "dry_run": True, "destination": str(dest),
+                "counts": manifest.get("counts", {}), "attachments": len(attachments),
+            }
+
+        ensure_layout(dest)
+        data_dir = dest / "data"
+        blobs = data_dir / "blobs"
+        blobs.mkdir(parents=True, exist_ok=True)
+        (data_dir / "data.db").write_bytes(zf.read("data/data.db"))
+        materialized: dict[str, Path] = {}
+        for attachment_id, meta in attachments.items():
+            asset = meta.get("path")
+            if not asset or asset not in names:
+                continue
+            target = blobs / _safe_name(attachment_id)
+            if asset in materialized:
+                try:
+                    os.link(materialized[asset], target)
+                    continue
+                except OSError:
+                    pass
+            target.write_bytes(zf.read(asset))
+            materialized[asset] = target
+            try:
+                target.chmod(0o600)
+            except OSError:
+                pass
+        for name in names:
+            if name.startswith("agents/") or name.startswith("packs/"):
+                relative = Path(name)
+                target = dest / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(zf.read(name))
+        return {
+            "ok": True, "dry_run": False, "destination": str(dest),
+            "counts": manifest.get("counts", {}), "attachments": len(attachments),
+        }

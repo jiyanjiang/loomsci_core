@@ -4,6 +4,17 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.39
+
+- P2.5 asset bundle: `backup create`, `backup show`, `backup restore`.
+- Bundle contains a consistent SQLite snapshot, Markdown projections, content-
+  addressed assets, `attachments.json`, `references.json`, `excluded.json`.
+- Duplicate attachments share one asset object; restore hardlinks when possible.
+- Secrets block export by default; `--redact` creates redacted copies without
+  changing source; `--allow-secrets` is explicit unsafe override.
+- Third-party PDFs are indexed in `references.json` but their binaries are not
+  included.
+
 ## v0.1.0-preview.38
 
 - P2.5 first cut: read-only `loomsci backup inspect` / `--json`.

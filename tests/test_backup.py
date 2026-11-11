@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
+import sqlite3
 import sys
 import tempfile
+import zipfile
 import unittest
 from pathlib import Path
 
@@ -70,6 +73,48 @@ class BackupInspectTest(unittest.TestCase):
         self.assertIn("data/blobs", "".join(paths))
         reference_paths = {item["path"] for item in result["samples"]["references"]}
         self.assertTrue(any(path.endswith("paper.pdf") or "blobs/" in path for path in reference_paths))
+
+    def test_create_bundle_blocks_secrets_and_restores_assets(self) -> None:
+        out = Path(self.tmp.name) / "backup.zip"
+        with self.assertRaises(backup.BackupError):
+            backup.create(self.home, out)
+        result = backup.create(self.home, out, redact=True)
+        self.assertTrue(result["ok"])
+        self.assertTrue(out.is_file())
+        self.assertTrue(result["counts"]["redacted_rows"] >= 1)
+
+        with zipfile.ZipFile(out) as zf:
+            names = set(zf.namelist())
+            self.assertIn("data/data.db", names)
+            self.assertIn("references.json", names)
+            self.assertIn("attachments.json", names)
+            self.assertFalse(any(name.endswith("paper.pdf") for name in names))
+            references = json.loads(zf.read("references.json"))
+            self.assertEqual(references[0]["filename"], "paper.pdf")
+            with sqlite3.connect("file:" + str(self.home / "data" / "data.db") + "?mode=ro", uri=True) as conn:
+                pass
+        shown = backup.inspect_bundle(out)
+        self.assertTrue(shown["ok"])
+        self.assertTrue(shown["redacted"])
+
+        dest = Path(self.tmp.name) / "restored"
+        dry = backup.restore_bundle(out, dest)
+        self.assertTrue(dry["dry_run"])
+        restored = backup.restore_bundle(out, dest, apply=True)
+        self.assertFalse(restored["dry_run"])
+        self.assertTrue((dest / "data" / "data.db").is_file())
+        self.assertTrue((dest / "agents" / "alice" / "persona.yaml").is_file())
+        blobs = list((dest / "data" / "blobs").iterdir())
+        self.assertEqual(len(blobs), 2)
+        conn = sqlite3.connect(dest / "data" / "data.db")
+        try:
+            attachment_count = conn.execute("SELECT count(*) FROM attachments").fetchone()[0]
+            body = conn.execute("SELECT body FROM posts").fetchone()[0]
+        finally:
+            conn.close()
+        self.assertEqual(attachment_count, 2)
+        self.assertNotIn("1234567890abcdefghijklmnop", body)
+        self.assertIn("[REDACTED]", body)
 
     def test_inspect_is_read_only(self) -> None:
         before = {

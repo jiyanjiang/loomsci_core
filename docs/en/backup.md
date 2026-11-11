@@ -21,6 +21,10 @@ be represented by `references.json` in a future bundle.
 ```bash
 loomsci backup inspect
 loomsci backup inspect --json
+loomsci backup create --out assets.zip
+loomsci backup show assets.zip
+loomsci backup restore assets.zip --to <empty-home>
+loomsci backup restore assets.zip --to <empty-home> --apply
 ```
 
 A secret hit blocks a future backup export or requires explicit redaction; the

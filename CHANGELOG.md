@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.39
+
+- P2.5 asset bundle create/show/restore, Markdown projection, content-addressed
+  assets, references index, secret blocking/redaction.
+
 ## v0.1.0-preview.38
 
 - P2.5 backup boundary inventory: read-only inspect, classifications, duplicate

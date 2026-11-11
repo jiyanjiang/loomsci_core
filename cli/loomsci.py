@@ -834,6 +834,49 @@ def _cmd_addon_profile(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_backup_create(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = backup_mod.create(
+            layout.root, args.out, redact=args.redact, allow_secrets=args.allow_secrets
+        )
+    except backup_mod.BackupError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"backup: {result['path']}")
+        print(f"counts: {json.dumps(result['counts'], ensure_ascii=False, sort_keys=True)}")
+    return 0
+
+
+def _cmd_backup_show(args: argparse.Namespace) -> int:
+    try:
+        result = backup_mod.inspect_bundle(args.bundle)
+    except backup_mod.BackupError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"backup: {result['path']}")
+        print(f"counts: {json.dumps(result['counts'], ensure_ascii=False, sort_keys=True)}")
+        print(f"redacted: {result['redacted']}")
+    return 0
+
+
+def _cmd_backup_restore(args: argparse.Namespace) -> int:
+    try:
+        result = backup_mod.restore_bundle(args.bundle, args.to, apply=args.apply)
+    except backup_mod.BackupError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"destination: {result['destination']}")
+        print(f"dry_run: {result['dry_run']}")
+    return 0
+
+
 def _cmd_backup_inspect(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = backup_mod.inspect(layout.root)
@@ -1104,6 +1147,25 @@ def build_parser() -> argparse.ArgumentParser:
     backup_inspect = backup_sub.add_parser("inspect", help="read-only asset/secret inventory")
     backup_inspect.add_argument("--json", action="store_true")
     backup_inspect.set_defaults(func=_cmd_backup_inspect)
+
+    backup_create = backup_sub.add_parser("create", help="create a portable asset bundle")
+    backup_create.add_argument("--out", required=True)
+    backup_create.add_argument("--redact", action="store_true")
+    backup_create.add_argument("--allow-secrets", action="store_true")
+    backup_create.add_argument("--json", action="store_true")
+    backup_create.set_defaults(func=_cmd_backup_create)
+
+    backup_show = backup_sub.add_parser("show", help="verify and summarize a bundle")
+    backup_show.add_argument("bundle")
+    backup_show.add_argument("--json", action="store_true")
+    backup_show.set_defaults(func=_cmd_backup_show)
+
+    backup_restore = backup_sub.add_parser("restore", help="dry-run or restore a bundle")
+    backup_restore.add_argument("bundle")
+    backup_restore.add_argument("--to", required=True)
+    backup_restore.add_argument("--apply", action="store_true", help="write to an empty destination")
+    backup_restore.add_argument("--json", action="store_true")
+    backup_restore.set_defaults(func=_cmd_backup_restore)
 
     export = sub.add_parser("export", help="export the home as a zip")
     export.add_argument("--out", required=True)

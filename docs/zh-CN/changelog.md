@@ -3,6 +3,16 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.39
+
+- P2.5 资产 bundle：`backup create`、`backup show`、`backup restore`。
+- bundle 包含一致性 SQLite 快照、Markdown 投影、内容寻址资产、
+  `attachments.json`、`references.json`、`excluded.json`。
+- 重复附件共享一个资产对象；恢复时优先 hardlink。
+- 默认秘密阻断导出；`--redact` 生成脱敏副本且不改源；`--allow-secrets`
+  为显式危险覆盖。
+- 第三方 PDF 只进入 `references.json`，不包含二进制。
+
 ## v0.1.0-preview.38
 
 - P2.5 第一步：只读 `loomsci backup inspect` / `--json`。
