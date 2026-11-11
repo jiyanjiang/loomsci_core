@@ -141,6 +141,8 @@ def _write_launcher(home: Path, name: str, module: str, port: int) -> Path:
     launcher.write_text(
         "import os, runpy, sys\n"
         f"home = {str(home)!r}\n"
+        f"marker = {str(home / 'runtime' / 'addons' / (name + '.launcher.started'))!r}\n"
+        f"open(marker, 'w', encoding='utf-8').write('started')\n"
         f"os.chdir(home)\n"
         f"sys.path.insert(0, home)\n"
         f"sys.argv = [{name!r}, '--home', home, '--port', '{port}']\n"
@@ -239,14 +241,16 @@ def start(home: Path, name: str, timeout: float = 8.0) -> dict[str, Any]:
     port_before = _port_open(port)
     returncode = process.poll()
     log_size = log_path.stat().st_size if log_path.exists() else 0
+    marker = home / "runtime" / "addons" / f"{name}.launcher.started"
+    marker_before = marker.is_file()
     _terminate(home, name, pid, process)
     _PROCESSES.pop(name, None)
     _clear_state(home, name)
     raise AddonRuntimeError(
         f"{name} did not become healthy on port {port}: "
         f"pid={pid} alive_before={alive_before} port_before={port_before} "
-        f"returncode={returncode} log_size={log_size} python={_python(home)} "
-        f"log={_tail(log_path)}"
+        f"returncode={returncode} log_size={log_size} marker={marker_before} "
+        f"python={_python(home)} log={_tail(log_path)}"
     )
 
 
