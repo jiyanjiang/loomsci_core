@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from core.home import ensure_layout
+from core import storage
 
 SKIP_PARTS = {
     ".git", ".cache", ".DS_Store", "__pycache__", "node_modules", "venv",
@@ -707,7 +708,7 @@ def _safe_member(name: str) -> bool:
     return ".." not in parts
 
 
-def restore_bundle(path: str | Path, destination: str | Path, *, apply: bool = False) -> dict[str, Any]:
+def restore_bundle(path: str | Path, destination: str | Path, *, apply: bool = False, allow_existing: bool = False) -> dict[str, Any]:
     source = Path(path).expanduser()
     dest = Path(destination).expanduser()
     if not source.is_file():
@@ -719,7 +720,7 @@ def restore_bundle(path: str | Path, destination: str | Path, *, apply: bool = F
         for name in names:
             if not _safe_member(name):
                 raise BackupError(f"unsafe bundle member: {name}")
-        if dest.exists() and any(dest.iterdir()):
+        if dest.exists() and any(dest.iterdir()) and not allow_existing:
             raise BackupError(f"destination is not empty: {dest}")
         attachments = json.loads(zf.read("attachments.json").decode("utf-8")) if "attachments.json" in names else {}
         if not apply:
@@ -733,6 +734,7 @@ def restore_bundle(path: str | Path, destination: str | Path, *, apply: bool = F
         blobs = data_dir / "blobs"
         blobs.mkdir(parents=True, exist_ok=True)
         (data_dir / "data.db").write_bytes(zf.read("data/data.db"))
+        storage.init_db(data_dir / "data.db")
         materialized: dict[str, Path] = {}
         for attachment_id, meta in attachments.items():
             asset = meta.get("path")

@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.43
+
+- P3 v0.1 target contract: `sync inspect` and `sync import`.
+- Import into an installed but empty workspace; refuses used/unknown targets.
+- Preserves local config, add-on code, and non-source default agents (moved to
+  `runtime/pre-import-agents/`).
+- Restore applies additive schema migrations so older bundles remain usable.
+- Offline only: AirDrop/U-disk/email transfer; no network daemon.
+
 ## v0.1.0-preview.42
 
 - Attachment provenance: `meta_json` with `origin`, `asset_kind`, `rights`,

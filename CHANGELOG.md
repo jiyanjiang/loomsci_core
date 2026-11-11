@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.43
+
+- P3 target contract: sync inspect/import into an installed empty workspace;
+  refuse used targets; preserve local config and non-source agents.
+
 ## v0.1.0-preview.42
 
 - Attachment provenance, asset classification, and origin-based document/media

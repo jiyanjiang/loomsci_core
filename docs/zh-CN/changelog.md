@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.43
+
+- P3 v0.1 目标契约：`sync inspect`、`sync import`。
+- 可导入“已安装但无用户数据”的工作区；拒绝 used/unknown 目标。
+- 保留本地 config、add-on 代码；源 bundle 不存在的默认 agent 移到
+  `runtime/pre-import-agents/`。
+- 恢复时执行 additive schema migration，旧 bundle 仍可导入。
+- 仅离线：AirDrop/U 盘/邮件传输；无网络 daemon。
+
 ## v0.1.0-preview.42
 
 - 附件来源元数据 `meta_json`：`origin`、`asset_kind`、`rights`、

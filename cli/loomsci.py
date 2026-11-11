@@ -16,6 +16,7 @@ from pathlib import Path
 
 from core import addon_runtime
 from core import backup as backup_mod
+from core import migration as migration_mod
 from core import storage_ops
 from core import addons as addons_mod
 from core import export as export_mod
@@ -853,6 +854,34 @@ def _asset_rows(args: argparse.Namespace) -> list[dict]:
         conn.close()
 
 
+def _cmd_migrate_inspect(args: argparse.Namespace) -> int:
+    target = Path(args.to).expanduser() if args.to else _layout(args).root
+    result = migration_mod.state(target)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"home: {result['home']}")
+        print(f"state: {result['state']}")
+        print(f"counts: {json.dumps(result['counts'], sort_keys=True)}")
+    return 0
+
+
+def _cmd_migrate_import(args: argparse.Namespace) -> int:
+    target = Path(args.to).expanduser() if args.to else _layout(args).root
+    try:
+        result = migration_mod.import_bundle(args.bundle, target, apply=args.apply)
+    except migration_mod.MigrationError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"target: {target}")
+        print(f"state: {result['target']['state']}")
+        print(f"dry_run: {result['dry_run']}")
+        print(f"source counts: {json.dumps(result['source']['counts'], sort_keys=True)}")
+    return 0
+
+
 def _cmd_asset_list(args: argparse.Namespace) -> int:
     rows = _asset_rows(args)
     if args.unclassified:
@@ -1289,6 +1318,19 @@ def build_parser() -> argparse.ArgumentParser:
     addon_profile.add_argument("--start", action="store_true", help="start installed add-ons")
     addon_profile.add_argument("--json", action="store_true")
     addon_profile.set_defaults(func=_cmd_addon_profile)
+
+    sync = sub.add_parser("sync", help="offline workspace inspection and migration")
+    sync_sub = sync.add_subparsers(dest="sync_command", required=True)
+    sync_inspect = sync_sub.add_parser("inspect", help="inspect the target workspace state")
+    sync_inspect.add_argument("--to")
+    sync_inspect.add_argument("--json", action="store_true")
+    sync_inspect.set_defaults(func=_cmd_migrate_inspect)
+    sync_import = sync_sub.add_parser("import", help="dry-run or import a migration bundle")
+    sync_import.add_argument("bundle")
+    sync_import.add_argument("--to")
+    sync_import.add_argument("--apply", action="store_true")
+    sync_import.add_argument("--json", action="store_true")
+    sync_import.set_defaults(func=_cmd_migrate_import)
 
     asset = sub.add_parser("asset", help="inspect and classify attachment provenance")
     asset_sub = asset.add_subparsers(dest="asset_command", required=True)
