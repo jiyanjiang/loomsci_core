@@ -4,6 +4,13 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.45
+
+- G4.1 first slice: `loomsci doctor` checks home, database integrity, Core
+  reachability, add-on state, optional tools, DeepSeek configuration, and disk.
+- `loomsci up` starts installed add-ons then runs the Core host.
+- Installer output points to `doctor` and `up`.
+
 ## v0.1.0-preview.44
 
 - Corrections to the asset boundary: every attachment submitted to Core is a

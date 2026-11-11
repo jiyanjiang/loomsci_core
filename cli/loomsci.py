@@ -16,6 +16,7 @@ from pathlib import Path
 
 from core import addon_runtime
 from core import backup as backup_mod
+from core import doctor as doctor_mod
 from core import migration as migration_mod
 from core import storage_ops
 from core import addons as addons_mod
@@ -150,6 +151,38 @@ def _cmd_serve(args: argparse.Namespace) -> int:
         debug=False,
     )
     return 0
+
+
+def _cmd_doctor(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = doctor_mod.run(layout.root, port=args.port)
+    if args.json:
+        _json_print(result)
+    else:
+        checks = result["checks"]
+        print(f"home: {result['home']}")
+        print(f"home exists: {checks['home']['ok']}")
+        print(f"database: {checks['database'].get('integrity', checks['database'].get('error', 'unknown'))}")
+        print(f"core: {'reachable' if checks['core']['ok'] else 'unreachable'}")
+        print("tools: " + ", ".join(f"{key}={'yes' if value else 'no'}" for key, value in checks["tools"].items()))
+        print("add-ons: " + (", ".join(checks["addons"]["installed"]) or "(none)"))
+        for warning in result["warnings"]:
+            print("warning: " + warning)
+    return 0 if result["ok"] else 1
+
+
+def _cmd_up(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    if not _port_available(args.host, args.port):
+        print(f"error: port {args.port} is already in use on {args.host}", file=sys.stderr)
+        return 2
+    started = addon_runtime.start_all(layout.root)
+    for item in started:
+        if item.get("error"):
+            print(f"warning: {item['name']}: {item['error']}", file=sys.stderr)
+        else:
+            print(f"addon: {item['name']} {item['state']}")
+    return _cmd_serve(args)
 
 
 def _cmd_features(args: argparse.Namespace) -> int:
@@ -1121,6 +1154,11 @@ def build_parser() -> argparse.ArgumentParser:
     migrate.add_argument("--json", action="store_true")
     migrate.set_defaults(func=_cmd_migrate)
 
+    doctor = sub.add_parser("doctor", help="diagnose the installed workspace")
+    doctor.add_argument("--port", type=int, default=8787)
+    doctor.add_argument("--json", action="store_true")
+    doctor.set_defaults(func=_cmd_doctor)
+
     features = sub.add_parser("features", help="show active profile, routes, jobs, nav")
     features.add_argument("--json", action="store_true")
     features.set_defaults(func=_cmd_features)
@@ -1129,6 +1167,11 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8787)
     serve.set_defaults(func=_cmd_serve)
+
+    up = sub.add_parser("up", help="start installed add-ons and run the host")
+    up.add_argument("--host", default="127.0.0.1")
+    up.add_argument("--port", type=int, default=8787)
+    up.set_defaults(func=_cmd_up)
 
     post = sub.add_parser("post", help="create a post")
     post.add_argument("--kind", default="note")

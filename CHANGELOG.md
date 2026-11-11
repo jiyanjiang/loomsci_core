@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.45
+
+- G4.1: doctor diagnostics and `up` startup command; installer hints.
+
 ## v0.1.0-preview.44
 
 - Asset boundary correction: submitted attachments are included by default;

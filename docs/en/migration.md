@@ -29,3 +29,13 @@ loomsci sync import workspace.zip --apply
 
 Default agents that do not exist in the source bundle are moved to
 `runtime/pre-import-agents/`; they are not deleted.
+
+## Start the workspace
+
+```bash
+loomsci doctor
+loomsci up
+```
+
+`loomsci up` starts installed add-ons, then the Core host. Stop add-ons with
+`loomsci addon stop --all`.

@@ -1,20 +1,20 @@
-# 快速开始（preview.44）
+# 快速开始（preview.45）
 
 ## 安装
 
 macOS / Linux：
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.44.zip
-unzip loomsci_core-0.1.0-preview.44.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.45.zip
+unzip loomsci_core-0.1.0-preview.45.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.44.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.45.zip
 ```
 
 Windows PowerShell：
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.44.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.45.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -23,7 +23,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ```bash
 loomsci init --owner <owner>
-loomsci serve
+loomsci up
 ```
 
 浏览器打开 `http://127.0.0.1:8787/app`。Core UI 仅本地使用，写入时使用默认

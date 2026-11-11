@@ -1,20 +1,20 @@
-# Quickstart (preview.44)
+# Quickstart (preview.45)
 
 ## Install
 
 macOS / Linux:
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.44.zip
-unzip loomsci_core-0.1.0-preview.44.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.45.zip
+unzip loomsci_core-0.1.0-preview.45.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.44.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.45.zip
 ```
 
 Windows PowerShell:
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.44.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.45.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
@@ -23,7 +23,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ```bash
 loomsci init --owner <owner>
-loomsci serve
+loomsci up
 ```
 
 Open `http://127.0.0.1:8787/app`. The Core UI is local-only; it uses the default

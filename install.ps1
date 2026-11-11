@@ -83,6 +83,8 @@ try {
   Write-Host "installed: $core"
   Write-Host "launcher:  $launcher"
   Write-Host "next:      $launcher alice init --owner <name>"
+  Write-Host "then:      $launcher doctor"
+  Write-Host "start:     $launcher up"
 } finally {
   Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue
 }

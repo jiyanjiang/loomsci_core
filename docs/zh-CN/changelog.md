@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.45
+
+- G4.1 第一步：`loomsci doctor` 检查 home、数据库完整性、Core 可达性、
+  add-on 状态、可选工具、DeepSeek 配置和磁盘。
+- `loomsci up` 先启动已安装 add-on，再启动 Core。
+- 安装器输出提示 `doctor` 和 `up`。
+
 ## v0.1.0-preview.44
 
 - 修正资产边界：凡提交到 Core 的附件默认都属于工作区资产，不再按来源或
