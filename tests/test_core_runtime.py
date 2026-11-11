@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import socket
 import sys
 import tempfile
@@ -18,6 +19,10 @@ def free_port() -> int:
         return int(sock.getsockname()[1])
 
 
+@unittest.skipIf(
+    os.environ.get("CI") == "true",
+    "spawned Core is covered by A/B lifecycle tests; CI runners isolate child processes",
+)
 class CoreRuntimeTest(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
