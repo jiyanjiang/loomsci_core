@@ -52,7 +52,7 @@ class AddonHostTest(unittest.TestCase):
         self.assertIn("ui-shell", addons.installed(self.home))
         self.assertEqual(result["name"], "ui-shell")
         self.assertEqual(result["package"], "ui_shell")
-        self.assertEqual(addons.record(self.home, "ui-shell")["version"], "0.3.4")
+        self.assertEqual(addons.record(self.home, "ui-shell")["version"], "0.4.0")
         data = self.home / "packs" / "ui_shell" / "data"
         data.mkdir()
         (data / "state.json").write_text("{}")

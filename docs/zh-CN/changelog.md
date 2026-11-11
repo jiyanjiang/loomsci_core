@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.36
+
+- ui-shell v0.4.0：英文 / 简体中文界面，自动检测语言并提供语言选择；选择
+  存入浏览器 localStorage。
+- 壳层文案集中到 `addons/ui_shell/web/i18n.js`；用户内容不翻译。
+- add-on server 绑定端口不再做反向 DNS（macOS CI 修复）。
+
 ## v0.1.0-preview.35
 
 - add-on 生命周期 v1：manifest 增加 `package`、`entry`、`port`、`health`；

@@ -1,3 +1,4 @@
+const t = (key, vars) => window.LS_I18N.t(key, vars);
 const app = document.getElementById("app");
 const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
@@ -6,6 +7,11 @@ let pendingFiles = [];
 let documentPasteBound = false;
 
 function showError(message) { errorEl.hidden = !message; errorEl.textContent = message || ""; }
+function stateLabel(prefix, value) {
+  const key = `${prefix}.${value}`;
+  const translated = t(key);
+  return translated === key ? value : translated;
+}
 function esc(value) { return String(value ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function safeUrl(url) { return /^(https?:\/\/|mailto:)/i.test(url) ? url : "#"; }
 function inline(text) {
@@ -115,7 +121,7 @@ function renderPending() {
   const target = document.getElementById("pending-files");
   if (!target) return;
   target.innerHTML = pendingFiles.map((file, index) =>
-    `<span class="chip">${esc(file.name)} <button type="button" data-remove="${index}" aria-label="Remove ${esc(file.name)}">×</button></span>`
+    `<span class="chip">${esc(file.name)} <button type="button" data-remove="${index}" aria-label="${esc(t("common.remove", {name: file.name}))}">×</button></span>`
   ).join("");
   target.querySelectorAll("button[data-remove]").forEach((button) => {
     button.onclick = () => { pendingFiles.splice(Number(button.dataset.remove), 1); renderPending(); };
@@ -144,29 +150,40 @@ function addFiles(files) {
   renderPending();
 }
 
+async function refreshHealth() {
+  try {
+    const health = await api("health");
+    statusEl.textContent = t("status.local", {service: health.service, version: health.version});
+    return health;
+  } catch (err) {
+    statusEl.textContent = t("status.unreachable");
+    return null;
+  }
+}
+
 async function loadPosts() {
   const status = await api("status");
   const since = Math.max(0, Number(status.last_seq || 0) - 100);
   const data = await api(`posts?since=${since}&limit=100`);
   pendingFiles = [];
   const form = `<form class="compose" id="post-form">
-    <input name="title" placeholder="Title" maxlength="200">
-    <textarea name="body" placeholder="Markdown + $LaTeX$ body; paste an image here" required></textarea>
+    <input name="title" placeholder="${esc(t("posts.titlePlaceholder"))}" maxlength="200">
+    <textarea name="body" placeholder="${esc(t("posts.bodyPlaceholder"))}" required></textarea>
     <input type="file" name="file" multiple>
-    <button type="button" id="paste-image">Paste image from clipboard</button>
+    <button type="button" id="paste-image">${esc(t("posts.pasteImage"))}</button>
     <div id="pending-files" class="pending"></div>
-    <button type="submit">Post</button></form>
-    <form class="compose" id="search-form"><input name="q" placeholder="Search posts, tasks, facts"><button type="submit">Search</button></form>`;
+    <button type="submit">${esc(t("posts.post"))}</button></form>
+    <form class="compose" id="search-form"><input name="q" placeholder="${esc(t("posts.searchPlaceholder"))}"><button type="submit">${esc(t("posts.search"))}</button></form>`;
   const posts = (data.posts || []).slice().reverse().map((post) =>
     item(post.title || post.id, `#${post.seq} · ${post.author} · ${post.kind}`, post.body, "", post.attachments)
   ).join("");
-  app.innerHTML = form + (posts || '<p class="muted">No posts yet.</p>');
+  app.innerHTML = form + (posts || `<p class="muted">${esc(t("posts.empty"))}</p>`);
   const fileInput = document.querySelector('#post-form input[type="file"]');
   fileInput.onchange = () => addFiles(fileInput.files);
   document.getElementById("paste-image").onclick = async () => {
     showError("");
     if (!navigator.clipboard?.read) {
-      showError("This browser does not expose navigator.clipboard.read; use copy/paste or the file picker.");
+      showError(t("posts.clipboardUnsupported"));
       return;
     }
     try {
@@ -177,9 +194,9 @@ async function loadPosts() {
         if (type) files.push(new File([await item.getType(type)], `clipboard-${Date.now()}.${type.split("/")[1] || "png"}`, {type}));
       }
       if (files.length) addFiles(files);
-      else showError("Clipboard contains no image.");
+      else showError(t("posts.clipboardEmpty"));
     } catch (err) {
-      showError("Clipboard read failed: " + err.message + ". Use Cmd/Ctrl+V in the body or the file picker.");
+      showError(t("posts.clipboardFailed", {error: err.message}));
     }
   };
   const bodyInput = document.querySelector('#post-form textarea[name="body"]');
@@ -195,7 +212,7 @@ async function loadPosts() {
     }
     const types = [...(event.clipboardData?.types || [])];
     if (types.includes("Files") || types.some((type) => type.startsWith("image/"))) {
-      showError("Clipboard did not expose an image file; copy the image itself (not a file path) and paste again.");
+      showError(t("posts.clipboardNoFile"));
     }
   });
   }
@@ -237,8 +254,8 @@ async function loadPosts() {
     if (!q.trim()) return loadPosts();
     try {
       const result = await api(`search?q=${encodeURIComponent(q)}&limit=50`);
-      app.innerHTML = `<p class="muted">Results for ${esc(q)}</p>` + ((result.results || []).map((r) =>
-        item(r.title, `${r.type} · ${r.id}`, r.snippet || "")).join("") || '<p class="muted">No results.</p>');
+      app.innerHTML = `<p class="muted">${esc(t("posts.results", {query: q}))}</p>` + ((result.results || []).map((r) =>
+        item(r.title, `${r.type} · ${r.id}`, r.snippet || "")).join("") || `<p class="muted">${esc(t("posts.noResults"))}</p>`);
       renderMath(app);
     } catch (err) { showError(err.message); }
   };
@@ -248,15 +265,16 @@ async function loadPosts() {
 async function loadTasks() {
   const data = await api("tasks?limit=100");
   const form = `<form class="compose" id="task-form">
-    <input name="title" placeholder="Task title" required maxlength="200">
-    <textarea name="acceptance" placeholder="Acceptance criteria"></textarea>
-    <button type="submit">Add task</button></form>`;
+    <input name="title" placeholder="${esc(t("tasks.titlePlaceholder"))}" required maxlength="200">
+    <textarea name="acceptance" placeholder="${esc(t("tasks.acceptancePlaceholder"))}"></textarea>
+    <button type="submit">${esc(t("tasks.add"))}</button></form>`;
   const tasks = (data.tasks || []).map((task) => {
-    const actions = `<div class="actions"><form data-task="${esc(task.id)}" data-action="claim"><button>Claim</button></form>
-      <form data-task="${esc(task.id)}" data-action="done"><input name="evidence" placeholder="Evidence" required><button>Done</button></form></div>`;
-    return item(task.title || task.id, `${task.status} · ${task.assigned_to || "unassigned"}`, task.acceptance || "", actions);
+    const actions = `<div class="actions"><form data-task="${esc(task.id)}" data-action="claim"><button>${esc(t("tasks.claim"))}</button></form>
+      <form data-task="${esc(task.id)}" data-action="done"><input name="evidence" placeholder="${esc(t("tasks.evidencePlaceholder"))}" required><button>${esc(t("tasks.done"))}</button></form></div>`;
+    const owner = task.assigned_to || t("tasks.unassigned");
+    return item(task.title || task.id, `${stateLabel("tasks.status", task.status)} · ${owner}`, task.acceptance || "", actions);
   }).join("");
-  app.innerHTML = form + (tasks || '<p class="muted">No tasks yet.</p>');
+  app.innerHTML = form + (tasks || `<p class="muted">${esc(t("tasks.empty"))}</p>`);
   document.getElementById("task-form").onsubmit = async (event) => {
     event.preventDefault(); const formData = new FormData(event.target);
     try { await api("tasks", {method: "POST", body: {title: formData.get("title") || "", acceptance: formData.get("acceptance") || ""}}); await loadTasks(); }
@@ -278,15 +296,15 @@ async function loadTasks() {
 async function loadMemory() {
   const data = await api("memory?limit=100");
   const form = `<form class="compose" id="fact-form">
-    <input name="claim" placeholder="Fact / claim" required maxlength="500">
-    <input name="source" placeholder="Source">
-    <textarea name="evidence" placeholder="Evidence"></textarea>
-    <button type="submit">Add candidate fact</button></form>`;
+    <input name="claim" placeholder="${esc(t("memory.claimPlaceholder"))}" required maxlength="500">
+    <input name="source" placeholder="${esc(t("memory.sourcePlaceholder"))}">
+    <textarea name="evidence" placeholder="${esc(t("memory.evidencePlaceholder"))}"></textarea>
+    <button type="submit">${esc(t("memory.add"))}</button></form>`;
   const facts = (data.facts || []).map((fact) => {
-    const actions = `<div class="actions"><button data-fact="${esc(fact.id)}" data-status="approved">Approve</button><button data-fact="${esc(fact.id)}" data-status="rejected">Reject</button></div>`;
-    return item(fact.claim, `${fact.status} · ${fact.source || "no source"}`, fact.evidence || "", actions);
+    const actions = `<div class="actions"><button data-fact="${esc(fact.id)}" data-status="approved">${esc(t("memory.approve"))}</button><button data-fact="${esc(fact.id)}" data-status="rejected">${esc(t("memory.reject"))}</button></div>`;
+    return item(fact.claim, `${stateLabel("memory.status", fact.status)} · ${fact.source || t("memory.noSource")}`, fact.evidence || "", actions);
   }).join("");
-  app.innerHTML = form + (facts || '<p class="muted">No facts yet.</p>');
+  app.innerHTML = form + (facts || `<p class="muted">${esc(t("memory.empty"))}</p>`);
   document.getElementById("fact-form").onsubmit = async (event) => {
     event.preventDefault(); const formData = new FormData(event.target);
     try { await api("memory", {method: "POST", body: {claim: formData.get("claim") || "", source: formData.get("source") || "", evidence: formData.get("evidence") || ""}}); await loadMemory(); }
@@ -304,10 +322,10 @@ async function loadMemory() {
 async function loadInbox() {
   const data = await api("inbox?limit=100");
   const posts = (data.inbox || []).map((post) =>
-    item(post.title || post.id, `#${post.seq} · ${post.author} · ${post.mention_read_at ? "read" : "unread"}`, post.body,
-      `<div class="actions"><button data-post="${esc(post.id)}">Mark read</button></div>`)
+    item(post.title || post.id, `#${post.seq} · ${post.author} · ${post.mention_read_at ? t("inbox.read") : t("inbox.unread")}`, post.body,
+      `<div class="actions"><button data-post="${esc(post.id)}">${esc(t("inbox.markRead"))}</button></div>`)
   ).join("");
-  app.innerHTML = posts || '<p class="muted">No mentions.</p>';
+  app.innerHTML = posts || `<p class="muted">${esc(t("inbox.empty"))}</p>`;
   app.querySelectorAll("button[data-post]").forEach((button) => {
     button.onclick = async () => {
       try { await api("inbox/read", {method: "POST", body: {post_id: button.dataset.post}}); await loadInbox(); }
@@ -326,8 +344,17 @@ async function render(next = view) {
 }
 
 document.querySelectorAll("nav button").forEach((button) => { button.onclick = () => render(button.dataset.view); });
+const localeSelect = document.getElementById("locale");
+if (localeSelect) {
+  localeSelect.onchange = () => {
+    window.LS_I18N.setLocale(localeSelect.value);
+    refreshHealth();
+    render();
+  };
+}
 (async () => {
-  try { const health = await api("health"); statusEl.textContent = `${health.service} ${health.version} · local`; }
-  catch (err) { statusEl.textContent = "core unreachable"; showError(err.message); }
+  window.LS_I18N.applyStatic();
+  statusEl.textContent = t("status.connecting");
+  await refreshHealth();
   render();
 })();

@@ -2,25 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>loomsci ui-shell</title>
-<link rel="stylesheet" href="/style.css?v=0.3.4">
+<title data-i18n="app.title">loomsci ui-shell</title>
+<link rel="stylesheet" href="/style.css?v=0.4.0">
 <link rel="stylesheet" href="/vendor/katex/katex.min.css">
 </head>
 <body>
 <header>
-  <strong>loomsci</strong>
+  <strong data-i18n="app.name">loomsci</strong>
   <span id="status" class="muted">connecting…</span>
   <nav>
-    <button data-view="posts">Posts</button>
-    <button data-view="tasks">Tasks</button>
-    <button data-view="memory">Memory</button>
-    <button data-view="inbox">Inbox</button>
+    <button data-view="posts" data-i18n="nav.posts">Posts</button>
+    <button data-view="tasks" data-i18n="nav.tasks">Tasks</button>
+    <button data-view="memory" data-i18n="nav.memory">Memory</button>
+    <button data-view="inbox" data-i18n="nav.inbox">Inbox</button>
   </nav>
+  <select id="locale" aria-label="Language">
+    <option value="en">EN</option>
+    <option value="zh-CN">中文</option>
+  </select>
 </header>
 <main id="app"><p class="muted">loading…</p></main>
 <div id="error" class="error" hidden></div>
 <script src="/vendor/katex/katex.min.js"></script>
 <script src="/vendor/katex/auto-render.min.js"></script>
-<script src="/app.js?v=0.3.4"></script>
+<script src="/i18n.js?v=0.4.0"></script>
+<script src="/app.js?v=0.4.0"></script>
 </body>
 </html>

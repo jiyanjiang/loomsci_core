@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.36
+
+- ui-shell v0.4.0 i18n: English / Simplified Chinese, locale selector.
+- Add-on server bind skips reverse DNS (macOS CI fix).
+
 ## v0.1.0-preview.35
 
 - Add-on lifecycle: manifest package/entry/port/health, installed metadata,

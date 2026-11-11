@@ -72,7 +72,14 @@ class UiShellTest(unittest.TestCase):
             response.read()
         self.assertEqual(_Upstream.last_path, "/v1/health?probe=1")
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/") as response:
-            self.assertIn(b"loomsci", response.read())
+            html = response.read().decode()
+            self.assertIn("loomsci", html)
+            self.assertIn('data-i18n="nav.posts"', html)
+            self.assertIn("/i18n.js?v=0.4.0", html)
+        with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/i18n.js") as response:
+            script = response.read().decode()
+            self.assertIn('"zh-CN"', script)
+            self.assertIn('"nav.posts": "帖子"', script)
 
 
 if __name__ == "__main__":

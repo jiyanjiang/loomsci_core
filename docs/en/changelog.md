@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.36
+
+- ui-shell v0.4.0: English / Simplified Chinese UI, locale detection and a
+  language selector. Locale choice is stored in browser localStorage.
+- Shell strings moved to `addons/ui_shell/web/i18n.js`; user content is not
+  translated.
+- Add-on server bind no longer performs reverse DNS (macOS CI fix).
+
 ## v0.1.0-preview.35
 
 - Add-on lifecycle v1: manifests now carry `package`, `entry`, `port`, and

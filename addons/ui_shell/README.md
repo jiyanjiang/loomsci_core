@@ -16,3 +16,8 @@ python -m addons.ui_shell.server --home ~/.loomsci --port 8790
 Open `http://127.0.0.1:8790/`.
 
 This is a separate process; Core stays on 8787.
+
+## v0.4.0
+
+English / Simplified Chinese UI. Strings live in `web/i18n.js`; locale is
+stored in localStorage and user content is never translated.
