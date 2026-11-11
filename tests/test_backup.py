@@ -91,8 +91,8 @@ class BackupInspectTest(unittest.TestCase):
             self.assertFalse(any(name.endswith("paper.pdf") for name in names))
             references = json.loads(zf.read("references.json"))
             self.assertEqual(references[0]["filename"], "paper.pdf")
-            with sqlite3.connect("file:" + str(self.home / "data" / "data.db") + "?mode=ro", uri=True) as conn:
-                pass
+            conn = sqlite3.connect("file:" + str(self.home / "data" / "data.db") + "?mode=ro", uri=True)
+            conn.close()
         shown = backup.inspect_bundle(out)
         self.assertTrue(shown["ok"])
         self.assertTrue(shown["redacted"])
