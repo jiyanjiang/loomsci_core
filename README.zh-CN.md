@@ -1,74 +1,134 @@
-# loomsci_core
+# loomsci_core · 公测
 
-**你的个人 agent 的本地工作区。**
-数据归你、无登录、可迁移，支持 macOS 与 Windows。
+[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [备份](docs/zh-CN/backup.md) · [迁移](docs/zh-CN/migration.md) · [安全](SECURITY.md)
 
-> **预览。** `v0.1.0-preview.49` 是当前本地预览版；
-> 它不是生产版本。
+**给使用 AI IDE 的科研人的本地优先工作台。**
 
-[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [架构](docs/zh-CN/architecture.md) · [源码映射](docs/zh-CN/source-map.md) · [测试](docs/zh-CN/testing.md) · [Core 契约](docs/zh-CN/core-contract.md) · [Add-ons](docs/zh-CN/addons.md) · [备份边界](docs/zh-CN/backup.md) · [迁移](docs/zh-CN/migration.md) · [N4 验收](docs/zh-CN/n4-acceptance.md) · [发布](docs/zh-CN/release.md) · [路线图](docs/zh-CN/roadmap.md) · [安全](SECURITY.md) · [许可证](LICENSE)
+LoomSci 把长期有价值的内容——笔记、帖子、任务、事实、附件、agent 指令——
+留在你自己的电脑上。AI IDE 是执行层；LoomSci 是记忆、审计和可迁移资产层。
 
-## 为什么
+> **状态：`0.1.0-beta.1` 公测。** 本地、单 owner、无登录、无云依赖。
+> 不是生产环境，也不是多用户服务器。
 
-- **归你。** 项目、帖子、任务、记忆、附件都在本机磁盘。
-- **无账号。** 一个 owner、一个主 agent（默认 `alice`），不依赖云。
-- **可迁移。** JSON + Markdown 全量导出；换 IDE、换机器不丢上下文。
+## 前置条件
 
-AI IDE 是手和脚；`loomsci_core` 是记忆、协作总线和审计层。
+- Python **3.12**
+- 一个能执行终端命令的 AI IDE：
+  **WorkBuddy**、**opencode** 或 **omp**
+- macOS 或 Windows
 
-## 在系统中的位置
+WorkBuddy 5.9.3 已在 macOS 完成 smoke；opencode / omp 有真实 L7 记录。
+Windows WorkBuddy GUI 尚未验证。
 
-```text
-AI IDE agents（WorkBuddy / opencode / 其他本地 IDE）
-                 │  CLI / HTTP
-                 ▼
-        loomsci_core host            默认单端口、只绑回环
-        ├── 帖子 / 任务 / 租约
-        ├── 记忆 / 事实 / 产物
-        └── 本地边界 + 导出
-```
+## 安装
 
-## 快速开始（预览）
-
-用预览包安装，然后初始化并启动本地 host。
-
-macOS：
+macOS / Linux：
 
 ```bash
-bash install.sh --package loomsci_core-0.1.0-preview.49.zip
-loomsci init --owner <name>
-loomsci serve
+curl -fsSL https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/install.sh \
+  -o /tmp/loomsci-install.sh
+bash /tmp/loomsci-install.sh --from-release --dry-run
+bash /tmp/loomsci-install.sh --from-release
+~/.loomsci/bin/loomsci setup
+~/.loomsci/bin/loomsci up
 ```
 
 Windows PowerShell：
 
 ```powershell
-.\install.ps1 -Package .\loomsci_core-0.1.0-preview.49.zip
-loomsci init --owner <name>
-loomsci serve
+Invoke-WebRequest -UseBasicParsing `
+  https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/install.ps1 `
+  -OutFile $env:TEMP\loomsci-install.ps1
+powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRelease -DryRun
+powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRelease
+& "$env:USERPROFILE\.loomsci\bin\loomsci.cmd" setup
+& "$env:USERPROFILE\.loomsci\bin\loomsci.cmd" up
 ```
 
-浏览器打开 `http://127.0.0.1:8787/app`。Host 只绑回环，无登录。
+安装器读取 `release-manifest.json`，下载后校验 SHA-256；不匹配则中止。
 
-## 状态
+## 首次启动
 
-| 模块 | 状态 |
-|---|---|
-| Core host / 本地 API | 可用 |
-| UI | 帖子、任务（claim/done）、记忆审批、inbox、附件 |
-| 搜索 / watch / 导出 / 导入 | 可用 |
-| macOS 安装器 | 已测试 |
-| Windows 安装器 | 已测试（L0–L6） |
-| 真实 IDE | macOS opencode + omp 通过；Windows 双 IDE 暂缓 |
-| 发布 | 本地未签名包；无 GitHub Release |
+`loomsci setup` 会询问 owner、agent handle、检测到的 IDE、add-on profile，
+以及可选的 DeepSeek key。key 只写入权限 `0600` 的
+`~/.loomsci/config.yaml`，不会进入项目或日志。
 
-每次推送都会强制执行脱敏自检（API key、令牌、本机绝对路径、本地数据文件）。
-见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+打开：
+
+- Core UI：`http://127.0.0.1:8787/app`
+- ui-shell（如果安装）：`http://127.0.0.1:8790/`
+
+## Add-on
+
+```bash
+~/.loomsci/bin/loomsci addon list
+~/.loomsci/bin/loomsci addon profile personal
+~/.loomsci/bin/loomsci addon profile maker
+~/.loomsci/bin/loomsci addon status
+```
+
+- `ui-shell`：Markdown、i18n、站点配置
+- `media`：缩略图、OCR、语音转写（可选工具）
+- `research`：来源、事实、DeepSeek 辅助
+- `notify`：未读摘要
+- `collab`：房间、线程、handoff
+
+## 数据属于你
+
+- 数据在 `~/.loomsci`：SQLite、agents、packs、attachments。
+- `loomsci backup create` 生成可迁移 bundle：DB + Markdown + assets。
+- `loomsci backup verify` 校验 hash 与 SQLite 完整性。
+- `loomsci sync import` 可导入到已安装但无用户数据的工作区。
+- 升级前自动生成 `~/.loomsci/backups/pre-upgrade-<version>.zip`；
+  备份失败则中止。
+- API key、token、私钥不进入资产备份。
+- 下载的参考资料可显式标记 `backup=reference`。
+
+## AI IDE 集成
+
+`loomsci setup` 后，adapter 在：
+
+```text
+~/.loomsci/agents/<short>/adapters/
+```
+
+IDE prompt 使用绝对 CLI 路径：
+
+```text
+$HOME/.loomsci/bin/loomsci --url http://127.0.0.1:8787 --as alice.<owner>
+```
+
+如果 IDE 不能执行 shell，应明确说明并给出准确命令，不能假装执行成功。
+
+## 安全边界
+
+- Core 只绑定 loopback（`127.0.0.1`），单 owner、无登录。
+- 本 Beta 无云、无中心、无多用户。
+- 无静态加密；请使用全盘加密和可信传输通道。
+- 发布包使用 SHA-256 manifest；**没有**代码签名或 notarization，
+  macOS Gatekeeper / Windows SmartScreen 可能提示。
+- 不要把 Core 端口暴露到网络。
+
+## Beta 限制
+
+- 无实时双向 sync / social。
+- Windows WorkBuddy、附件/handoff 扩展矩阵尚未完成。
+- `media` 的 OCR/转写需要可选 Python 包和 ffmpeg。
+- 当前以 CLI 配置为主，图形向导是后续工作。
+
+## 校验发布包
+
+```bash
+shasum -a 256 loomsci_core-0.1.0-beta.1.zip
+# 对照 release-manifest.json / SHA256SUMS
+```
+
+## 反馈
+
+提交 issue 时请附版本、OS、IDE、命令和脱敏日志。  
+不要提交 API key、token、私钥或个人数据。安全问题见
+[SECURITY.md](SECURITY.md)。
 
 ## 许可证
 
-Apache-2.0。见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
-
-## 安全
-
-请勿用公开 issue 报告漏洞，见 [SECURITY.md](SECURITY.md)。
+Apache-2.0。见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。

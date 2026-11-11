@@ -19,7 +19,7 @@ zip 内含 `BUILD_INFO.json` 与 `upgrade-manifest.json`；manifest 说明哪些
 可选签名：
 
 ```bash
-python scripts/build_release.py --out dist --signing-key /path/to/ed25519.raw
+python scripts/build_release.py --out releases
 ```
 
 ## 安装

@@ -5,21 +5,67 @@ set -euo pipefail
 PACKAGE=""
 HOME_DIR="${LOOMSCI_HOME:-$HOME/.loomsci}"
 NO_DEPS="0"
+FROM_RELEASE="0"
+DRY_RUN="0"
+RELEASE_BASE="${LOOMSCI_RELEASE_BASE:-https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --package) PACKAGE="$2"; shift 2 ;;
     --home) HOME_DIR="$2"; shift 2 ;;
     --no-deps) NO_DEPS="1"; shift ;;
+    --from-release) FROM_RELEASE="1"; shift ;;
+    --release-base) RELEASE_BASE="$2"; shift 2 ;;
+    --dry-run) DRY_RUN="1"; shift ;;
     -h|--help)
-      echo "usage: install.sh [--package FILE.zip] [--home DIR] [--no-deps]"
+      echo "usage: install.sh [--package FILE.zip | --from-release] [--release-base URL] [--home DIR] [--no-deps] [--dry-run]"
       exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 
+if [[ "$FROM_RELEASE" = "1" && -n "$PACKAGE" ]]; then
+  echo "use either --package or --from-release" >&2; exit 2
+fi
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+
+if [[ "$FROM_RELEASE" = "1" ]]; then
+  command -v curl >/dev/null || { echo "curl is required for --from-release" >&2; exit 2; }
+  MANIFEST_URL="${RELEASE_BASE%/}/release-manifest.json"
+  MANIFEST_JSON="$(curl -fsSL "$MANIFEST_URL")" || { echo "cannot read $MANIFEST_URL" >&2; exit 2; }
+  field() {
+    printf '%s' "$MANIFEST_JSON" | tr -d '\r' \
+      | sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -1
+  }
+  VERSION="$(field version)"
+  FILE="$(field file)"
+  EXPECTED="$(field sha256)"
+  [[ -n "$VERSION" && -n "$FILE" && -n "$EXPECTED" ]] || { echo "invalid release manifest" >&2; exit 2; }
+  URL="${RELEASE_BASE%/}/releases/$FILE"
+  if [[ "$DRY_RUN" = "1" ]]; then
+    echo "version: $VERSION"
+    echo "url:     $URL"
+    echo "sha256:  $EXPECTED"
+    exit 0
+  fi
+  command -v unzip >/dev/null || { echo "unzip is required" >&2; exit 2; }
+  PACKAGE="$TMP/package.zip"
+  curl -fL --retry 3 --connect-timeout 10 --max-time 300 "$URL" -o "$PACKAGE" || { echo "download failed" >&2; exit 2; }
+  ACTUAL="$(shasum -a 256 "$PACKAGE" | awk '{print $1}')"
+  if [[ "$ACTUAL" != "$EXPECTED" ]]; then
+    echo "package SHA256 mismatch" >&2
+    echo "  expected: $EXPECTED" >&2
+    echo "  actual:   $ACTUAL" >&2
+    exit 3
+  fi
+fi
+
+if [[ "$DRY_RUN" = "1" ]]; then
+  echo "package: ${PACKAGE:-$PWD}"
+  exit 0
+fi
 
 if [[ -n "$PACKAGE" ]]; then
   [[ -f "$PACKAGE" ]] || { echo "package not found: $PACKAGE" >&2; exit 2; }

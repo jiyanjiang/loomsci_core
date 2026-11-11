@@ -1,3 +1,13 @@
+# v0.1.0-beta.1 — 公测
+
+第一个公测版。本地、单 owner。范围：
+
+- Core、ui-shell、media、research、notify；collab 可选。
+- WorkBuddy 5.9.3 macOS smoke；opencode/omp 已有 L7 记录。
+- 通过 `release-manifest.json` 安装并校验 SHA-256。
+- 备份、校验、恢复、离线迁移、升级前自动备份。
+- 不含实时 sync、social、多用户或代码签名。
+
 # 变更记录
 
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带

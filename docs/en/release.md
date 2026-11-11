@@ -20,7 +20,7 @@ lists code entries that may be replaced and user data that must be preserved.
 Signing is optional:
 
 ```bash
-python scripts/build_release.py --out dist --signing-key /path/to/ed25519.raw
+python scripts/build_release.py --out releases
 ```
 
 ## Install

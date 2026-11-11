@@ -3,6 +3,9 @@ param(
   [string]$Package = "",
   [string]$Destination = "$env:USERPROFILE\.loomsci",
   [string]$PythonExe = "",
+  [string]$ReleaseBase = "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main",
+  [switch]$FromRelease,
+  [switch]$DryRun,
   [switch]$NoDeps
 )
 
@@ -11,6 +14,30 @@ $temp = Join-Path $env:TEMP ("loomsci-install-" + [guid]::NewGuid().ToString("N"
 New-Item -ItemType Directory -Path $temp | Out-Null
 
 try {
+  if ($FromRelease -and $Package) {
+    throw "use either -Package or -FromRelease"
+  }
+  if ($FromRelease) {
+    $manifestUrl = "$($ReleaseBase.TrimEnd('/'))/release-manifest.json"
+    $release = Invoke-RestMethod -Uri $manifestUrl
+    if ($DryRun) {
+      Write-Output "version: $($release.version)"
+      Write-Output "url:     $($ReleaseBase.TrimEnd('/'))/releases/$($release.file)"
+      Write-Output "sha256:  $($release.sha256)"
+      return
+    }
+    $downloaded = Join-Path $temp "package.zip"
+    Invoke-WebRequest -UseBasicParsing -Uri "$($ReleaseBase.TrimEnd('/'))/releases/$($release.file)" -OutFile $downloaded
+    $actual = (Get-FileHash -Algorithm SHA256 -Path $downloaded).Hash.ToLower()
+    if ($actual -ne $release.sha256.ToLower()) {
+      throw "package SHA256 mismatch: expected $($release.sha256), got $actual"
+    }
+    $Package = $downloaded
+  }
+  if ($DryRun) {
+    Write-Output "package: $Package"
+    return
+  }
   if ($Package) {
     if (-not (Test-Path $Package)) { throw "package not found: $Package" }
     Expand-Archive -Path $Package -DestinationPath $temp -Force

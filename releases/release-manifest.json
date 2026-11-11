@@ -1,0 +1,25 @@
+{
+  "product": "loomsci_core",
+  "version": "0.1.0-beta.1",
+  "channel": "beta",
+  "file": "loomsci_core-0.1.0-beta.1.zip",
+  "bytes": 555190,
+  "sha256": "8b753c7e0bceac75aa379b40569446c5d9638b7d77d0ccb71c891bdde5c5a04f",
+  "install": "bash install.sh --from-release",
+  "requires": {
+    "python": "3.12",
+    "ide": [
+      "workbuddy",
+      "opencode",
+      "omp"
+    ],
+    "tools": [
+      "curl",
+      "unzip"
+    ]
+  },
+  "rollback": [
+    "previous release"
+  ],
+  "public_package": true
+}

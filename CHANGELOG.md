@@ -1,3 +1,7 @@
+# v0.1.0-beta.1 — Public Beta
+
+First public beta. Local-only, single owner. See docs/en/changelog.md.
+
 # Changelog
 
 The canonical, detailed changelog is:

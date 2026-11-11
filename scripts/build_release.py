@@ -158,10 +158,11 @@ def build(
         except Exception as exc:
             raise SystemExit(f"signing failed: {exc}") from exc
 
+    channel = "beta" if "beta" in ver else "preview"
     latest = {
         "product": PACKAGE_NAME,
         "version": ver,
-        "channel": "preview",
+        "channel": channel,
         "url": f"{base_url.rstrip('/')}/{archive.name}" if base_url else archive.name,
         "bytes": archive.stat().st_size,
         "sha256": digest,
@@ -172,7 +173,27 @@ def build(
         json.dumps(latest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    return {"archive": str(archive), "sha256": digest, "latest": latest}
+    manifest = {
+        "product": PACKAGE_NAME,
+        "version": ver,
+        "channel": channel,
+        "file": archive.name,
+        "bytes": archive.stat().st_size,
+        "sha256": digest,
+        "install": "bash install.sh --from-release",
+        "requires": {
+            "python": "3.12",
+            "ide": ["workbuddy", "opencode", "omp"],
+            "tools": ["curl", "unzip"],
+        },
+        "rollback": ["previous release"],
+        "public_package": True,
+    }
+    (out_dir / "release-manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return {"archive": str(archive), "sha256": digest, "latest": latest, "manifest": manifest}
 
 
 def main(argv: list[str] | None = None) -> int:

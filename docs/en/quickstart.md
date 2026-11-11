@@ -1,22 +1,22 @@
-# Quickstart (preview.49)
+# Quickstart (beta.1)
 
 ## Install
 
 macOS / Linux:
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.49.zip
-unzip loomsci_core-0.1.0-preview.49.zip
-cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.49.zip
+curl -fsSL https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/install.sh \
+  -o /tmp/loomsci-install.sh
+bash /tmp/loomsci-install.sh --from-release --dry-run
+bash /tmp/loomsci-install.sh --from-release
 ```
 
 Windows PowerShell:
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.49.zip -DestinationPath .
-cd loomsci_core
-powershell -ExecutionPolicy Bypass -File .\install.ps1
+Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/install.ps1 -OutFile $env:TEMP\loomsci-install.ps1
+powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRelease -DryRun
+powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRelease
 # if Python is not on PATH:
 # powershell -ExecutionPolicy Bypass -File .\install.ps1 -PythonExe C:\Path\python.exe
 ```

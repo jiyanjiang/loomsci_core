@@ -1,73 +1,138 @@
-# loomsci_core
+# loomsci_core · Public Beta
 
-**Local-first workspace for your personal AI agent.**
-Data stays yours. No login. Portable across machines and AI IDEs.
+[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
 
-> **Preview.** `v0.1.0-preview.49` is the current local preview; it is not a production release.
+**A local-first research workspace for people who work with AI IDEs.**
 
-[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Architecture](docs/en/architecture.md) · [Source map](docs/en/source-map.md) · [Testing](docs/en/testing.md) · [Core contract](docs/en/core-contract.md) · [Add-ons](docs/en/addons.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [N4 acceptance](docs/en/n4-acceptance.md) · [Release](docs/en/release.md) · [Roadmap](docs/en/roadmap.md) · [Security](SECURITY.md) · [License](LICENSE)
+LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
+attachments, and agent instructions — on your computer. Your AI IDE is the
+execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-## Why
+> **Status: `0.1.0-beta.1` public beta.** Local-only, one owner, no login, no
+> cloud dependency. Not a production or multi-user server.
 
-- **Yours.** Projects, posts, tasks, memory, and attachments live on your disk.
-- **No account.** One owner, one main agent (`alice` by default); no cloud dependency.
-- **Portable.** Export everything as JSON + Markdown; switch IDEs or machines without losing context.
+## Requirements
 
-AI IDEs are the hands. `loomsci_core` is the memory, collaboration bus, and audit trail.
+- Python **3.12**
+- One AI IDE that can run terminal commands:
+  **WorkBuddy**, **opencode**, or **omp**
+- macOS or Windows
 
-## How it fits
+WorkBuddy 5.9.3 has been smoke-tested on macOS. opencode and omp have real L7
+history. The Windows WorkBuddy GUI has not yet been tested.
 
-```text
-AI IDE agents (WorkBuddy / opencode / other local IDEs)
-                 │  CLI / HTTP
-                 ▼
-        loomsci_core host            one port, loopback by default
-        ├── posts / tasks / leases
-        ├── memory / facts / artifacts
-        └── local boundary + export
-```
+## Install
 
-## Quickstart (preview)
-
-Install from the preview package, then initialize and start the local host.
-
-macOS:
+macOS / Linux:
 
 ```bash
-bash install.sh --package loomsci_core-0.1.0-preview.49.zip
-loomsci init --owner <name>
-loomsci serve
+curl -fsSL https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/install.sh \
+  -o /tmp/loomsci-install.sh
+bash /tmp/loomsci-install.sh --from-release --dry-run
+bash /tmp/loomsci-install.sh --from-release
+~/.loomsci/bin/loomsci setup
+~/.loomsci/bin/loomsci up
 ```
 
 Windows PowerShell:
 
 ```powershell
-.\install.ps1 -Package .\loomsci_core-0.1.0-preview.49.zip
-loomsci init --owner <name>
-loomsci serve
+Invoke-WebRequest -UseBasicParsing `
+  https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/install.ps1 `
+  -OutFile $env:TEMP\loomsci-install.ps1
+powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRelease -DryRun
+powershell -ExecutionPolicy Bypass -File $env:TEMP\loomsci-install.ps1 -FromRelease
+& "$env:USERPROFILE\.loomsci\bin\loomsci.cmd" setup
+& "$env:USERPROFILE\.loomsci\bin\loomsci.cmd" up
 ```
 
-Open `http://127.0.0.1:8787/app`. The host binds loopback; there is no login.
+The installer reads `release-manifest.json`, downloads the package, and verifies
+its SHA-256 before installing. A mismatch aborts.
 
-## Status
+## First run
 
-| Area | Status |
-|---|---|
-| Core host / local API | available |
-| UI | posts, tasks (claim/done), memory review, inbox, attachments |
-| Search / watch / export / import | available |
-| macOS installer | tested |
-| Windows installer | tested (L0-L6) |
-| Real IDE | macOS opencode + omp passed; Windows dual-IDE waived |
-| Release | local unsigned package; no GitHub Release |
+`loomsci setup` asks for owner, agent handle, detected IDE, add-on profile, and an
+optional DeepSeek key. The key is stored only in `~/.loomsci/config.yaml` with
+mode `0600`; it is never written into the project or logs.
 
-Every push runs a mandatory sanitization check (API keys, tokens, absolute
-user-home paths, local data files). See [CONTRIBUTING.md](CONTRIBUTING.md).
+Then open:
+
+- Core UI: `http://127.0.0.1:8787/app`
+- ui-shell (if installed): `http://127.0.0.1:8790/`
+
+## Add-ons
+
+```bash
+~/.loomsci/bin/loomsci addon list
+~/.loomsci/bin/loomsci addon profile personal
+~/.loomsci/bin/loomsci addon profile maker
+~/.loomsci/bin/loomsci addon status
+```
+
+- `ui-shell` — Markdown UI, i18n, site config
+- `media` — thumbnails, OCR, speech transcription (optional tools)
+- `research` — sources, facts, DeepSeek-assisted work
+- `notify` — unread digest
+- `collab` — rooms, threads, handoff
+
+## Your data stays yours
+
+- Data lives in `~/.loomsci`: SQLite, agents, packs, attachments.
+- `loomsci backup create` builds a portable bundle with DB, Markdown, and assets.
+- `loomsci backup verify` checks hashes and SQLite integrity.
+- `loomsci sync import` restores into an installed, empty workspace.
+- Upgrades create `~/.loomsci/backups/pre-upgrade-<version>.zip` first and abort
+  if that backup fails.
+- API keys, tokens, and private keys are never included in asset backups.
+- Downloaded reference documents can be explicitly marked `backup=reference`.
+
+## AI IDE integration
+
+After `loomsci setup`, the agent adapters are under:
+
+```text
+~/.loomsci/agents/<short>/adapters/
+```
+
+Use the absolute CLI path in the IDE prompt, for example:
+
+```text
+$HOME/.loomsci/bin/loomsci --url http://127.0.0.1:8787 --as alice.<owner>
+```
+
+If the IDE cannot execute shell commands, it should say so and provide exact
+commands rather than claiming success.
+
+## Security boundary
+
+- Core binds loopback only (`127.0.0.1`), with one owner and no login.
+- No cloud, no center, no multi-user access in this beta.
+- No encryption at rest; use full-disk encryption and trusted transfer channels.
+- Packages use a SHA-256 release manifest. They are **not** code-signed or
+  notarized; macOS Gatekeeper / Windows SmartScreen may warn.
+- Do not expose the Core port to a network.
+
+## Beta limitations
+
+- No real-time two-way sync or social features.
+- WorkBuddy Windows and attachment/handoff flows are not yet part of the tested
+  beta matrix.
+- `media` OCR/transcription need optional Python packages and ffmpeg.
+- The CLI is the setup surface; a guided UI is future work.
+
+## Verify a release
+
+```bash
+shasum -a 256 loomsci_core-0.1.0-beta.1.zip
+# compare with release-manifest.json / SHA256SUMS
+```
+
+## Feedback
+
+Open an issue with the version, OS, IDE, command, and redacted logs. Do not post
+API keys, tokens, private keys, or personal data. Security reports: see
+[SECURITY.md](SECURITY.md).
 
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
-
-## Security
-
-Please do not open public issues for vulnerabilities. See [SECURITY.md](SECURITY.md).

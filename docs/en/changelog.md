@@ -1,3 +1,13 @@
+# v0.1.0-beta.1 — Public Beta
+
+First public beta. Local-only, single owner. Scope:
+
+- Core, ui-shell, media, research, notify; collab optional.
+- WorkBuddy 5.9.3 macOS smoke; opencode/omp L7 history.
+- Install through `release-manifest.json` with SHA-256 verification.
+- Backup, verify, restore, offline migration, pre-upgrade backup.
+- No real-time sync, social, multi-user, or code signing.
+
 # Changelog
 
 All notable changes are documented here. The project follows a

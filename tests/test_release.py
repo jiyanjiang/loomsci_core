@@ -57,6 +57,10 @@ class ReleaseTest(unittest.TestCase):
             latest = json.loads((out / "latest.json").read_text(encoding="utf-8"))
             self.assertEqual(latest["sha256"], result["sha256"])
             self.assertEqual(latest["product"], "loomsci_core")
+            manifest = json.loads((out / "release-manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["file"], Path(result["archive"]).name)
+            self.assertEqual(manifest["sha256"], result["sha256"])
+            self.assertEqual(manifest["channel"], "beta")
 
 
 if __name__ == "__main__":
