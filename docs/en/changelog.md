@@ -1,3 +1,12 @@
+# v0.1.0-beta.5 — Runtime control
+
+- Add detached Core lifecycle: `up --detach`, `status`, `down`, `open`.
+- `up --detach` keeps Core alive after the terminal closes; runtime state is
+  stored under `home/runtime/`.
+- `status` reports PID, port, health, version, and the primary URL.
+- `open` prefers the running ui-shell and falls back to Core `/app`.
+- The existing API status remains available as `status --as <agent.owner>`.
+
 # v0.1.0-beta.4 — UI route hotfix
 
 - ui-shell serves `/app` and the five view paths instead of returning 404.

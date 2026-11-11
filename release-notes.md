@@ -1,14 +1,16 @@
-# loomsci_core 0.1.0-beta.4 · Public Beta
+# loomsci_core 0.1.0-beta.5 · Public Beta
 
-- Version: `0.1.0-beta.4`
-- Package: `releases/loomsci_core-0.1.0-beta.4.zip`
-- SHA256: `90da02e63c8a24337550bb5f1fd98b91fdb14cc96a006e8fa4fadeb1adba95c1`
+- Version: `0.1.0-beta.5`
+- Package: `releases/loomsci_core-0.1.0-beta.5.zip`
+- SHA256: `ca37701ee72562c65ff3e7d2746e796479bf42fcbe5e6e97b04de76c1c97ef02`
 
-## Fix
+## Runtime control
 
-- ui-shell now serves `/app`, `/app/posts`, `/app/tasks`, `/app/memory`,
-  `/app/inbox`, and `/app/site` instead of returning 404.
-- Navigation updates the URL; browser back/forward restores the active view.
-- Post detail (`/app/posts?post=<id>`) is unchanged.
+- `loomsci up --detach` starts Core in the background and survives terminal close.
+- `loomsci status` reports PID, port, health, version, and primary URL.
+- `loomsci down` stops only the recorded Core process.
+- `loomsci open` opens ui-shell when running, otherwise Core `/app`.
+- Runtime state is under `~/.loomsci/runtime/`.
 
-This hotfix carries the beta.2 post model and beta.3 loose-list fix.
+This release carries the beta.2 post model, beta.3 loose-list fix, and beta.4
+`/app` routes.

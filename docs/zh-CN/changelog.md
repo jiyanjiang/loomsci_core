@@ -1,3 +1,11 @@
+# v0.1.0-beta.5 — 运行时控制
+
+- 新增 `up --detach`、`status`、`down`、`open`。
+- `up --detach` 关闭终端后 Core 仍运行；runtime 状态写入 `home/runtime/`。
+- `status` 报告 PID、端口、health、版本和主 URL。
+- `open` 优先 ui-shell，未运行时回退 Core `/app`。
+- `status --as <agent.owner>` 保留原有 API 状态行为。
+
 # v0.1.0-beta.4 — UI 路由修复
 
 - ui-shell 现在为 `/app` 及五个视图路径返回界面，不再 404。

@@ -1,3 +1,10 @@
+# v0.1.0-beta.5 — Runtime control
+
+- Add `loomsci up --detach`, `loomsci status`, `loomsci down`, and `loomsci open`.
+- Detached Core survives terminal close; PID/lock/state live under `runtime/`.
+- One primary URL: ui-shell when running, otherwise Core `/app`.
+- `loomsci status` keeps the existing API-status behavior when `--as` is used.
+
 # v0.1.0-beta.4 — UI route hotfix
 
 - `/app`, `/app/posts`, `/app/tasks`, `/app/memory`, `/app/inbox`, `/app/site`

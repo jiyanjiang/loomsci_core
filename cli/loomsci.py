@@ -13,9 +13,11 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 from pathlib import Path
 
 from core import addon_runtime
+from core import core_runtime
 from core import backup as backup_mod
 from core import doctor as doctor_mod
 from core import migration as migration_mod
@@ -271,18 +273,64 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     return 0 if result["ok"] else 1
 
 
-def _cmd_up(args: argparse.Namespace) -> int:
-    layout = _layout(args)
-    if not _port_available(args.host, args.port):
-        print(f"error: port {args.port} is already in use on {args.host}", file=sys.stderr)
-        return 2
-    started = addon_runtime.start_all(layout.root)
+def _print_addons(started) -> None:
     for item in started:
         if item.get("error"):
             print(f"warning: {item['name']}: {item['error']}", file=sys.stderr)
         else:
             print(f"addon: {item['name']} {item['state']}")
+
+
+def _cmd_up(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    if getattr(args, "detach", False):
+        started = addon_runtime.start_all(layout.root)
+        _print_addons(started)
+        try:
+            result = core_runtime.start(
+                layout.root, host=args.host, port=args.port
+            )
+        except core_runtime.CoreRuntimeError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        url = core_runtime.primary_url(layout.root, core_port=args.port)
+        if args.json:
+            _json_print({**result, "url": url})
+        else:
+            print(f"core: {result['host']}:{result['port']} pid={result['pid']}")
+            print(f"url:  {url}")
+        if getattr(args, "open", False):
+            webbrowser.open(url)
+        return 0
+    if not _port_available(args.host, args.port):
+        print(f"error: port {args.port} is already in use on {args.host}", file=sys.stderr)
+        return 2
+    started = addon_runtime.start_all(layout.root)
+    _print_addons(started)
+    print(f"url:  {core_runtime.primary_url(layout.root, core_port=args.port)}")
     return _cmd_serve(args)
+
+
+def _cmd_down(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = core_runtime.stop(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        print("core: stopped")
+    return 0
+
+
+def _cmd_open(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = core_runtime.status(layout.root)
+    if not result["running"]:
+        print("error: Core is not running; run `loomsci up --detach`", file=sys.stderr)
+        return 1
+    url = core_runtime.primary_url(layout.root, core_port=int(result.get("port") or 8787))
+    print(url)
+    webbrowser.open(url)
+    return 0
 
 
 def _cmd_features(args: argparse.Namespace) -> int:
@@ -812,6 +860,26 @@ def _cmd_watch(args: argparse.Namespace) -> int:
 
 
 def _cmd_status(args: argparse.Namespace) -> int:
+    if not getattr(args, "agent", None):
+        layout = _layout(args)
+        result = core_runtime.status(layout.root)
+        url = (
+            core_runtime.primary_url(
+                layout.root, core_port=int(result.get("port") or args.port)
+            )
+            if result["running"]
+            else ""
+        )
+        if args.json:
+            _json_print({**result, "url": url})
+        else:
+            state = "running" if result["running"] else "stopped"
+            print(f"core: {state} pid={result.get('pid') or '-'} port={result.get('port') or '-'}")
+            if result.get("health"):
+                print(f"version: {result['health'].get('version')}")
+            if url:
+                print(f"url: {url}")
+        return 0 if result["running"] else 1
     _require_agent(args)
     result = _request(args, "GET", "/v1/status")
     if args.json:
@@ -1284,7 +1352,17 @@ def build_parser() -> argparse.ArgumentParser:
     up = sub.add_parser("up", help="start installed add-ons and run the host")
     up.add_argument("--host", default="127.0.0.1")
     up.add_argument("--port", type=int, default=8787)
+    up.add_argument("--detach", action="store_true", help="start Core in the background")
+    up.add_argument("--open", action="store_true", help="open the primary UI URL")
+    up.add_argument("--json", action="store_true")
     up.set_defaults(func=_cmd_up)
+
+    down = sub.add_parser("down", help="stop the detached Core")
+    down.add_argument("--json", action="store_true")
+    down.set_defaults(func=_cmd_down)
+
+    open_cmd = sub.add_parser("open", help="open the primary UI URL")
+    open_cmd.set_defaults(func=_cmd_open)
 
     post = sub.add_parser("post", help="create a post")
     post.add_argument("--kind", default="note")
@@ -1422,7 +1500,8 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--json", action="store_true")
     watch.set_defaults(func=_cmd_watch)
 
-    status = sub.add_parser("status", help="show health, integrity, and counts")
+    status = sub.add_parser("status", help="show runtime, health, integrity, and counts")
+    status.add_argument("--port", type=int, default=8787)
     status.add_argument("--json", action="store_true")
     status.set_defaults(func=_cmd_status)
 

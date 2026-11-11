@@ -8,7 +8,7 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.4` public beta.** Local-only, one owner, no login, no
+> **Status: `0.1.0-beta.5` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
@@ -59,6 +59,22 @@ Then open:
 
 - Core UI: `http://127.0.0.1:8787/app`
 - ui-shell (if installed): `http://127.0.0.1:8790/`
+
+## Start, stop, and status
+
+Run Core in the background:
+
+```bash
+~/.loomsci/bin/loomsci up --detach
+~/.loomsci/bin/loomsci status
+~/.loomsci/bin/loomsci open       # open the primary UI URL
+~/.loomsci/bin/loomsci down
+```
+
+`up --detach` keeps Core alive after the terminal closes. `status` reports the
+PID, port, health, version, and primary URL. `open` prefers the ui-shell URL
+when that add-on is running, otherwise it opens the Core `/app` fallback.
+`down` stops only the detached Core process recorded in the runtime state.
 
 ## Posts and summaries
 
@@ -149,7 +165,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.4.zip
+shasum -a 256 loomsci_core-0.1.0-beta.5.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 
