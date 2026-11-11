@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.48
+
+- `loomsci setup` 在终端中交互：owner、agent、profile、检测到的 IDE、可选隐藏
+  输入的 DeepSeek key；保留非交互 flags。
+- API key 只写入权限 0600 的 `config.yaml`，不进入工作区或日志。
+
 ## v0.1.0-preview.47
 
 - `loomsci setup` 初始化 owner、agent adapter、profile，并提示下一步 `up`。

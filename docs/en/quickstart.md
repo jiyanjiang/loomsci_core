@@ -1,20 +1,20 @@
-# Quickstart (preview.47)
+# Quickstart (preview.48)
 
 ## Install
 
 macOS / Linux:
 
 ```bash
-curl -LO <release-url>/loomsci_core-0.1.0-preview.47.zip
-unzip loomsci_core-0.1.0-preview.47.zip
+curl -LO <release-url>/loomsci_core-0.1.0-preview.48.zip
+unzip loomsci_core-0.1.0-preview.48.zip
 cd loomsci_core
-bash install.sh --package ../loomsci_core-0.1.0-preview.47.zip
+bash install.sh --package ../loomsci_core-0.1.0-preview.48.zip
 ```
 
 Windows PowerShell:
 
 ```powershell
-Expand-Archive loomsci_core-0.1.0-preview.47.zip -DestinationPath .
+Expand-Archive loomsci_core-0.1.0-preview.48.zip -DestinationPath .
 cd loomsci_core
 powershell -ExecutionPolicy Bypass -File .\install.ps1
 # if Python is not on PATH:

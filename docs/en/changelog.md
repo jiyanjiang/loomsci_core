@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.48
+
+- `loomsci setup` is interactive on a terminal: owner, agent, profile, detected
+  IDE, and optional hidden DeepSeek key. Non-interactive use remains supported
+  with flags.
+- API keys are written only to `config.yaml` with mode 0600; never to the
+  workspace or logs.
+
 ## v0.1.0-preview.47
 
 - `loomsci setup` initializes owner, agent adapter, profile, and prints the next

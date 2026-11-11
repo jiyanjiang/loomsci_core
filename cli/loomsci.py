@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import base64
 import getpass
+import sys
 import json
 import os
 import socket
@@ -153,13 +154,44 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _save_deepseek_key(home: Path, key: str) -> None:
+    import yaml
+    path = home / "config.yaml"
+    data = {}
+    if path.is_file():
+        try:
+            loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            if isinstance(loaded, dict):
+                data = loaded
+        except (OSError, ValueError):
+            data = {}
+    llm = data.get("llm")
+    if not isinstance(llm, dict):
+        llm = {}
+    llm["deepseek_api_key"] = key
+    data["llm"] = llm
+    path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
+
+
 def _cmd_setup(args: argparse.Namespace) -> int:
     layout = _layout(args)
-    owner = (args.owner or input("owner: ")).strip()
+    owner = (args.owner or "").strip()
+    if not owner:
+        if not sys.stdin.isatty():
+            raise CliError("--owner is required in non-interactive mode")
+        owner = input("owner: ").strip()
     if not owner:
         raise CliError("owner is required")
+    agent = (args.agent or "alice").strip()
+    if sys.stdin.isatty() and not args.agent:
+        candidate = input(f"agent short [{agent}]: ").strip()
+        agent = candidate or agent
     alice_mod = _alice_module()
-    record = alice_mod.ensure(layout.root, owner, args.agent)
+    record = alice_mod.ensure(layout.root, owner, agent)
     storage.init_db(layout.db)
     conn = storage.connect(layout.db)
     try:
@@ -167,23 +199,41 @@ def _cmd_setup(args: argparse.Namespace) -> int:
         conn.commit()
     finally:
         conn.close()
-    installed = addons_mod.install_profile(layout.root, args.profile)
+    profile = args.profile or "personal"
+    if sys.stdin.isatty() and not args.profile:
+        candidate = input(f"profile [{profile}]: ").strip()
+        profile = candidate or profile
+    installed = addons_mod.install_profile(layout.root, profile)
     detected = doctor_mod.ides()
     ide = args.ide
     if not ide:
-        ide = next((name for name, item in detected.items() if item["found"]), None)
+        found = [name for name, item in detected.items() if item["found"]]
+        ide = found[0] if found else None
+        if sys.stdin.isatty():
+            if found:
+                print("detected IDEs: " + ", ".join(found))
+            candidate = input(f"IDE [{ide or 'workbuddy'}]: ").strip()
+            ide = candidate or ide or "workbuddy"
     adapter = layout.root / "agents" / str(record["handle"]).split(".", 1)[0] / "adapters" / f"{ide}.md" if ide else None
     result = {
         "ok": True,
         "home": str(layout.root),
         "owner": owner,
         "agent": record["handle"],
-        "profile": args.profile,
+        "profile": profile,
         "addons": [item["name"] for item in installed],
         "ide": ide,
         "adapter": str(adapter) if adapter and adapter.is_file() else None,
         "next": "loomsci up",
     }
+    key = ""
+    if sys.stdin.isatty() and not args.no_key:
+        key = getpass.getpass("DeepSeek API key (optional, hidden): ").strip()
+        if key:
+            _save_deepseek_key(layout.root, key)
+            result["deepseek_configured"] = True
+    else:
+        result["deepseek_configured"] = False
     if args.json:
         _json_print(result)
     else:
@@ -620,8 +670,12 @@ def _cmd_agent_prune(args: argparse.Namespace) -> int:
 def _cmd_init(args: argparse.Namespace) -> int:
     owner = (args.owner or getpass.getuser()).strip().lower()
     layout = _layout(args)
+    agent = (args.agent or "alice").strip()
+    if sys.stdin.isatty() and not args.agent:
+        candidate = input(f"agent short [{agent}]: ").strip()
+        agent = candidate or agent
     alice_mod = _alice_module()
-    record = alice_mod.ensure(layout.root, owner, args.agent)
+    record = alice_mod.ensure(layout.root, owner, agent)
     storage.init_db(layout.db)
     conn = storage.connect(layout.db)
     try:
@@ -1215,9 +1269,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     setup = sub.add_parser("setup", help="initialize owner, agent, IDE adapter, and add-ons")
     setup.add_argument("--owner")
-    setup.add_argument("--agent", default="alice")
+    setup.add_argument("--agent")
     setup.add_argument("--ide", choices=["workbuddy", "opencode", "omp", "qoder", "cursor", "codebuddy"])
-    setup.add_argument("--profile", choices=sorted(addons_mod.PROFILES), default="personal")
+    setup.add_argument("--profile", choices=sorted(addons_mod.PROFILES))
+    setup.add_argument("--no-key", action="store_true", help="skip interactive API key prompt")
     setup.add_argument("--json", action="store_true")
     setup.set_defaults(func=_cmd_setup)
 
