@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.38
+
+- P2.5 backup boundary inventory: read-only inspect, classifications, duplicate
+  attachment detection, secret scan.
+
 ## v0.1.0-preview.37
 
 - ui-shell v0.5.0 site config: name, logo, links, footer; defaults and local JSON.

@@ -3,6 +3,13 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.38
+
+- P2.5 第一步：只读 `loomsci backup inspect` / `--json`。
+- 分类资产、第三方参考资料、派生/缓存、排除的 runtime/代码和秘密内容。
+- 按 SHA-256 检测重复附件对象并估算可回收空间；不修改数据。
+- 边界文档：`docs/zh-CN/backup.md`。
+
 ## v0.1.0-preview.37
 
 - ui-shell v0.5.0：可编辑站点名称、logo、链接和页脚。

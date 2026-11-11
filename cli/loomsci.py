@@ -15,6 +15,7 @@ import urllib.request
 from pathlib import Path
 
 from core import addon_runtime
+from core import backup as backup_mod
 from core import addons as addons_mod
 from core import export as export_mod
 from core import storage
@@ -833,6 +834,24 @@ def _cmd_addon_profile(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_backup_inspect(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = backup_mod.inspect(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        summary = result["summary"]
+        print(f"home: {result['home']}")
+        for key in ("assets", "references", "derived", "excluded"):
+            item = summary[key]
+            print(f"{key:<10} {item['files']:>5} files  {item['bytes']:>10} bytes")
+        print(f"secrets    {summary['secrets']['hits']:>5} hits")
+        print(f"duplicates {len(result['duplicates']):>5} groups  reclaimable={result['reclaimable_bytes']} bytes")
+        for warning in result["warnings"]:
+            print("warning: " + warning)
+    return 0
+
+
 def _cmd_export(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = export_mod.export_home(layout.root, args.out)
@@ -1079,6 +1098,12 @@ def build_parser() -> argparse.ArgumentParser:
     addon_profile.add_argument("--start", action="store_true", help="start installed add-ons")
     addon_profile.add_argument("--json", action="store_true")
     addon_profile.set_defaults(func=_cmd_addon_profile)
+
+    backup = sub.add_parser("backup", help="inspect backup asset boundaries")
+    backup_sub = backup.add_subparsers(dest="backup_command", required=True)
+    backup_inspect = backup_sub.add_parser("inspect", help="read-only asset/secret inventory")
+    backup_inspect.add_argument("--json", action="store_true")
+    backup_inspect.set_defaults(func=_cmd_backup_inspect)
 
     export = sub.add_parser("export", help="export the home as a zip")
     export.add_argument("--out", required=True)

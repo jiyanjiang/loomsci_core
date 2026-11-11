@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.38
+
+- P2.5 first cut: read-only `loomsci backup inspect` / `--json`.
+- Classifies assets, third-party references, derived/cache files, excluded
+  runtime/code, and secret-like content.
+- Detects duplicate attachment objects by SHA-256 and estimates reclaimable
+  bytes; does not modify data.
+- Default boundary documented in `docs/en/backup.md`.
+
 ## v0.1.0-preview.37
 
 - ui-shell v0.5.0: editable site name, logo, links, and footer.
