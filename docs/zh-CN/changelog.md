@@ -3,6 +3,15 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.42
+
+- 附件来源元数据 `meta_json`：`origin`、`asset_kind`、`rights`、
+  `source_url`、generator。
+- `asset list --unclassified`、`asset classify` 用于存量附件分类。
+- 文档边界改为按来源：AI/人生成的 PDF/PPT/EPUB 包含；下载资料只保留元数据；
+  未知文档默认迁移包含，可用 `--unknown-documents` 调整。
+- 生成/下载的音频、视频同样按来源处理。
+
 ## v0.1.0-preview.41
 
 - `backup verify` 校验 bundle hash、SQLite 完整性、附件和 Markdown 投影。

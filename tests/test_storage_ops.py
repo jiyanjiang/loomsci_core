@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
@@ -41,6 +42,19 @@ class StorageOpsTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
+
+    def test_attachment_provenance(self) -> None:
+        conn = storage.connect(self.layout.db)
+        try:
+            item = storage.get_attachment(conn, self.first["id"])
+            self.assertEqual(json.loads(item["meta_json"]), {})
+            updated = storage.update_attachment_meta(
+                conn, self.first["id"],
+                {"origin": "generated", "asset_kind": "image", "rights": "owned"},
+            )
+            self.assertEqual(json.loads(updated["meta_json"])["origin"], "generated")
+        finally:
+            conn.close()
 
     def test_report_and_duplicates(self) -> None:
         result = storage_ops.report(self.home)

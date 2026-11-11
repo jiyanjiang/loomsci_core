@@ -43,7 +43,7 @@ COLUMNS = {
     "mentions": ("post_seq", "agent", "created_at", "read_at"),
     "attachments": (
         "id", "post_id", "filename", "content_type", "bytes", "sha256",
-        "created_at",
+        "meta_json", "created_at",
     ),
     "reads": ("agent", "scope", "last_seq", "updated_at"),
     "presence": (
@@ -188,7 +188,8 @@ def _insert(conn: sqlite3.Connection, table: str, rows: list[dict[str, Any]]) ->
         f"VALUES ({', '.join('?' for _ in columns)})"
     )
     for row in rows:
-        conn.execute(sql, tuple(row.get(column) for column in columns))
+        values = tuple('{}' if column == "meta_json" and row.get(column) is None else row.get(column) for column in columns)
+        conn.execute(sql, values)
 
 
 def import_home(zip_path: str | Path, destination: str | Path) -> dict[str, Any]:

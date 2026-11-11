@@ -52,3 +52,14 @@ loomsci backup verify assets.zip
 loomsci backup prune --dir ./backups --keep 5
 loomsci backup prune --dir ./backups --keep 5 --apply
 ```
+
+## 来源
+
+```bash
+loomsci asset list --unclassified
+loomsci asset classify <attachment-id> --origin generated
+loomsci asset classify <attachment-id> --origin downloaded
+```
+
+`origin=generated|authored` 的二进制包含在备份中；`origin=downloaded` 只保留
+引用；未知文档为迁移安全默认包含。

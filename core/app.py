@@ -502,12 +502,17 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             return jsonify({"ok": False, "error": "json_object_required"}), 400
         try:
             data = base64.b64decode(str(body.get("content_base64") or ""), validate=True)
+            meta = body.get("meta") if isinstance(body.get("meta"), dict) else {}
+            for key in ("origin", "asset_kind", "rights", "source_url", "generator"):
+                if body.get(key):
+                    meta[key] = body.get(key)
             attachment = storage.add_attachment(
                 get_db(),
                 filename=str(body.get("filename") or "file"),
                 content_type=str(body.get("content_type") or "application/octet-stream"),
                 data=data,
                 blob_dir=layout.blobs,
+                meta=meta,
             )
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)

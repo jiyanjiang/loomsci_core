@@ -29,14 +29,22 @@ class BackupInspectTest(unittest.TestCase):
             first = storage.add_attachment(
                 conn, filename="image.png", content_type="image/png",
                 data=PNG, blob_dir=self.layout.blobs,
+                meta={"origin": "generated", "asset_kind": "image", "rights": "owned"},
             )
             second = storage.add_attachment(
                 conn, filename="copy.png", content_type="image/png",
                 data=PNG, blob_dir=self.layout.blobs,
+                meta={"origin": "generated", "asset_kind": "image", "rights": "owned"},
             )
             storage.add_attachment(
                 conn, filename="paper.pdf", content_type="application/pdf",
                 data=b"%PDF-1.4 reference", blob_dir=self.layout.blobs,
+                meta={"origin": "downloaded", "asset_kind": "document", "rights": "third_party", "source_url": "https://example.test/paper"},
+            )
+            storage.add_attachment(
+                conn, filename="generated-report.pdf", content_type="application/pdf",
+                data=b"%PDF-1.4 generated", blob_dir=self.layout.blobs,
+                meta={"origin": "generated", "asset_kind": "document", "rights": "owned"},
             )
             secret = "sk-" + "1234567890abcdefghijklmnop"
             storage.create_post(
@@ -90,8 +98,10 @@ class BackupInspectTest(unittest.TestCase):
             self.assertIn("references.json", names)
             self.assertIn("attachments.json", names)
             self.assertFalse(any(name.endswith("paper.pdf") for name in names))
+            self.assertTrue(any("generated-report.pdf" in name for name in names))
             references = json.loads(zf.read("references.json"))
             self.assertEqual(references[0]["filename"], "paper.pdf")
+            self.assertEqual(references[0]["origin"], "downloaded")
             conn = sqlite3.connect("file:" + str(self.home / "data" / "data.db") + "?mode=ro", uri=True)
             conn.close()
         shown = backup.inspect_bundle(out)
@@ -110,16 +120,40 @@ class BackupInspectTest(unittest.TestCase):
         self.assertTrue((dest / "data" / "data.db").is_file())
         self.assertTrue((dest / "agents" / "alice" / "persona.yaml").is_file())
         blobs = list((dest / "data" / "blobs").iterdir())
-        self.assertEqual(len(blobs), 2)
+        self.assertEqual(len(blobs), 3)
         conn = sqlite3.connect(dest / "data" / "data.db")
         try:
             attachment_count = conn.execute("SELECT count(*) FROM attachments").fetchone()[0]
             body = conn.execute("SELECT body FROM posts").fetchone()[0]
         finally:
             conn.close()
-        self.assertEqual(attachment_count, 2)
+        self.assertEqual(attachment_count, 3)
         self.assertNotIn("1234567890abcdefghijklmnop", body)
         self.assertIn("[REDACTED]", body)
+
+    def test_generated_media_and_downloaded_media(self) -> None:
+        conn = storage.connect(self.layout.db)
+        try:
+            storage.add_attachment(
+                conn, filename="generated.mp3", content_type="audio/mpeg",
+                data=b"generated-audio", blob_dir=self.layout.blobs,
+                meta={"origin": "generated", "asset_kind": "audio", "rights": "owned"},
+            )
+            storage.add_attachment(
+                conn, filename="downloaded.mp4", content_type="video/mp4",
+                data=b"downloaded-video", blob_dir=self.layout.blobs,
+                meta={"origin": "downloaded", "asset_kind": "video", "rights": "third_party"},
+            )
+        finally:
+            conn.close()
+        out = Path(self.tmp.name) / "media.zip"
+        backup.create(self.home, out, redact=True)
+        with zipfile.ZipFile(out) as zf:
+            names = set(zf.namelist())
+            references = json.loads(zf.read("references.json"))
+        self.assertTrue(any(name.endswith("generated.mp3") for name in names))
+        self.assertFalse(any(name.endswith("downloaded.mp4") for name in names))
+        self.assertTrue(any(item["filename"] == "downloaded.mp4" for item in references))
 
     def test_backup_retention(self) -> None:
         first = Path(self.tmp.name) / "one.zip"

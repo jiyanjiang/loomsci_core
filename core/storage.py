@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS attachments (
   content_type TEXT,
   bytes        INTEGER NOT NULL,
   sha256       TEXT NOT NULL,
+  meta_json    TEXT NOT NULL DEFAULT '{}',
   created_at   TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS attachments_post ON attachments(post_id);
@@ -167,6 +168,9 @@ def init_db(db_path: str | Path) -> None:
     try:
         conn.execute("PRAGMA journal_mode = WAL")
         conn.executescript(SCHEMA)
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(attachments)")}
+        if "meta_json" not in columns:
+            conn.execute("ALTER TABLE attachments ADD COLUMN meta_json TEXT NOT NULL DEFAULT '{}'")
         conn.commit()
     finally:
         conn.close()
@@ -292,6 +296,7 @@ def add_attachment(
     content_type: str,
     data: bytes,
     blob_dir: Path,
+    meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not data:
         raise ValueError("empty attachment")
@@ -310,14 +315,26 @@ def add_attachment(
         pass
     created = now()
     conn.execute(
-        "INSERT INTO attachments(id, filename, content_type, bytes, sha256, created_at) "
-        "VALUES (?,?,?,?,?,?)",
+        "INSERT INTO attachments(id, filename, content_type, bytes, sha256, meta_json, created_at) "
+        "VALUES (?,?,?,?,?,?,?)",
         (attachment_id, safe_name, content_type or "application/octet-stream",
-         len(data), digest, created),
+         len(data), digest, json.dumps(meta or {}, ensure_ascii=False), created),
     )
     conn.commit()
     row = conn.execute("SELECT * FROM attachments WHERE id=?", (attachment_id,)).fetchone()
     return dict(row)
+
+
+def update_attachment_meta(conn: sqlite3.Connection, attachment_id: str, meta: dict[str, Any]) -> dict[str, Any] | None:
+    row = conn.execute("SELECT id FROM attachments WHERE id=?", (attachment_id,)).fetchone()
+    if row is None:
+        return None
+    conn.execute(
+        "UPDATE attachments SET meta_json=? WHERE id=?",
+        (json.dumps(meta or {}, ensure_ascii=False), attachment_id),
+    )
+    conn.commit()
+    return get_attachment(conn, attachment_id)
 
 
 def get_attachment(conn: sqlite3.Connection, attachment_id: str) -> dict[str, Any] | None:

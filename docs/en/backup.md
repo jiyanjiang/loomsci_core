@@ -56,3 +56,15 @@ loomsci backup verify assets.zip
 loomsci backup prune --dir ./backups --keep 5
 loomsci backup prune --dir ./backups --keep 5 --apply
 ```
+
+## Provenance
+
+```bash
+loomsci asset list --unclassified
+loomsci asset classify <attachment-id> --origin generated
+loomsci asset classify <attachment-id> --origin downloaded
+```
+
+`origin=generated|authored` binaries are included, `origin=downloaded` binaries
+are references only, and unknown documents default to inclusion for migration
+safety.

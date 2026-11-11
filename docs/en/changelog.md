@@ -4,6 +4,16 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.42
+
+- Attachment provenance: `meta_json` with `origin`, `asset_kind`, `rights`,
+  `source_url`, and generator fields.
+- `asset list --unclassified` and `asset classify` for existing attachments.
+- Document boundary is provenance-based: generated/authored PDF/PPT/EPUB are
+  included; downloaded references are metadata-only; unknown documents default
+  to include for migration safety, with `--unknown-documents`.
+- Generated/downloaded audio and video follow the same origin rule.
+
 ## v0.1.0-preview.41
 
 - `backup verify` checks bundle hashes, SQLite integrity, attachments, and

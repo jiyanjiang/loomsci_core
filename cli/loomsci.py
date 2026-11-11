@@ -835,6 +835,64 @@ def _cmd_addon_profile(args: argparse.Namespace) -> int:
     return 0
 
 
+def _asset_rows(args: argparse.Namespace) -> list[dict]:
+    layout = _layout(args)
+    conn = storage.connect(layout.db)
+    try:
+        rows = conn.execute("SELECT * FROM attachments ORDER BY created_at DESC").fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            try:
+                item["meta"] = json.loads(item.pop("meta_json", "{}") or "{}")
+            except (TypeError, ValueError):
+                item["meta"] = {}
+            result.append(item)
+        return result
+    finally:
+        conn.close()
+
+
+def _cmd_asset_list(args: argparse.Namespace) -> int:
+    rows = _asset_rows(args)
+    if args.unclassified:
+        rows = [row for row in rows if not row["meta"].get("origin") or row["meta"].get("origin") == "unknown"]
+    if args.json:
+        _json_print({"attachments": rows})
+    else:
+        for row in rows:
+            print(f"{row['id']} {row['meta'].get('origin', 'unknown'):<12} {row['filename']}")
+    return 0
+
+
+def _cmd_asset_classify(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    conn = storage.connect(layout.db)
+    try:
+        current = conn.execute("SELECT meta_json FROM attachments WHERE id=?", (args.attachment_id,)).fetchone()
+        if current is None:
+            raise CliError("attachment not found")
+        try:
+            meta = json.loads(current["meta_json"] or "{}")
+        except (TypeError, ValueError):
+            meta = {}
+        meta["origin"] = args.origin
+        if args.asset_kind:
+            meta["asset_kind"] = args.asset_kind
+        if args.rights:
+            meta["rights"] = args.rights
+        if args.source_url:
+            meta["source_url"] = args.source_url
+        updated = storage.update_attachment_meta(conn, args.attachment_id, meta)
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(updated or {})
+    else:
+        print(f"classified: {args.attachment_id} origin={args.origin}")
+    return 0
+
+
 def _cmd_storage_report(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = storage_ops.report(layout.root)
@@ -927,7 +985,8 @@ def _cmd_backup_create(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
         result = backup_mod.create(
-            layout.root, args.out, redact=args.redact, allow_secrets=args.allow_secrets
+            layout.root, args.out, redact=args.redact, allow_secrets=args.allow_secrets,
+            unknown_documents=args.unknown_documents,
         )
     except backup_mod.BackupError as exc:
         raise CliError(str(exc)) from None
@@ -974,7 +1033,7 @@ def _cmd_backup_inspect(args: argparse.Namespace) -> int:
     else:
         summary = result["summary"]
         print(f"home: {result['home']}")
-        for key in ("assets", "references", "derived", "excluded"):
+        for key in ("assets", "references", "unknown", "derived", "excluded"):
             item = summary[key]
             print(f"{key:<10} {item['files']:>5} files  {item['bytes']:>10} bytes")
         print(f"secrets    {summary['secrets']['hits']:>5} hits")
@@ -1231,6 +1290,21 @@ def build_parser() -> argparse.ArgumentParser:
     addon_profile.add_argument("--json", action="store_true")
     addon_profile.set_defaults(func=_cmd_addon_profile)
 
+    asset = sub.add_parser("asset", help="inspect and classify attachment provenance")
+    asset_sub = asset.add_subparsers(dest="asset_command", required=True)
+    asset_list = asset_sub.add_parser("list", help="list attachments and provenance")
+    asset_list.add_argument("--unclassified", action="store_true")
+    asset_list.add_argument("--json", action="store_true")
+    asset_list.set_defaults(func=_cmd_asset_list)
+    asset_classify = asset_sub.add_parser("classify", help="set attachment origin")
+    asset_classify.add_argument("attachment_id")
+    asset_classify.add_argument("--origin", choices=["generated", "authored", "downloaded"], required=True)
+    asset_classify.add_argument("--asset-kind")
+    asset_classify.add_argument("--rights")
+    asset_classify.add_argument("--source-url")
+    asset_classify.add_argument("--json", action="store_true")
+    asset_classify.set_defaults(func=_cmd_asset_classify)
+
     storage = sub.add_parser("storage", help="inspect and compact local storage")
     storage_sub = storage.add_subparsers(dest="storage_command", required=True)
     storage_report = storage_sub.add_parser("report", help="read-only storage report")
@@ -1263,6 +1337,7 @@ def build_parser() -> argparse.ArgumentParser:
     backup_create.add_argument("--out", required=True)
     backup_create.add_argument("--redact", action="store_true")
     backup_create.add_argument("--allow-secrets", action="store_true")
+    backup_create.add_argument("--unknown-documents", choices=["include", "reference", "review"], default="include")
     backup_create.add_argument("--json", action="store_true")
     backup_create.set_defaults(func=_cmd_backup_create)
 

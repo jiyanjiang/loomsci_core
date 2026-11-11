@@ -5,6 +5,11 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.42
+
+- Attachment provenance, asset classification, and origin-based document/media
+  backup policy.
+
 ## v0.1.0-preview.41
 
 - Backup verify and retention; storage report logical vs physical bytes.

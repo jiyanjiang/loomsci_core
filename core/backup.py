@@ -66,31 +66,38 @@ def _is_secret_name(path: Path) -> bool:
     return path.name in SECRET_NAMES or path.suffix.lower() in SECRET_SUFFIXES
 
 
-def _attachment_suffixes(home: Path) -> dict[str, str]:
+def _attachment_meta(home: Path) -> dict[str, dict[str, Any]]:
     db = home / "data" / "data.db"
     if not db.is_file():
         return {}
     conn = None
     try:
         conn = sqlite3.connect(f"file:{db.resolve().as_posix()}?mode=ro", uri=True)
-        rows = conn.execute("SELECT id, filename, content_type FROM attachments").fetchall()
+        rows = conn.execute("SELECT id, filename, content_type, meta_json FROM attachments").fetchall()
     except sqlite3.Error:
         return {}
     finally:
         if conn is not None:
             conn.close()
     result = {}
-    for attachment_id, filename, content_type in rows:
-        suffix = Path(str(filename or "")).suffix.lower()
-        if suffix in REFERENCE_SUFFIXES or str(content_type or "").lower() in {
-            "application/pdf", "application/epub+zip", "application/zip",
-            "application/octet-stream",
-        }:
-            result[str(attachment_id)] = suffix or ".bin"
+    for attachment_id, filename, content_type, raw in rows:
+        try:
+            meta = json.loads(raw) if raw else {}
+        except (TypeError, ValueError):
+            meta = {}
+        result[str(attachment_id)] = {
+            "filename": str(filename or ""),
+            "content_type": str(content_type or "").lower(),
+            "suffix": Path(str(filename or "")).suffix.lower(),
+            "origin": str(meta.get("origin") or "unknown"),
+            "rights": str(meta.get("rights") or "unknown"),
+            "source_url": str(meta.get("source_url") or ""),
+            "asset_kind": str(meta.get("asset_kind") or ""),
+        }
     return result
 
 
-def _category(path: Path, home: Path, attachment_suffixes: dict[str, str] | None = None) -> tuple[str, str]:
+def _category(path: Path, home: Path, attachment_meta: dict[str, dict[str, Any]] | None = None) -> tuple[str, str]:
     rel = path.relative_to(home)
     suffix = path.suffix.lower()
     if _is_secret_name(path):
@@ -102,9 +109,15 @@ def _category(path: Path, home: Path, attachment_suffixes: dict[str, str] | None
     if rel.parts[:1] == ("agents",):
         return "asset", "agent persona"
     if rel.parts[:2] == ("data", "blobs"):
-        suffix = (attachment_suffixes or {}).get(path.name, suffix)
+        meta = (attachment_meta or {}).get(path.name, {})
+        origin = str(meta.get("origin") or "unknown")
+        suffix = str(meta.get("suffix") or suffix)
+        if origin == "downloaded":
+            return "reference", "downloaded reference"
+        if origin in {"generated", "authored"}:
+            return "asset", "authored/generated asset"
         if suffix in REFERENCE_SUFFIXES:
-            return "reference", "third-party binary"
+            return "unknown", "unclassified document"
         return "asset", "attachment"
     if rel.parts[:1] in {("assets",), ("programs",)}:
         return "asset", "user/AI program asset"
@@ -214,20 +227,21 @@ def inspect(home: str | Path) -> dict[str, Any]:
         "references": {"files": 0, "bytes": 0},
         "derived": {"files": 0, "bytes": 0},
         "excluded": {"files": 0, "bytes": 0},
+        "unknown": {"files": 0, "bytes": 0},
         "secrets": {"files": 0, "bytes": 0, "hits": 0},
     }
     samples: dict[str, list[dict[str, Any]]] = {key: [] for key in summary}
     secret_hits: list[dict[str, str]] = []
     hashes: dict[str, list[dict[str, Any]]] = {}
 
-    attachment_suffixes = _attachment_suffixes(home)
+    attachment_meta = _attachment_meta(home)
     for path in _iter_candidates(home):
         try:
             size = path.stat().st_size
         except OSError:
             continue
-        category, reason = _category(path, home, attachment_suffixes)
-        key = {"asset": "assets", "reference": "references", "derived": "derived", "secret": "secrets"}.get(category, "excluded")
+        category, reason = _category(path, home, attachment_meta)
+        key = {"asset": "assets", "reference": "references", "derived": "derived", "unknown": "unknown", "secret": "secrets"}.get(category, "excluded")
         summary[key]["files"] += 1
         summary[key]["bytes"] += size
         if key != "secrets" and len(samples[key]) < 50:
@@ -470,12 +484,14 @@ def _zip_bytes(zf: zipfile.ZipFile, name: str, data: bytes) -> dict[str, Any]:
     return {"path": name, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
 
 
-def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allow_secrets: bool = False) -> dict[str, Any]:
+def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allow_secrets: bool = False, unknown_documents: str = "include") -> dict[str, Any]:
     home = Path(home).expanduser()
     out = Path(out_path).expanduser()
     db = home / "data" / "data.db"
     if not db.is_file():
         raise BackupError("database not found")
+    if unknown_documents not in {"include", "reference", "review"}:
+        raise BackupError("unknown_documents must be include, reference, or review")
     hits = _included_secret_hits(home)
     if hits and not redact and not allow_secrets:
         locations = ", ".join(sorted({hit["location"] for hit in hits})[:8])
@@ -490,6 +506,7 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
     references: list[dict[str, Any]] = []
     attachments_meta: dict[str, dict[str, Any]] = {}
     asset_paths: dict[str, str] = {}
+    unknown_document_hits: list[dict[str, Any]] = []
     try:
         with tempfile.TemporaryDirectory() as workspace:
             snapshot = Path(workspace) / "data.db"
@@ -505,10 +522,25 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
                 if not blob.is_file():
                     continue
                 content_type = str(row.get("content_type") or "").lower()
-                is_reference = suffix in REFERENCE_SUFFIXES or content_type in {
-                    "application/pdf", "application/epub+zip", "application/zip",
-                    "application/octet-stream",
-                }
+                try:
+                    meta = json.loads(row.get("meta_json") or "{}")
+                except (TypeError, ValueError):
+                    meta = {}
+                origin = str(meta.get("origin") or "unknown")
+                is_reference = origin == "downloaded"
+                is_unknown_document = (
+                    origin == "unknown"
+                    and (suffix in REFERENCE_SUFFIXES or content_type in {
+                        "application/pdf", "application/epub+zip", "application/zip",
+                        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    })
+                )
+                if is_unknown_document:
+                    unknown_document_hits.append({"id": attachment_id, "filename": filename})
+                    if unknown_documents == "review":
+                        continue
+                    is_reference = unknown_documents == "reference"
                 if is_reference:
                     references.append({
                         "attachment_id": attachment_id,
@@ -516,7 +548,10 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
                         "content_type": content_type,
                         "bytes": int(row.get("bytes") or blob.stat().st_size),
                         "sha256": row.get("sha256"),
-                        "reason": "third_party_reference",
+                        "origin": origin,
+                        "rights": str(meta.get("rights") or ("third_party" if origin == "downloaded" else "unknown")),
+                        "source_url": str(meta.get("source_url") or ""),
+                        "reason": "third_party_reference" if origin == "downloaded" else "unclassified_document",
                     })
                     continue
                 digest = _sha256(blob)
@@ -530,6 +565,9 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
                     "path": asset_paths[digest],
                 }
 
+            if unknown_documents == "review" and unknown_document_hits:
+                names = ", ".join(item["filename"] for item in unknown_document_hits[:8])
+                raise BackupError(f"unclassified documents require classification: {names}")
             reference_ids = {item["attachment_id"] for item in references}
             _drop_attachment_rows(snapshot, reference_ids)
 
@@ -597,6 +635,7 @@ def create(home: str | Path, out_path: str | Path, *, redact: bool = False, allo
                     "references": len(references),
                     "excluded": len(excluded),
                     "redacted_rows": redacted_rows,
+                    "unknown_documents": len(unknown_document_hits),
                 }
                 manifest = {
                     "format": BUNDLE_FORMAT,
