@@ -46,4 +46,6 @@ python scripts/upgrade.py --package loomsci_core-<version>.zip --home <home>
 python scripts/upgrade.py --home <home> --rollback
 ```
 
-升级只替换 `core/`，不改数据目录与 `config.yaml`；交换失败自动恢复旧代码。
+升级先在 `<home>/backups/` 创建资产备份；备份失败则中止。随后只替换
+`core/`，不改数据目录与 `config.yaml`；交换失败自动恢复旧代码。
+`--no-backup` 仅用于诊断。

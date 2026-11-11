@@ -38,7 +38,7 @@ class ReleaseTest(unittest.TestCase):
             (home / "core" / "old.txt").write_text("old", encoding="utf-8")
             (home / "data").mkdir()
             (home / "data" / "data.db").write_bytes(b"keep")
-            upgraded = upgrade.apply(archive, home)
+            upgraded = upgrade.apply(archive, home, backup=False)
             self.assertTrue(upgraded["ok"])
             self.assertTrue((home / "core" / "pyproject.toml").is_file())
             self.assertFalse((home / "core" / "old.txt").exists())

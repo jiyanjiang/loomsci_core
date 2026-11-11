@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import build_release  # noqa: E402
+from core import storage  # noqa: E402
 import upgrade  # noqa: E402
 
 
@@ -32,9 +33,19 @@ class UpgradeTest(unittest.TestCase):
     def _package(self):
         return Path(build_release.build(self.out)["archive"])
 
+    def test_apply_creates_pre_upgrade_backup(self) -> None:
+        package = self._package()
+        (self.home / "data").mkdir(exist_ok=True)
+        (self.home / "data" / "data.db").unlink(missing_ok=True)
+        storage.init_db(self.home / "data" / "data.db")
+        result = upgrade.apply(package, self.home)
+        self.assertTrue(result["backup"])
+        self.assertTrue(Path(result["backup"]).is_file())
+        self.assertEqual(Path(result["backup"]).parent, self.home / "backups")
+
     def test_apply_preserves_data_and_rollback(self) -> None:
         package = self._package()
-        result = upgrade.apply(package, self.home)
+        result = upgrade.apply(package, self.home, backup=False)
         self.assertTrue(result["ok"])
         self.assertTrue((self.home / "core" / "pyproject.toml").is_file())
         self.assertEqual((self.home / "data" / "data.db").read_bytes(), b"db")
@@ -69,7 +80,7 @@ class UpgradeTest(unittest.TestCase):
                 serialization.Encoding.Raw, serialization.PublicFormat.Raw
             )
         )
-        upgrade.apply(package, self.home, signature=sig, public_key=pub)
+        upgrade.apply(package, self.home, signature=sig, public_key=pub, backup=False)
         self.assertTrue((self.home / "core" / "pyproject.toml").is_file())
 
     def test_bad_signature_does_not_swap(self) -> None:

@@ -4,6 +4,12 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.49
+
+- `scripts/upgrade.py` creates an asset bundle in `<home>/backups/` before
+  swapping code. The upgrade aborts if the backup cannot be created.
+- `--no-backup` is available for tests/diagnostics.
+
 ## v0.1.0-preview.48
 
 - `loomsci setup` is interactive on a terminal: owner, agent, profile, detected

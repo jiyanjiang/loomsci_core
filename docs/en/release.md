@@ -48,8 +48,11 @@ python scripts/upgrade.py --package loomsci_core-<version>.zip --home <home>
 python scripts/upgrade.py --home <home> --rollback
 ```
 
-The upgrade swaps only `core/`; data directories and `config.yaml` are never
-modified. A failed swap restores the previous code tree automatically.
+The upgrade creates an asset backup under `<home>/backups/` first. If the
+backup cannot be created, the upgrade aborts. The upgrade then swaps only
+`core/`; data directories and `config.yaml` are never modified. A failed swap
+restores the previous code tree automatically. Use `--no-backup` only for
+diagnostics.
 
 If the package is signed, verify before applying:
 

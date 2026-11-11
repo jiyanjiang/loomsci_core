@@ -17,6 +17,10 @@ import zipfile
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 PRODUCT = "loomsci_core"
 MAX_BYTES = 200 * 1024 * 1024
 MAX_MEMBERS = 10_000
@@ -116,6 +120,19 @@ def _refresh_launcher(home: Path) -> None:
         cmd.write_text("\r\n".join(lines) + "\r\n", encoding="ascii")
 
 
+def _backup(home: Path, version: str) -> str | None:
+    db = home / "data" / "data.db"
+    if not db.is_file():
+        return None
+    from core import backup
+
+    folder = home / "backups"
+    folder.mkdir(parents=True, exist_ok=True)
+    destination = folder / f"pre-upgrade-{version}.zip"
+    backup.create(home, destination)
+    return str(destination)
+
+
 def _state(home: Path, phase: str, **extra) -> None:
     path = home / "upgrade.state.json"
     payload = {"phase": phase, "at": _now(), **extra}
@@ -130,6 +147,7 @@ def apply(
     dry_run: bool = False,
     signature: str | Path | None = None,
     public_key: str | Path | None = None,
+    backup: bool = True,
 ) -> dict:
     package = Path(package).expanduser()
     home = Path(home).expanduser()
@@ -144,6 +162,11 @@ def apply(
         return {"ok": True, "dry_run": True, "manifest": manifest}
 
     home.mkdir(parents=True, exist_ok=True)
+    backup_path = None
+    if backup:
+        _state(home, "PREFLIGHT", package=str(package))
+        backup_path = _backup(home, str(manifest.get("package_version") or "unknown"))
+        _state(home, "BACKED_UP", package=str(package), backup=backup_path)
     _state(home, "PREFLIGHT", package=str(package))
     staging = Path(tempfile.mkdtemp(prefix="loomsci-upgrade-", dir=str(home)))
     new_core: Path | None = None
@@ -159,7 +182,7 @@ def apply(
         _refresh_launcher(home)
         _state(home, "SWAPPED", package=str(package))
         _state(home, "COMMITTED", package=str(package))
-        return {"ok": True, "home": str(home), "manifest": manifest}
+        return {"ok": True, "home": str(home), "manifest": manifest, "backup": backup_path}
     except Exception as exc:
         core = home / "core"
         previous = home / "core.prev"
@@ -192,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rollback", action="store_true")
     parser.add_argument("--signature")
     parser.add_argument("--public-key")
+    parser.add_argument("--no-backup", action="store_true")
     args = parser.parse_args(argv)
     try:
         if args.rollback:
@@ -205,6 +229,7 @@ def main(argv: list[str] | None = None) -> int:
                 dry_run=args.dry_run,
                 signature=args.signature,
                 public_key=args.public_key,
+                backup=not args.no_backup,
             )
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)

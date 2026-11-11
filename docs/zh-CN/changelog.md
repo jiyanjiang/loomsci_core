@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.49
+
+- `scripts/upgrade.py` 在替换代码前于 `<home>/backups/` 创建资产 bundle；
+  备份失败则中止升级。
+- 测试/诊断可用 `--no-backup`。
+
 ## v0.1.0-preview.48
 
 - `loomsci setup` 在终端中交互：owner、agent、profile、检测到的 IDE、可选隐藏
