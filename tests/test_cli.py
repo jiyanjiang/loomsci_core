@@ -259,5 +259,20 @@ class CliTest(unittest.TestCase):
             self.assertIn("team", json.loads(listed.stdout)["profiles"])
 
 
+    def test_setup_initializes_owner_ide_and_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / "home"
+            env = {"LOOMSCI_HOME": str(home)}
+            result = _run(["setup", "--owner", "owner", "--ide", "workbuddy", "--profile", "personal", "--json"], env=env)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["agent"], "alice.owner")
+            self.assertEqual(payload["profile"], "personal")
+            self.assertEqual(payload["ide"], "workbuddy")
+            self.assertTrue((home / "agents" / "alice" / "agent.json").is_file())
+            self.assertTrue((home / "agents" / "alice" / "adapters" / "workbuddy.md").is_file())
+            self.assertTrue((home / "packs" / "ui_shell" / "manifest.json").is_file())
+
+
 if __name__ == "__main__":
     unittest.main()

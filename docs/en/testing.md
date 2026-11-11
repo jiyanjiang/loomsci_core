@@ -78,5 +78,9 @@ reviewed like code.
 - The agent guessed `/bin/loomsci` and copied the launcher when the path was
   ambiguous. `v0.1.0-preview.4` now generates absolute CLI paths.
 - Windows L0-L6 passed on preview.11. Windows dual-IDE L7 is waived by the
-  user because the machine only has opencode. WorkBuddy/codebuddy/Qoder GUI
-  adapters and Qoder remain unverified.
+  user because the machine only has opencode.
+- macOS WorkBuddy 5.9.3 smoke passed on 2026-11-11: shell/tool access, presence,
+  post, claim, and done all verified against the host. Attachment/handoff and
+  WorkBuddy+opencode cross-IDE handoff remain to be tested.
+- WorkBuddy/codebuddy/Qoder GUI adapters and Qoder remain unverified beyond this
+  WorkBuddy smoke.

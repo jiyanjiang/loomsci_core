@@ -48,6 +48,27 @@ def _db_check(home: Path) -> dict[str, Any]:
             conn.close()
 
 
+def ides() -> dict[str, dict[str, Any]]:
+    candidates = {
+        "workbuddy": [Path("/Applications/WorkBuddy.app"), shutil.which("workbuddy")],
+        "opencode": [shutil.which("opencode")],
+        "omp": [shutil.which("omp")],
+        "qoder": [Path("/Applications/Qoder.app"), shutil.which("qoder")],
+        "cursor": [Path("/Applications/Cursor.app"), shutil.which("cursor")],
+        "codebuddy": [Path("/Applications/CodeBuddy.app"), shutil.which("codebuddy")],
+    }
+    local = os.environ.get("LOCALAPPDATA")
+    if local:
+        base = Path(local)
+        candidates["workbuddy"].append(base / "Programs" / "WorkBuddy" / "WorkBuddy.exe")
+        candidates["cursor"].append(base / "Programs" / "Cursor" / "Cursor.exe")
+    result = {}
+    for name, paths in candidates.items():
+        found = next((str(path) for path in paths if path and Path(path).exists()), None)
+        result[name] = {"found": bool(found), "path": found}
+    return result
+
+
 def _config_check(home: Path) -> dict[str, Any]:
     env_key = bool(os.environ.get("DEEPSEEK_API_KEY") or os.environ.get("DS_KEY"))
     config = home / "config.yaml"
@@ -72,6 +93,7 @@ def run(home: str | Path, *, port: int = 8787) -> dict[str, Any]:
         "installed": installed,
         "states": addon_runtime.status_all(home) if installed else [],
     }
+    checks["ides"] = ides()
     checks["tools"] = {
         "ffmpeg": bool(shutil.which("ffmpeg")),
         "rapidocr": importlib.util.find_spec("rapidocr_onnxruntime") is not None,
@@ -90,6 +112,8 @@ def run(home: str | Path, *, port: int = 8787) -> dict[str, Any]:
             warnings.append(f"add-on {item['name']} is {item.get('state')}")
     if not checks["tools"]["ffmpeg"]:
         warnings.append("ffmpeg not found; media previews/transforms unavailable")
+    if not any(item["found"] for item in checks["ides"].values()):
+        warnings.append("no AI IDE detected; install WorkBuddy, opencode, omp, or Qoder")
     if not checks["config"]["deepseek_configured"]:
         warnings.append("DeepSeek API key not configured")
     return {

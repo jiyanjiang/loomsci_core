@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.47
+
+- Setup command, IDE detection, WorkBuddy smoke baseline.
+
 ## v0.1.0-preview.46
 
 - Windows clean-install Python discovery and `-PythonExe`.

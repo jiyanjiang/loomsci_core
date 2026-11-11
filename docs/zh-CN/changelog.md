@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.47
+
+- `loomsci setup` 初始化 owner、agent adapter、profile，并提示下一步 `up`。
+- `doctor` 检测 WorkBuddy/opencode/omp/Qoder/Cursor/CodeBuddy，未发现时警告。
+- 记录 WorkBuddy 5.9.3 smoke：shell/tool、presence、post、claim、done 通过。
+
 ## v0.1.0-preview.46
 
 - 修复 Windows 干净安装：`py`/`python` 不在 PATH 时可用 `-PythonExe`，

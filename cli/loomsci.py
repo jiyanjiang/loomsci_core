@@ -153,6 +153,50 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_setup(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    owner = (args.owner or input("owner: ")).strip()
+    if not owner:
+        raise CliError("owner is required")
+    alice_mod = _alice_module()
+    record = alice_mod.ensure(layout.root, owner, args.agent)
+    storage.init_db(layout.db)
+    conn = storage.connect(layout.db)
+    try:
+        storage.ensure_agent(conn, record["handle"])
+        conn.commit()
+    finally:
+        conn.close()
+    installed = addons_mod.install_profile(layout.root, args.profile)
+    detected = doctor_mod.ides()
+    ide = args.ide
+    if not ide:
+        ide = next((name for name, item in detected.items() if item["found"]), None)
+    adapter = layout.root / "agents" / str(record["handle"]).split(".", 1)[0] / "adapters" / f"{ide}.md" if ide else None
+    result = {
+        "ok": True,
+        "home": str(layout.root),
+        "owner": owner,
+        "agent": record["handle"],
+        "profile": args.profile,
+        "addons": [item["name"] for item in installed],
+        "ide": ide,
+        "adapter": str(adapter) if adapter and adapter.is_file() else None,
+        "next": "loomsci up",
+    }
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"owner: {owner}")
+        print(f"agent: {record['handle']}")
+        print("add-ons: " + (", ".join(result["addons"]) or "(core)"))
+        print("ide: " + (ide or "(not detected; pass --ide)"))
+        if result["adapter"]:
+            print("adapter: " + result["adapter"])
+        print("next: loomsci up")
+    return 0
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     layout = _layout(args)
     result = doctor_mod.run(layout.root, port=args.port)
@@ -164,6 +208,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         print(f"home exists: {checks['home']['ok']}")
         print(f"database: {checks['database'].get('integrity', checks['database'].get('error', 'unknown'))}")
         print(f"core: {'reachable' if checks['core']['ok'] else 'unreachable'}")
+        print("ides: " + ", ".join(f"{key}={'yes' if value['found'] else 'no'}" for key, value in checks["ides"].items()))
         print("tools: " + ", ".join(f"{key}={'yes' if value else 'no'}" for key, value in checks["tools"].items()))
         print("add-ons: " + (", ".join(checks["addons"]["installed"]) or "(none)"))
         for warning in result["warnings"]:
@@ -1167,6 +1212,14 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8787)
     serve.set_defaults(func=_cmd_serve)
+
+    setup = sub.add_parser("setup", help="initialize owner, agent, IDE adapter, and add-ons")
+    setup.add_argument("--owner")
+    setup.add_argument("--agent", default="alice")
+    setup.add_argument("--ide", choices=["workbuddy", "opencode", "omp", "qoder", "cursor", "codebuddy"])
+    setup.add_argument("--profile", choices=sorted(addons_mod.PROFILES), default="personal")
+    setup.add_argument("--json", action="store_true")
+    setup.set_defaults(func=_cmd_setup)
 
     up = sub.add_parser("up", help="start installed add-ons and run the host")
     up.add_argument("--host", default="127.0.0.1")

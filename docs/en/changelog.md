@@ -4,6 +4,14 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.47
+
+- `loomsci setup` initializes owner, agent adapter, profile, and prints the next
+  `up` step.
+- `doctor` detects WorkBuddy/opencode/omp/Qoder/Cursor/CodeBuddy and warns when
+  none is present.
+- WorkBuddy 5.9.3 smoke recorded: shell/tool, presence, post, claim, done passed.
+
 ## v0.1.0-preview.46
 
 - Fix Windows clean install when `py`/`python` is not on PATH: accept

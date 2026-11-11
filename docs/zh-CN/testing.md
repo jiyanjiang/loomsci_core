@@ -68,4 +68,6 @@
 - opencode 默认模型 + 长提示：卡住；模型选择影响很大。
 - 路径不明确时 agent 猜 `/bin/loomsci` 并复制 launcher；`v0.1.0-preview.4` 已改为
   生成绝对 CLI 路径。
-- Windows、WorkBuddy、codebuddy、Qoder、L4/L5/L6 仍未覆盖。
+- 2026-11-11：macOS WorkBuddy 5.9.3 smoke 通过（shell/tool、presence、post、
+  claim、done）；附件、handoff、WorkBuddy+opencode 跨 IDE 仍未覆盖。
+- Windows、codebuddy、Qoder、L4/L5/L6 仍未覆盖。
