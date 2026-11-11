@@ -1,3 +1,9 @@
+# v0.1.0-beta.4 — UI route hotfix
+
+- ui-shell serves `/app` and the five view paths instead of returning 404.
+- The active view is derived from the path; nav clicks push history and
+  back/forward restore the view (BUG-0003).
+
 # v0.1.0-beta.3 — Loose list hotfix
 
 - Blank lines between ordered-list items no longer close the list and restart

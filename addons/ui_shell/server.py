@@ -18,6 +18,10 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
+APP_PATHS = frozenset({
+    "/app", "/app/", "/app/posts", "/app/posts/", "/app/tasks", "/app/tasks/",
+    "/app/memory", "/app/memory/", "/app/inbox", "/app/inbox/", "/app/site", "/app/site/",
+})
 DEFAULT_SITE = {
     "site_name": "loomsci",
     "logo_url": "https://www.loomsci.com/nav-logo.png",
@@ -80,6 +84,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.command == "POST":
                 return self._save_site()
             return self._json(405, {"ok": False, "error": "method_not_allowed"})
+        if path in APP_PATHS:
+            self._static("/")
+            return
         if path.startswith("/api/"):
             upstream = "/v1/" + path[len("/api/v1/"):] if path.startswith("/api/v1/") else path
             if parsed.query:

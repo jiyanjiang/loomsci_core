@@ -1,3 +1,9 @@
+# v0.1.0-beta.4 — UI route hotfix
+
+- `/app`, `/app/posts`, `/app/tasks`, `/app/memory`, `/app/inbox`, `/app/site`
+  now serve the ui-shell instead of 404.
+- Nav clicks update the path; browser back/forward restores the view (BUG-0003).
+
 # v0.1.0-beta.3 — Loose list hotfix
 
 - Fix ordered lists separated by blank lines: one `<ol>` instead of two numbered lists.

@@ -1,17 +1,14 @@
-# loomsci_core 0.1.0-beta.3 · Public Beta
+# loomsci_core 0.1.0-beta.4 · Public Beta
 
-- Version: `0.1.0-beta.3`
-- Package: `releases/loomsci_core-0.1.0-beta.3.zip`
-- SHA256: `d4299bd0e9d72f865007616e14e34ada252727254ce1640532dc77bb3c769ff2`
+- Version: `0.1.0-beta.4`
+- Package: `releases/loomsci_core-0.1.0-beta.4.zip`
+- SHA256: `90da02e63c8a24337550bb5f1fd98b91fdb14cc96a006e8fa4fadeb1adba95c1`
 
 ## Fix
 
-- Ordered lists with blank lines between items now render as one `<ol>` and keep
-  numbering. The previous parser treated each blank line as a list boundary.
-- Fixed in ui-shell, collab, and notify (BUG-0002).
+- ui-shell now serves `/app`, `/app/posts`, `/app/tasks`, `/app/memory`,
+  `/app/inbox`, and `/app/site` instead of returning 404.
+- Navigation updates the URL; browser back/forward restores the active view.
+- Post detail (`/app/posts?post=<id>`) is unchanged.
 
-## Base
-
-This hotfix carries the beta.2 post model: one Markdown body, no title field,
-800-character full-post threshold, 300–500 character summaries, and local
-fallback when DeepSeek is not configured.
+This hotfix carries the beta.2 post model and beta.3 loose-list fix.

@@ -2,7 +2,14 @@ const t = (key, vars) => window.LS_I18N.t(key, vars);
 const app = document.getElementById("app");
 const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
-let view = "posts";
+function viewFromPath(pathname) {
+  const match = String(pathname || "").match(/^\/app\/(posts|tasks|memory|inbox|site)\/?$/);
+  return match ? match[1] : "posts";
+}
+function viewPath(next) {
+  return next === "posts" ? "/app/posts" : `/app/${next}`;
+}
+let view = viewFromPath(location.pathname);
 let pendingFiles = [];
 let documentPasteBound = false;
 let site = {site_name: "loomsci", logo_url: "https://www.loomsci.com/nav-logo.png", links: [], footer: ""};
@@ -463,7 +470,13 @@ async function render(next = view) {
   try { await views[view](); } catch (err) { app.innerHTML = ""; showError(err.message); }
 }
 
-document.querySelectorAll("nav button").forEach((button) => { button.onclick = () => render(button.dataset.view); });
+document.querySelectorAll("nav button").forEach((button) => {
+  button.onclick = () => {
+    history.pushState({view: button.dataset.view}, "", viewPath(button.dataset.view));
+    render(button.dataset.view);
+  };
+});
+window.addEventListener("popstate", () => render(viewFromPath(location.pathname)));
 const localeSelect = document.getElementById("locale");
 if (localeSelect) {
   localeSelect.onchange = () => {

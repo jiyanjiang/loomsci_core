@@ -98,6 +98,10 @@ class UiShellTest(unittest.TestCase):
             self.assertIn("loomsci", html)
             self.assertIn('data-i18n="nav.posts"', html)
             self.assertIn("/i18n.js?v=0.5.0", html)
+        for route in ("/app", "/app/posts", "/app/tasks", "/app/memory", "/app/inbox", "/app/site"):
+            with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}{route}") as response:
+                self.assertEqual(response.status, 200)
+                self.assertIn('data-i18n="nav.posts"', response.read().decode())
         with urllib.request.urlopen(f"http://127.0.0.1:{self.shell.server_port}/i18n.js") as response:
             script = response.read().decode()
             self.assertIn('"zh-CN"', script)
