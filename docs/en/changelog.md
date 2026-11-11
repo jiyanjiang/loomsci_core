@@ -4,6 +4,15 @@ All notable changes are documented here. The project follows a
 `MAJOR.MINOR.PATCH` product version; preview builds may use a `-preview`
 suffix.
 
+## v0.1.0-preview.41
+
+- `backup verify` checks bundle hashes, SQLite integrity, attachments, and
+  Markdown projection.
+- `backup prune --dir --keep` implements retention; dry-run by default, only
+  valid asset bundles are candidates.
+- Storage report distinguishes logical blob bytes from physical disk usage after
+  hardlink dedupe.
+
 ## v0.1.0-preview.40
 
 - P2.6 first cut: `storage report`, `storage duplicates`, `storage dedupe`,

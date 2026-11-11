@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -96,6 +97,10 @@ class BackupInspectTest(unittest.TestCase):
         shown = backup.inspect_bundle(out)
         self.assertTrue(shown["ok"])
         self.assertTrue(shown["redacted"])
+        verified = backup.verify_bundle(out)
+        self.assertTrue(verified["ok"])
+        self.assertEqual(verified["integrity"], "ok")
+        self.assertEqual(verified["missing_assets"], [])
 
         dest = Path(self.tmp.name) / "restored"
         dry = backup.restore_bundle(out, dest)
@@ -115,6 +120,18 @@ class BackupInspectTest(unittest.TestCase):
         self.assertEqual(attachment_count, 2)
         self.assertNotIn("1234567890abcdefghijklmnop", body)
         self.assertIn("[REDACTED]", body)
+
+    def test_backup_retention(self) -> None:
+        first = Path(self.tmp.name) / "one.zip"
+        second = Path(self.tmp.name) / "two.zip"
+        backup.create(self.home, first, redact=True)
+        shutil.copy2(first, second)
+        result = backup.prune_bundles(Path(self.tmp.name), keep=1)
+        self.assertFalse(result["apply"])
+        self.assertEqual(len(result["candidates"]), 1)
+        self.assertTrue(first.exists() and second.exists())
+        applied = backup.prune_bundles(Path(self.tmp.name), keep=1, apply=True)
+        self.assertEqual(len(applied["removed"]), 1)
 
     def test_inspect_is_read_only(self) -> None:
         before = {

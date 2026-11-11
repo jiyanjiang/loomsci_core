@@ -722,3 +722,78 @@ def restore_bundle(path: str | Path, destination: str | Path, *, apply: bool = F
             "ok": True, "dry_run": False, "destination": str(dest),
             "counts": manifest.get("counts", {}), "attachments": len(attachments),
         }
+
+
+def verify_bundle(path: str | Path) -> dict[str, Any]:
+    summary = inspect_bundle(path)
+    source = Path(path).expanduser()
+    with zipfile.ZipFile(source) as zf:
+        raw = zf.read("data/data.db")
+        with tempfile.TemporaryDirectory() as workspace:
+            db = Path(workspace) / "data.db"
+            db.write_bytes(raw)
+            conn = sqlite3.connect(db)
+            try:
+                integrity = conn.execute("PRAGMA integrity_check").fetchone()[0]
+                counts = {}
+                for table in ("posts", "tasks", "facts", "attachments"):
+                    try:
+                        counts[table] = int(conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0])
+                    except sqlite3.Error:
+                        counts[table] = 0
+            finally:
+                conn.close()
+        attachments = json.loads(zf.read("attachments.json").decode("utf-8")) if "attachments.json" in zf.namelist() else {}
+        missing = [meta.get("path") for meta in attachments.values() if meta.get("path") not in zf.namelist()]
+        references = json.loads(zf.read("references.json").decode("utf-8")) if "references.json" in zf.namelist() else []
+        markdown = [name for name in zf.namelist() if name.startswith("md/") and name.endswith(".md")]
+    return {
+        "ok": integrity == "ok" and not missing,
+        "path": str(source),
+        "integrity": integrity,
+        "counts": counts,
+        "attachments": len(attachments),
+        "missing_assets": missing,
+        "references": len(references),
+        "markdown_files": len(markdown),
+        "bundle": summary,
+    }
+
+
+def prune_bundles(directory: str | Path, *, keep: int = 5, apply: bool = False) -> dict[str, Any]:
+    folder = Path(directory).expanduser()
+    if not folder.is_dir():
+        raise BackupError(f"backup directory not found: {folder}")
+    if keep < 0:
+        raise BackupError("keep must be >= 0")
+    candidates = []
+    for path in sorted(folder.glob("*.zip"), key=lambda item: item.stat().st_mtime, reverse=True):
+        if len(candidates) < keep:
+            candidates.append(path)
+            continue
+        try:
+            with zipfile.ZipFile(path) as archive:
+                _bundle_manifest(archive)
+        except (BackupError, OSError, zipfile.BadZipFile):
+            continue
+        candidates.append(path)
+    stale = candidates[keep:]
+    stale_bytes = sum(path.stat().st_size for path in stale if path.exists())
+    removed = []
+    if apply:
+        for path in stale:
+            try:
+                path.unlink()
+                removed.append(str(path))
+            except OSError:
+                pass
+    return {
+        "ok": True,
+        "directory": str(folder),
+        "keep": keep,
+        "apply": apply,
+        "kept": [str(path) for path in candidates[:keep]],
+        "candidates": [str(path) for path in stale],
+        "removed": removed,
+        "bytes": stale_bytes,
+    }

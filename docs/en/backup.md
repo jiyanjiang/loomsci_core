@@ -50,3 +50,9 @@ loomsci storage compact --apply
 `dedupe` replaces duplicate blobs with hardlinks; `prune` removes only orphan
 blobs older than the threshold; `compact` requires `--apply`. Run a backup
 before destructive maintenance.
+
+```bash
+loomsci backup verify assets.zip
+loomsci backup prune --dir ./backups --keep 5
+loomsci backup prune --dir ./backups --keep 5 --apply
+```

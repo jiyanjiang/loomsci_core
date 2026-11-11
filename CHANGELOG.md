@@ -5,6 +5,10 @@ The canonical, detailed changelog is:
 - [English](docs/en/changelog.md)
 - [中文](docs/zh-CN/changelog.md)
 
+## v0.1.0-preview.41
+
+- Backup verify and retention; storage report logical vs physical bytes.
+
 ## v0.1.0-preview.40
 
 - P2.6 storage report/duplicates/dedupe/prune/compact; hardlink dedupe and

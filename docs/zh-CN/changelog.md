@@ -3,6 +3,12 @@
 记录所有重要变更。产品版本使用 `MAJOR.MINOR.PATCH`；预览构建可带
 `-preview` 后缀。
 
+## v0.1.0-preview.41
+
+- `backup verify` 校验 bundle hash、SQLite 完整性、附件和 Markdown 投影。
+- `backup prune --dir --keep` 实现保留策略；默认 dry-run，只处理有效资产 bundle。
+- `storage report` 区分 hardlink 去重前后的逻辑 blob 与实际磁盘占用。
+
 ## v0.1.0-preview.40
 
 - P2.6 第一步：`storage report`、`storage duplicates`、`storage dedupe`、

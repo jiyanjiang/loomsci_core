@@ -46,3 +46,9 @@ loomsci storage compact --apply
 
 `dedupe` 用 hardlink 合并重复 blob；`prune` 只删除超过阈值的孤儿 blob；
 `compact` 必须显式 `--apply`。破坏性维护前请先做 backup。
+
+```bash
+loomsci backup verify assets.zip
+loomsci backup prune --dir ./backups --keep 5
+loomsci backup prune --dir ./backups --keep 5 --apply
+```

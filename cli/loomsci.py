@@ -895,6 +895,34 @@ def _cmd_storage_compact(args: argparse.Namespace) -> int:
     return 0 if result.get("ok") else 1
 
 
+def _cmd_backup_verify(args: argparse.Namespace) -> int:
+    try:
+        result = backup_mod.verify_bundle(args.bundle)
+    except (backup_mod.BackupError, OSError) as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"integrity: {result['integrity']}")
+        print(f"counts: {json.dumps(result['counts'], ensure_ascii=False, sort_keys=True)}")
+        print(f"attachments: {result['attachments']} markdown: {result['markdown_files']} references: {result['references']}")
+    return 0 if result["ok"] else 1
+
+
+def _cmd_backup_prune(args: argparse.Namespace) -> int:
+    try:
+        result = backup_mod.prune_bundles(args.dir, keep=args.keep, apply=args.apply)
+    except backup_mod.BackupError as exc:
+        raise CliError(str(exc)) from None
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"keep={result['keep']} candidates={len(result['candidates'])} removed={len(result['removed'])} apply={result['apply']}")
+        for item in result["candidates"]:
+            print("candidate: " + item)
+    return 0
+
+
 def _cmd_backup_create(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
@@ -1237,6 +1265,18 @@ def build_parser() -> argparse.ArgumentParser:
     backup_create.add_argument("--allow-secrets", action="store_true")
     backup_create.add_argument("--json", action="store_true")
     backup_create.set_defaults(func=_cmd_backup_create)
+
+    backup_verify = backup_sub.add_parser("verify", help="verify bundle hashes, SQLite integrity, and attachments")
+    backup_verify.add_argument("bundle")
+    backup_verify.add_argument("--json", action="store_true")
+    backup_verify.set_defaults(func=_cmd_backup_verify)
+
+    backup_prune = backup_sub.add_parser("prune", help="apply retention to backup bundles")
+    backup_prune.add_argument("--dir", required=True)
+    backup_prune.add_argument("--keep", type=int, default=5)
+    backup_prune.add_argument("--apply", action="store_true")
+    backup_prune.add_argument("--json", action="store_true")
+    backup_prune.set_defaults(func=_cmd_backup_prune)
 
     backup_show = backup_sub.add_parser("show", help="verify and summarize a bundle")
     backup_show.add_argument("bundle")
