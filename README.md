@@ -8,7 +8,7 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.18` public beta.** Local-only, one owner, no login, no
+> **Status: `0.1.0-beta.19` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
@@ -95,6 +95,14 @@ enabled; the user confirms installation.
 ~/.loomsci/bin/loomsci update download
 ~/.loomsci/bin/loomsci update apply
 ```
+
+## Search benchmark
+
+```bash
+python scripts/bench_search.py --posts 10000 --facts 50000
+```
+
+Search uses SQLite FTS5; the benchmark reports p50/p95 latency.
 
 ## Project scan
 
@@ -233,7 +241,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.18.zip
+shasum -a 256 loomsci_core-0.1.0-beta.19.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 

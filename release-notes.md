@@ -1,14 +1,16 @@
-# loomsci_core 0.1.0-beta.18 · Public Beta
+# loomsci_core 0.1.0-beta.19 · Public Beta
 
-- Version: `0.1.0-beta.18`
-- Package: `releases/loomsci_core-0.1.0-beta.18.zip`
-- SHA256: `245b65899369a750f2c1f450611d6c98ca1e1d13b721c9a2d2f6763428a7a921`
+- Version: `0.1.0-beta.19`
+- Package: `releases/loomsci_core-0.1.0-beta.19.zip`
+- SHA256: `73aa7a85537b03abd801acf334cfcb393d6a174dda22727d46ddd2799128adc3`
 
-## Project templates
+## FTS5 search
 
-- Add book, research, and OPC 180-day project skeletons.
-- `project template list/create`.
-- Templates create new empty projects only; existing project data is never copied.
+- Add FTS5 indexes and triggers for posts, tasks, and facts.
+- Search uses FTS5 with a LIKE fallback.
+- Add 10k/50k benchmark and tests.
 
-This release carries beta.17 evaluation rubric, beta.16 app registry, and
-beta.15 API/schema contract.
+Benchmark: 10k posts + 50k facts, p95 0.3 ms on the test host.
+
+This release carries beta.18 templates, beta.17 evaluation, and beta.16 app
+registry.

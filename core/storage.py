@@ -229,6 +229,43 @@ CREATE TABLE IF NOT EXISTS project_apps (
   error      TEXT,
   PRIMARY KEY (source_id, name)
 );
+CREATE VIRTUAL TABLE IF NOT EXISTS posts_fts USING fts5(id UNINDEXED, body, tokenize='unicode61');
+CREATE VIRTUAL TABLE IF NOT EXISTS tasks_fts USING fts5(id UNINDEXED, title, description, acceptance, tokenize='unicode61');
+CREATE VIRTUAL TABLE IF NOT EXISTS facts_fts USING fts5(id UNINDEXED, claim, evidence, source, tokenize='unicode61');
+
+CREATE TRIGGER IF NOT EXISTS posts_fts_ai AFTER INSERT ON posts BEGIN
+  INSERT INTO posts_fts(id, body) VALUES (new.id, new.body);
+END;
+CREATE TRIGGER IF NOT EXISTS posts_fts_ad AFTER DELETE ON posts BEGIN
+  DELETE FROM posts_fts WHERE id = old.id;
+END;
+CREATE TRIGGER IF NOT EXISTS posts_fts_au AFTER UPDATE ON posts BEGIN
+  DELETE FROM posts_fts WHERE id = old.id;
+  INSERT INTO posts_fts(id, body) VALUES (new.id, new.body);
+END;
+
+CREATE TRIGGER IF NOT EXISTS tasks_fts_ai AFTER INSERT ON tasks BEGIN
+  INSERT INTO tasks_fts(id, title, description, acceptance) VALUES (new.id, new.title, new.description, new.acceptance);
+END;
+CREATE TRIGGER IF NOT EXISTS tasks_fts_ad AFTER DELETE ON tasks BEGIN
+  DELETE FROM tasks_fts WHERE id = old.id;
+END;
+CREATE TRIGGER IF NOT EXISTS tasks_fts_au AFTER UPDATE ON tasks BEGIN
+  DELETE FROM tasks_fts WHERE id = old.id;
+  INSERT INTO tasks_fts(id, title, description, acceptance) VALUES (new.id, new.title, new.description, new.acceptance);
+END;
+
+CREATE TRIGGER IF NOT EXISTS facts_fts_ai AFTER INSERT ON facts BEGIN
+  INSERT INTO facts_fts(id, claim, evidence, source) VALUES (new.id, new.claim, new.evidence, new.source);
+END;
+CREATE TRIGGER IF NOT EXISTS facts_fts_ad AFTER DELETE ON facts BEGIN
+  DELETE FROM facts_fts WHERE id = old.id;
+END;
+CREATE TRIGGER IF NOT EXISTS facts_fts_au AFTER UPDATE ON facts BEGIN
+  DELETE FROM facts_fts WHERE id = old.id;
+  INSERT INTO facts_fts(id, claim, evidence, source) VALUES (new.id, new.claim, new.evidence, new.source);
+END;
+
 """
 
 
@@ -315,6 +352,14 @@ def init_db(db_path: str | Path) -> None:
                 conn.execute("ALTER TABLE posts DROP COLUMN title")
             except sqlite3.OperationalError:
                 pass
+        for table, source in (
+            ("posts_fts", "SELECT id, body FROM posts"),
+            ("tasks_fts", "SELECT id, title, description, acceptance FROM tasks"),
+            ("facts_fts", "SELECT id, claim, evidence, source FROM facts"),
+        ):
+            count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            if count == 0:
+                conn.execute(f"INSERT INTO {table} " + source)
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.execute(
             "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?,?)",
@@ -881,6 +926,11 @@ def get_read_cursor(conn: sqlite3.Connection, *, agent: str, scope: str) -> int:
     return int(row["last_seq"]) if row else 0
 
 
+def _fts_query(text: str) -> str:
+    terms = [term for term in re.split(r"\s+", text.strip()) if term]
+    return " AND ".join('"' + term.replace('"', '""') + '"' for term in terms)
+
+
 def search(
     conn: sqlite3.Connection, *, q: str, limit: int = 50
 ) -> list[dict[str, Any]]:
@@ -890,10 +940,40 @@ def search(
     limit = max(1, min(int(limit), 100))
     like = f"%{text}%"
     results: list[dict[str, Any]] = []
-    for row in conn.execute(
-        POST_SELECT + " WHERE p.body LIKE ? ORDER BY p.seq DESC LIMIT ?",
-        (like, limit),
-    ).fetchall():
+    try:
+        match = _fts_query(text)
+        post_rows = conn.execute(
+            POST_SELECT
+            + " JOIN posts_fts ON posts_fts.id=p.id WHERE posts_fts MATCH ? "
+            "ORDER BY rank LIMIT ?",
+            (match, limit),
+        ).fetchall()
+        task_rows = conn.execute(
+            "SELECT t.* FROM tasks t JOIN tasks_fts f ON f.id=t.id "
+            "WHERE tasks_fts MATCH ? ORDER BY rank LIMIT ?",
+            (match, limit),
+        ).fetchall()
+        fact_rows = conn.execute(
+            "SELECT f.* FROM facts f JOIN facts_fts x ON x.id=f.id "
+            "WHERE facts_fts MATCH ? ORDER BY rank LIMIT ?",
+            (match, limit),
+        ).fetchall()
+    except sqlite3.OperationalError:
+        post_rows = conn.execute(
+            POST_SELECT + " WHERE p.body LIKE ? ORDER BY p.seq DESC LIMIT ?",
+            (like, limit),
+        ).fetchall()
+        task_rows = conn.execute(
+            "SELECT * FROM tasks WHERE title LIKE ? OR description LIKE ? OR acceptance LIKE ? "
+            "ORDER BY updated_at DESC LIMIT ?",
+            (like, like, like, limit),
+        ).fetchall()
+        fact_rows = conn.execute(
+            "SELECT * FROM facts WHERE claim LIKE ? OR evidence LIKE ? OR source LIKE ? "
+            "ORDER BY updated_at DESC LIMIT ?",
+            (like, like, like, limit),
+        ).fetchall()
+    for row in post_rows:
         post = _post_dict(row)
         label = str((post.get("summary") or {}).get("text") or "")
         if not label:
@@ -905,11 +985,7 @@ def search(
             "snippet": str(post.get("body") or "")[:240],
             "created_at": post.get("created_at"),
         })
-    for row in conn.execute(
-        "SELECT * FROM tasks WHERE title LIKE ? OR description LIKE ? OR acceptance LIKE ? "
-        "ORDER BY updated_at DESC LIMIT ?",
-        (like, like, like, limit),
-    ).fetchall():
+    for row in task_rows:
         task = _task_dict(row)
         results.append({
             "type": "task",
@@ -918,11 +994,7 @@ def search(
             "snippet": str(task.get("acceptance") or task.get("description") or "")[:240],
             "created_at": task.get("updated_at"),
         })
-    for row in conn.execute(
-        "SELECT * FROM facts WHERE claim LIKE ? OR evidence LIKE ? OR source LIKE ? "
-        "ORDER BY updated_at DESC LIMIT ?",
-        (like, like, like, limit),
-    ).fetchall():
+    for row in fact_rows:
         fact = dict(row)
         results.append({
             "type": "fact",

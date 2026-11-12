@@ -1,3 +1,9 @@
+# v0.1.0-beta.19 — FTS5 搜索
+
+- Add SQLite FTS5 indexes and triggers for posts, tasks, facts.
+- Search uses FTS5 with a LIKE fallback.
+- Add 10k/50k benchmark script and tests.
+
 # v0.1.0-beta.18 — 项目模板
 
 - Add book, research, and OPC 180-day project templates.
