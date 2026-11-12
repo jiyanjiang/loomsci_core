@@ -565,6 +565,25 @@ async function loadInbox() {
   renderMath(app);
 }
 
+async function loadAdvancedProvider() {
+  const select = document.getElementById("advanced-provider");
+  const base = document.getElementById("advanced-base");
+  const model = document.getElementById("advanced-model");
+  const key = document.getElementById("advanced-key");
+  const status = document.getElementById("advanced-status");
+  if (!select || !base || !model || !key || !status) return;
+  const provider = select.value;
+  try {
+    const data = await api(`settings/llm/${encodeURIComponent(provider)}`);
+    const p = data.provider || {};
+    base.value = p.base_url || "";
+    model.value = p.model || "";
+    key.value = "";
+    key.placeholder = p.configured ? t("settings.keepKey") : t("settings.notConfigured");
+    status.textContent = p.configured ? t("settings.configured") : t("settings.notConfigured");
+  } catch (err) { status.textContent = err.message; }
+}
+
 async function loadUpdateStatus() {
   const statusEl = document.getElementById("update-status");
   const actions = document.getElementById("update-actions");
@@ -621,6 +640,23 @@ async function loadSettings() {
       </form>
       <p class="meta" id="settings-status"></p>
     </article>
+    <h2>${esc(t("settings.advancedProviders"))}</h2>
+    <article class="item">
+      <div class="compose">
+        <label>${esc(t("settings.provider"))}
+          <select id="advanced-provider">
+            <option value="aliyun">Alibaba DashScope</option>
+            <option value="volcengine">Volcengine Ark</option>
+          </select>
+        </label>
+        <label>${esc(t("settings.baseUrl"))}<input id="advanced-base" autocomplete="off"></label>
+        <label>${esc(t("settings.model"))}<input id="advanced-model" autocomplete="off"></label>
+        <label>${esc(t("settings.keyLabel"))}<input id="advanced-key" type="password" autocomplete="off"></label>
+        <div class="actions"><button type="button" id="advanced-save">${esc(t("settings.save"))}</button>
+          <button type="button" id="advanced-test">${esc(t("settings.test"))}</button></div>
+        <p class="meta" id="advanced-status"></p>
+      </div>
+    </article>
     <h2>${esc(t("settings.updates"))}</h2>
     <article class="item">
       <div class="meta" id="update-status">${esc(t("settings.updateLoading"))}</div>
@@ -648,6 +684,33 @@ async function loadSettings() {
     } catch (err) { status.textContent = err.message; }
   };
   await loadUpdateStatus();
+  const advancedSelect = document.getElementById("advanced-provider");
+  if (advancedSelect) {
+    advancedSelect.onchange = loadAdvancedProvider;
+    await loadAdvancedProvider();
+    document.getElementById("advanced-save").onclick = async () => {
+      const provider = advancedSelect.value;
+      const status = document.getElementById("advanced-status");
+      try {
+        await api(`settings/llm/${encodeURIComponent(provider)}`, {method: "PUT", body: {
+          base_url: document.getElementById("advanced-base").value,
+          model: document.getElementById("advanced-model").value,
+        }});
+        const value = document.getElementById("advanced-key").value.trim();
+        if (value) await api(`settings/llm/${encodeURIComponent(provider)}/key`, {method: "PUT", body: {api_key: value}});
+        await loadAdvancedProvider();
+      } catch (err) { status.textContent = err.message; }
+    };
+    document.getElementById("advanced-test").onclick = async () => {
+      const provider = advancedSelect.value;
+      const status = document.getElementById("advanced-status");
+      status.textContent = t("settings.testing");
+      try {
+        const result = await api(`settings/llm/${encodeURIComponent(provider)}/test`, {method: "POST", body: {}});
+        status.textContent = result.ok ? t("settings.testOk", {ms: result.latency_ms}) : t("settings.testFailed", {error: result.error});
+      } catch (err) { status.textContent = err.message; }
+    };
+  }
   const clear = document.getElementById("clear-key");
   if (clear) clear.onclick = async () => {
     if (!confirm(t("settings.confirmClear"))) return;

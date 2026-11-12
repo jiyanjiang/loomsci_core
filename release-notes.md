@@ -1,16 +1,14 @@
-# loomsci_core 0.1.0-beta.19 · Public Beta
+# loomsci_core 0.1.0-beta.20 · Public Beta
 
-- Version: `0.1.0-beta.19`
-- Package: `releases/loomsci_core-0.1.0-beta.19.zip`
-- SHA256: `73aa7a85537b03abd801acf334cfcb393d6a174dda22727d46ddd2799128adc3`
+- Version: `0.1.0-beta.20`
+- Package: `releases/loomsci_core-0.1.0-beta.20.zip`
+- SHA256: `93347aa9fa9168f0dfe727f48406a349806ecec8c70aa288bf43d2567f6797ba`
 
-## FTS5 search
+## Advanced providers
 
-- Add FTS5 indexes and triggers for posts, tasks, and facts.
-- Search uses FTS5 with a LIKE fallback.
-- Add 10k/50k benchmark and tests.
+- Settings → Advanced providers for Aliyun DashScope and Volcengine Ark.
+- Base URL, model, key, and connection test.
+- Keys remain write-only and are never returned.
 
-Benchmark: 10k posts + 50k facts, p95 0.3 ms on the test host.
-
-This release carries beta.18 templates, beta.17 evaluation, and beta.16 app
-registry.
+This release carries beta.19 FTS5 search, beta.18 templates, and beta.17
+evaluation rubric.

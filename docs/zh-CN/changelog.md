@@ -1,3 +1,9 @@
+# v0.1.0-beta.20 — 高级服务商
+
+- Add Aliyun DashScope and Volcengine Ark advanced settings.
+- Expose base URL, model, key, and connection test.
+- Keys remain write-only and are never returned.
+
 # v0.1.0-beta.19 — FTS5 搜索
 
 - Add SQLite FTS5 indexes and triggers for posts, tasks, facts.

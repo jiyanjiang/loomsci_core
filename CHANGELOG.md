@@ -1,3 +1,9 @@
+# v0.1.0-beta.20 — Advanced providers
+
+- Add Settings → Advanced providers for Aliyun DashScope and Volcengine Ark.
+- Expose base URL, model, key, and connection test.
+- Provider keys remain write-only and are never returned by the API.
+
 # v0.1.0-beta.19 — FTS5 search
 
 - Add SQLite FTS5 indexes and triggers for posts, tasks, and facts.
