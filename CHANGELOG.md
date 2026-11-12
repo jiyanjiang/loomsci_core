@@ -1,3 +1,10 @@
+# v0.1.0-beta.16 — Project app registry
+
+- Add project app add/list/check.
+- App status: registered, running, unreachable.
+- Read-only health checks; never execute project commands.
+- UI displays app status and check action.
+
 # v0.1.0-beta.15 — API/schema contract
 
 - Add `schema_version` and `schema_migrations` ledger via SQLite user_version.

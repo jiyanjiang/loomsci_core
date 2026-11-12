@@ -76,6 +76,17 @@ class ProjectStoreTest(unittest.TestCase):
         self.assertEqual(reviewed["status"], "active")
         self.assertEqual(len(project_store.list_projects(self.conn, selected_only=True)), 1)
 
+    def test_app_registry_and_unreachable_check(self) -> None:
+        project_store.create_project(
+            self.conn, code="alpha", name="Alpha", sources=[{"role": "root", "path": str(self.project)}]
+        )
+        project = project_store.add_app(self.conn, "alpha", name="app", port=59999)
+        self.assertEqual(project["apps"][0]["status"], "registered")
+        checked = project_store.check_app(self.conn, "alpha", "app")
+        self.assertEqual(checked["status"], "unreachable")
+        with self.assertRaises(ValueError):
+            project_store.add_app(self.conn, "alpha", name="bad", url="https://example.com")
+
     def test_remove(self) -> None:
         project_store.create_project(
             self.conn, code="alpha", name="Alpha", sources=[{"role": "root", "path": str(self.project)}]

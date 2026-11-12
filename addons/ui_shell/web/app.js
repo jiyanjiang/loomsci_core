@@ -331,7 +331,9 @@ async function loadProject(code) {
       <span class="muted">${esc(t("projects.dataAsOf"))} ${esc(source.data_as_of || "—")}</span></div>`).join("");
   const apps = (project.apps || []).map((app) =>
     `<div class="project-row"><b>${esc(app.name)}</b><span>${esc(app.status)}</span>
-      <code>${esc(app.url || "")}</code></div>`).join("") || `<p class="muted">—</p>`;
+      <code>${esc(app.url || "")}</code>
+      <span class="muted">${esc(app.checked_at || "")}</span>
+      <button type="button" data-check-app="${esc(app.name)}">${esc(t("projects.checkApp"))}</button></div>`).join("") || `<p class="muted">—</p>`;
   const schemas = (project.schemas || []).map((schema) => {
     let tables = [];
     try { tables = JSON.parse(schema.tables_json || "[]"); } catch { tables = []; }
@@ -358,6 +360,14 @@ async function loadProject(code) {
     <div class="project-section"><h3>${esc(t("projects.schemas"))}</h3>${schemas}</div>
     <div class="project-section"><h3>${esc(t("projects.timeline"))}</h3>${timelineHtml(stats.timeline || [])}</div>
     <div class="project-section"><h3>${esc(t("projects.recent"))}</h3>${recent}</div>`;
+  app.querySelectorAll('button[data-check-app]').forEach((button) => {
+    button.onclick = async () => {
+      try {
+        await api(`projects/${encodeURIComponent(project.code)}/apps/${encodeURIComponent(button.dataset.checkApp)}/check`, {method: "POST", body: {}});
+        await loadProject(project.code);
+      } catch (err) { showError(err.message); }
+    };
+  });
   renderMath(app);
 }
 

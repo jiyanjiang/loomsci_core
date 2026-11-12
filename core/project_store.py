@@ -10,6 +10,9 @@ import os
 import re
 import secrets
 import socket
+import urllib.error
+import urllib.request
+from urllib.parse import urlsplit
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -355,3 +358,76 @@ def review_project(
     )
     conn.commit()
     return get_project(conn, code) or project
+
+
+def add_app(
+    conn,
+    code: str,
+    *,
+    name: str,
+    command: str = "",
+    port: int | None = None,
+    url: str = "",
+) -> dict[str, Any]:
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    if not project["sources"]:
+        raise ValueError("project has no source")
+    app_name = str(name or "").strip() or "default"
+    target = str(url or "").strip()
+    if not target and port:
+        target = f"http://127.0.0.1:{int(port)}"
+    if target:
+        parsed = urlsplit(target)
+        if parsed.scheme not in {"http", "https"}:
+            raise ValueError("app URL must be http or https")
+        if (parsed.hostname or "").lower() not in {"127.0.0.1", "localhost", "::1"}:
+            raise ValueError("app URL must be loopback")
+        if parsed.username or parsed.password:
+            raise ValueError("app URL must not contain credentials")
+    source_id = project["sources"][0]["id"]
+    conn.execute(
+        "INSERT INTO project_apps(project_id, source_id, name, command, port, url, status, checked_at, error) "
+        "VALUES (?,?,?,?,?,?,?,?,?) "
+        "ON CONFLICT(source_id, name) DO UPDATE SET command=excluded.command, "
+        "port=excluded.port, url=excluded.url, status=excluded.status, error=excluded.error",
+        (project["id"], source_id, app_name, command, int(port) if port else None,
+         target, "registered", None, None),
+    )
+    conn.commit()
+    return get_project(conn, code) or project
+
+
+def check_app(conn, code: str, name: str) -> dict[str, Any]:
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    app = next((item for item in project["apps"] if item.get("name") == name), None)
+    if app is None:
+        raise LookupError("app not found")
+    url = str(app.get("url") or "")
+    status = "registered"
+    error = None
+    if url:
+        try:
+            with urllib.request.urlopen(url, timeout=2) as response:
+                status = "running" if 200 <= response.status < 400 else "unreachable"
+        except (OSError, ValueError, urllib.error.URLError):
+            status = "unreachable"
+            error = "unreachable"
+    stamp = _now()
+    conn.execute(
+        "UPDATE project_apps SET status=?, checked_at=?, error=? WHERE source_id=? AND name=?",
+        (status, stamp, error, app["source_id"], name),
+    )
+    conn.commit()
+    project = get_project(conn, code) or project
+    return next(item for item in project["apps"] if item.get("name") == name)
+
+
+def check_all_apps(conn, code: str) -> list[dict[str, Any]]:
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    return [check_app(conn, code, item["name"]) for item in project["apps"]]

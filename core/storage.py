@@ -207,6 +207,8 @@ CREATE TABLE IF NOT EXISTS project_apps (
   port       INTEGER,
   url        TEXT,
   status     TEXT NOT NULL DEFAULT 'registered',
+  checked_at TEXT,
+  error      TEXT,
   PRIMARY KEY (source_id, name)
 );
 """
@@ -266,6 +268,13 @@ def init_db(db_path: str | Path) -> None:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(attachments)")}
         if "meta_json" not in columns:
             conn.execute("ALTER TABLE attachments ADD COLUMN meta_json TEXT NOT NULL DEFAULT '{}'")
+        app_columns = {row[1] for row in conn.execute("PRAGMA table_info(project_apps)")}
+        for column, definition in {
+            "checked_at": "TEXT",
+            "error": "TEXT",
+        }.items():
+            if column not in app_columns:
+                conn.execute(f"ALTER TABLE project_apps ADD COLUMN {column} {definition}")
         project_columns = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
         project_additions = {
             "review_status": "TEXT NOT NULL DEFAULT 'candidate'",

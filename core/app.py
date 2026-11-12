@@ -569,6 +569,36 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         except LookupError:
             return jsonify({"ok": False, "error": "not_found"}), 404
 
+    @app.get("/v1/projects/<code>/apps")
+    def project_apps_list(code: str):
+        project = project_store.get_project(get_db(), code)
+        if project is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        return jsonify({"ok": True, "apps": project["apps"]})
+
+    @app.post("/v1/projects/<code>/apps")
+    def project_apps_add(code: str):
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        try:
+            project_store.add_app(
+                get_db(), code, name=str(body.get("name") or "default"),
+                command=str(body.get("command") or ""),
+                port=int(body["port"]) if body.get("port") else None,
+                url=str(body.get("url") or ""),
+            )
+        except Exception as exc:  # noqa: BLE001
+            return _storage_error(exc)
+        return jsonify({"ok": True, "apps": project_store.get_project(get_db(), code)["apps"]})
+
+    @app.post("/v1/projects/<code>/apps/<name>/check")
+    def project_apps_check(code: str, name: str):
+        try:
+            return jsonify({"ok": True, "app": project_store.check_app(get_db(), code, name)})
+        except LookupError:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+
     @app.get("/v1/projects/<code>")
     def projects_show(code: str):
         project = project_store.get_project(get_db(), code)

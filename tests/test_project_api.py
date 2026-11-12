@@ -49,6 +49,19 @@ class ProjectApiTest(unittest.TestCase):
         self.assertEqual(entries.json["limit"], 1)
         self.assertEqual(len(entries.json["entries"]), 1)
 
+    def test_app_registry_api(self) -> None:
+        added = self.client.post(
+            "/v1/projects/alpha/apps", json={"name": "app", "port": 59999},
+            headers=self.headers,
+        )
+        self.assertEqual(added.status_code, 200)
+        self.assertEqual(added.json["apps"][0]["name"], "app")
+        checked = self.client.post(
+            "/v1/projects/alpha/apps/app/check", json={}, headers=self.headers
+        )
+        self.assertEqual(checked.status_code, 200)
+        self.assertEqual(checked.json["app"]["status"], "unreachable")
+
     def test_unknown_project(self) -> None:
         response = self.client.get("/v1/projects/missing", headers=self.headers)
         self.assertEqual(response.status_code, 404)

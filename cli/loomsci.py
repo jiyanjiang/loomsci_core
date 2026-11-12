@@ -927,6 +927,63 @@ def _cmd_project_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_project_app_add(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_store.add_app(
+            conn, args.code, name=args.name, command=args.command or "",
+            port=args.port, url=args.url or "",
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(project)
+    else:
+        print(f"registered app: {args.name} on {args.code}")
+    return 0
+
+
+def _cmd_project_app_list(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_store.get_project(conn, args.code)
+    finally:
+        conn.close()
+    if project is None:
+        print("error: project not found", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print({"apps": project["apps"]})
+    else:
+        for app in project["apps"]:
+            print(f"{app['name']:<16} {app['status']:<12} {app.get('url') or ''}")
+    return 0
+
+
+def _cmd_project_app_check(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        if args.name:
+            result = project_store.check_app(conn, args.code, args.name)
+            apps = [result]
+        else:
+            apps = project_store.check_all_apps(conn, args.code)
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print({"apps": apps})
+    else:
+        for app in apps:
+            print(f"{app['name']}: {app['status']} {app.get('url') or ''}")
+    return 0
+
+
 def _cmd_project_review(args: argparse.Namespace) -> int:
     layout, conn = _project_conn(args)
     try:
@@ -1832,6 +1889,26 @@ def build_parser() -> argparse.ArgumentParser:
     project_show.add_argument("code")
     project_show.add_argument("--json", action="store_true")
     project_show.set_defaults(func=_cmd_project_show)
+
+    project_app = project_sub.add_parser("app", help="project-associated application registry")
+    project_app_sub = project_app.add_subparsers(dest="project_app_command", required=True)
+    app_add = project_app_sub.add_parser("add")
+    app_add.add_argument("code")
+    app_add.add_argument("--name", default="default")
+    app_add.add_argument("--port", type=int)
+    app_add.add_argument("--url")
+    app_add.add_argument("--command")
+    app_add.add_argument("--json", action="store_true")
+    app_add.set_defaults(func=_cmd_project_app_add)
+    app_list = project_app_sub.add_parser("list")
+    app_list.add_argument("code")
+    app_list.add_argument("--json", action="store_true")
+    app_list.set_defaults(func=_cmd_project_app_list)
+    app_check = project_app_sub.add_parser("check")
+    app_check.add_argument("code")
+    app_check.add_argument("--name")
+    app_check.add_argument("--json", action="store_true")
+    app_check.set_defaults(func=_cmd_project_app_check)
 
     project_review = project_sub.add_parser("review", help="record human project review")
     project_review.add_argument("code")

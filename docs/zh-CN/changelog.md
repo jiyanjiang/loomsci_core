@@ -1,3 +1,10 @@
+# v0.1.0-beta.16 — 项目应用注册
+
+- Add project app add/list/check.
+- Track registered/running/unreachable status.
+- Health checks are read-only; project commands are never executed.
+- UI displays app status and a check action.
+
 # v0.1.0-beta.15 — API/Schema 契约
 
 - Add `schema_version` and `schema_migrations` ledger.
