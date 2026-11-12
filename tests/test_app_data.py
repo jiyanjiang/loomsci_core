@@ -113,6 +113,30 @@ class AppDataTest(unittest.TestCase):
         ui_download = self.client.get(f"/app/attachments/{attachment['id']}")
         self.assertEqual(ui_download.status_code, 200)
         self.assertEqual(ui_download.data, b"hello")
+        inline = self.client.get(
+            f"/v1/attachments/{attachment['id']}/inline", headers=self.headers
+        )
+        self.assertEqual(inline.status_code, 200)
+        self.assertEqual(inline.json["text"], "hello")
+        self.assertFalse(inline.json["truncated"])
+
+    def test_attachment_inline_rejects_binary(self) -> None:
+        uploaded = self.client.post(
+            "/v1/attachments",
+            json={
+                "filename": "blob.bin",
+                "content_type": "application/octet-stream",
+                "content_base64": base64.b64encode(b"\x00\x01").decode("ascii"),
+            },
+            headers=self.headers,
+        )
+        self.assertEqual(uploaded.status_code, 201)
+        inline = self.client.get(
+            f"/v1/attachments/{uploaded.json['attachment']['id']}/inline",
+            headers=self.headers,
+        )
+        self.assertEqual(inline.status_code, 415)
+        self.assertEqual(inline.json["error"], "not_text")
 
     def test_restart_preserves_data(self) -> None:
         self.client.post(

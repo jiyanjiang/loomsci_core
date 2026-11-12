@@ -228,3 +228,22 @@ footer { margin-top: var(--space-6); padding-top: var(--space-3); border-top: 1p
 .timeline-row { display: grid; grid-template-columns: 6.5em 1fr 3em; gap: var(--space-2); align-items: center; font-size: 0.85rem; }
 .timeline-row .bar { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
 .timeline-row .bar i { display: block; height: 100%; background: var(--accent); }
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+.attachment-chip:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.md-attachment { margin: var(--space-3) 0; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.md-attachment > summary { cursor: pointer; padding: var(--space-2) var(--space-3); font-size: 0.9rem; }
+.md-attachment > summary::marker { color: var(--accent); }
+.attachment-download { margin-left: var(--space-2); font-size: 0.8rem; color: var(--accent); }
+.attachment-body { padding: var(--space-2) var(--space-3) var(--space-3); border-top: 1px solid var(--border); max-height: 70vh; overflow: auto; }

@@ -16,7 +16,7 @@ from typing import Mapping
 
 from flask import Flask, Response, g, jsonify, redirect, request
 
-from core import alice, handoff, llm_config, project_store, storage, summaries, updates
+from core import alice, handoff, llm_config, project_store, storage, updates
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -245,9 +245,6 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 kind="note",
                 body=str(request.form.get("body") or ""),
             )
-            summaries.enqueue_for_post(
-                get_db(), post_id=post["id"], body=post["body"], home=layout.root
-            )
         except ValueError:
             pass
         return redirect("/app/posts")
@@ -376,6 +373,34 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         body = "".join(items) or '<p class="meta">No mentions yet.</p>'
         return _data_shell("Inbox", body)
 
+    @app.get("/v1/attachments/<attachment_id>/inline")
+    def attachment_inline(attachment_id: str):
+        item = storage.get_attachment(get_db(), attachment_id)
+        if item is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        target = layout.blobs / attachment_id
+        if not target.is_file():
+            return jsonify({"ok": False, "error": "blob_missing"}), 404
+        filename = str(item.get("filename") or "")
+        content_type = str(item.get("content_type") or "")
+        suffix = Path(filename).suffix.lower()
+        textual = content_type.startswith("text/") or suffix in {".md", ".markdown", ".txt"}
+        if not textual:
+            return jsonify({"ok": False, "error": "not_text"}), 415
+        raw = target.read_bytes()
+        truncated = len(raw) > 512_000
+        text = raw[:512_000].decode("utf-8", errors="replace")[:200_000]
+        if len(text) >= 200_000:
+            truncated = True
+        return jsonify({
+            "ok": True,
+            "id": attachment_id,
+            "filename": filename,
+            "content_type": content_type or "text/plain",
+            "text": text,
+            "truncated": truncated,
+        })
+
     @app.get("/app/attachments/<attachment_id>")
     def attachment_page(attachment_id: str):
         item = storage.get_attachment(get_db(), attachment_id)
@@ -439,21 +464,6 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             limit=limit,
             thread_id=request.args.get("thread"),
         )
-        summaries.ensure_for_posts(get_db(), posts, home=layout.root)
-        if request.args.get("view") == "feed":
-            for post in posts:
-                if post["body_chars"] > summaries.SHORT_POST_MAX:
-                    if not post.get("summary"):
-                        post["summary"] = {
-                            "text": summaries.fallback(post["body"]),
-                            "status": "fallback",
-                            "model": "extractive",
-                            "error": None,
-                        }
-                    post["body"] = None
-                    post["has_more"] = True
-                else:
-                    post["has_more"] = False
         return jsonify({"ok": True, "posts": posts})
 
     @app.get("/v1/posts/<post_id>")
@@ -479,9 +489,6 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 parent_id=body.get("parent_id"),
                 meta=body.get("meta") if isinstance(body.get("meta"), dict) else {},
                 attachments=[str(item) for item in body.get("attachments") or []],
-            )
-            summaries.enqueue_for_post(
-                get_db(), post_id=post["id"], body=post["body"], home=layout.root
             )
             post = storage.get_post(get_db(), post["id"]) or post
         except Exception as exc:  # noqa: BLE001 - mapped below
@@ -975,9 +982,6 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         try:
             post = handoff.create(
                 get_db(), author=g.loomsci_agent, payload=body
-            )
-            summaries.enqueue_for_post(
-                get_db(), post_id=post["id"], body=post["body"], home=layout.root
             )
             post = storage.get_post(get_db(), post["id"]) or post
         except Exception as exc:  # noqa: BLE001 - mapped below

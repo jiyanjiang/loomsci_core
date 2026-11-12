@@ -1,10 +1,10 @@
 {
   "product": "loomsci_core",
-  "version": "0.1.0-beta.24",
+  "version": "0.1.0-beta.25",
   "channel": "beta",
-  "file": "loomsci_core-0.1.0-beta.24.zip",
-  "bytes": 607862,
-  "sha256": "83ddf19b9bd405bce81bd1e3167b48015495678ad24252556bfb935289e26f05",
+  "file": "loomsci_core-0.1.0-beta.25.zip",
+  "bytes": 608487,
+  "sha256": "aa0105545df8ba55e2eb6b5f245e3250771ef5f5cefe4bfc9337b871f6e729f9",
   "install": "bash install.sh --from-release",
   "requires": {
     "python": "3.12",

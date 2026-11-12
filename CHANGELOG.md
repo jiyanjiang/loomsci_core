@@ -1,3 +1,12 @@
+# v0.1.0-beta.25 — Full text and inline Markdown
+
+- Show full post bodies in the feed; remove automatic summary truncation.
+- Stop enqueueing and starting summary generation in the post path.
+- Add `/v1/attachments/<id>/inline` for UTF-8 text/Markdown, capped at 200k chars.
+- Render Markdown attachments in a collapsed `<details>` block on post detail.
+- Add attachment chips in the feed that link to the post detail.
+- Bump ui-shell to 0.5.2.
+
 # v0.1.0-beta.24 — Flash summaries
 
 - Disable thinking mode for summary requests; DeepSeek Flash defaults to thinking and could return empty content under the summary token budget.

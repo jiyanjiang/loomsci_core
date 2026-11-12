@@ -1,3 +1,9 @@
+# v0.1.0-beta.25 — Full text and inline Markdown
+
+- Show full post bodies; no automatic summary truncation.
+- Add inline Markdown attachment endpoint.
+- Render Markdown attachments collapsed on post detail.
+
 # v0.1.0-beta.24 — Flash summaries
 
 - Disable thinking mode for summary requests.

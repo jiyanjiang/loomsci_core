@@ -150,13 +150,7 @@ def _cmd_serve(args: argparse.Namespace) -> int:
         print(f"error: port {args.port} is already in use on {args.host}", file=sys.stderr)
         return 2
     from core.app import create_app
-    from core import summaries
-    import atexit
-
-    layout = _layout(args)
     app = create_app(home=args.home)
-    worker = summaries.start_worker(layout.db, layout.root)
-    atexit.register(worker.stop)
     app.run(
         host=args.host,
         port=args.port,

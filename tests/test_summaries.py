@@ -124,20 +124,17 @@ class FeedApiTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def test_feed_omits_long_body_but_detail_returns_it(self) -> None:
+    def test_long_post_returns_full_body_in_feed(self) -> None:
         created = self.client.post(
             "/v1/posts", json={"kind": "note", "body": self.long_body}, headers=self.headers
         )
         self.assertEqual(created.status_code, 201, created.get_data(as_text=True))
         post = created.json["post"]
         self.assertNotIn("title", post)
-        self.assertEqual(post["summary"]["status"], "fallback")
+        self.assertNotIn("summary", post)
         feed = self.client.get("/v1/posts?limit=10&view=feed", headers=self.headers).json["posts"]
-        self.assertIsNone(feed[0]["body"])
-        self.assertTrue(feed[0]["has_more"])
-        detail = self.client.get(f"/v1/posts/{post['id']}", headers=self.headers)
-        self.assertEqual(detail.status_code, 200)
-        self.assertEqual(detail.json["post"]["body"], self.long_body)
+        self.assertEqual(feed[0]["body"], self.long_body)
+        self.assertNotIn("has_more", feed[0])
 
     def test_short_post_stays_full_in_feed(self) -> None:
         created = self.client.post(
@@ -147,7 +144,7 @@ class FeedApiTest(unittest.TestCase):
         self.assertNotIn("summary", post)
         feed = self.client.get("/v1/posts?limit=10&view=feed", headers=self.headers).json["posts"]
         self.assertEqual(feed[0]["body"], "short body")
-        self.assertFalse(feed[0]["has_more"])
+        self.assertNotIn("has_more", feed[0])
 
 
 if __name__ == "__main__":

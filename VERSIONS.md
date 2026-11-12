@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.25` | `releases/loomsci_core-0.1.0-beta.25.zip` | Full text / inline MD |
 | `0.1.0-beta.24` | `releases/loomsci_core-0.1.0-beta.24.zip` | Flash non-thinking summaries |
 | `0.1.0-beta.23` | `releases/loomsci_core-0.1.0-beta.23.zip` | Summary cache / flash |
 | `0.1.0-beta.22` | `releases/loomsci_core-0.1.0-beta.22.zip` | Advanced-provider label fix |

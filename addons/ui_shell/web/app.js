@@ -120,6 +120,48 @@ function attachmentHtml(item) {
   return `<a href="${src}">${esc(item.filename)}</a>`;
 }
 
+function markdownAttachment(item) {
+  const name = String(item.filename || "").toLowerCase();
+  const type = String(item.content_type || "").toLowerCase();
+  return /\.md$/.test(name) || /\.markdown$/.test(name) || type === "text/markdown" || type === "text/x-markdown";
+}
+
+function attachmentChip(item) {
+  const icon = markdownAttachment(item) ? "📄" : String(item.content_type || "").startsWith("image/") ? "🖼" : "📎";
+  return `<a class="attachment-chip" href="?post=${encodeURIComponent(item.post_id || "")}">${icon} ${esc(item.filename)}</a>`;
+}
+
+function attachmentDetail(item) {
+  if (markdownAttachment(item)) {
+    return `<details class="attachment md-attachment" data-inline-attachment="${esc(item.id)}">` +
+      `<summary>📄 ${esc(item.filename)} <a class="attachment-download" href="/api/v1/attachments/${encodeURIComponent(item.id)}" download>${esc(t("posts.download"))}</a></summary>` +
+      `<div class="md attachment-body" data-inline-body="${esc(item.id)}">${esc(t("posts.loading"))}</div></details>`;
+  }
+  return `<div class="attachment">${attachmentHtml(item)}</div>`;
+}
+
+async function hydrateMarkdownAttachments(root) {
+  const nodes = [...root.querySelectorAll("details[data-inline-attachment]")];
+  for (const details of nodes) {
+    let loaded = false;
+    const load = async () => {
+      if (loaded) return;
+      loaded = true;
+      const id = details.dataset.inlineAttachment;
+      const body = details.querySelector("[data-inline-body]");
+      try {
+        const data = await api(`attachments/${encodeURIComponent(id)}/inline`);
+        body.innerHTML = markdown(data.text || "") + (data.truncated ? `<p class="muted">${esc(t("posts.truncated"))}</p>` : "");
+        renderMath(body);
+      } catch (err) {
+        body.textContent = err.message;
+      }
+    };
+    details.addEventListener("toggle", () => { if (details.open) load(); });
+    if (details.open) load();
+  }
+}
+
 async function api(path, options = {}) {
   const opts = { ...options, headers: { ...(options.headers || {}) } };
   if (opts.body && typeof opts.body !== "string") { opts.body = JSON.stringify(opts.body); opts.headers["Content-Type"] = "application/json"; }
@@ -138,34 +180,23 @@ function item(title, meta, body, actions = "", attachments = []) {
 }
 
 function postItem(post) {
-  const summary = post.summary || {};
-  const long = Boolean(post.has_more);
-  const text = long ? (summary.text || "") : (post.body || "");
-  const state = long && summary.status === "pending"
-    ? ` · ${t("posts.summaryPending")}`
-    : long && summary.status === "failed"
-      ? ` · ${t("posts.summaryFailed")}`
-      : long && summary.status === "fallback" ? ` · ${t("posts.summaryFallback")}` : "";
-  const meta = `#${post.seq} · ${post.author} · ${post.kind}` + state;
-  const more = long
-    ? `<a class="more" href="?post=${encodeURIComponent(post.id)}">${esc(t("posts.full"))}</a>`
-    : "";
-  return `<article class="item"><div class="meta">${esc(meta)}</div><div class="md">${markdown(text)}</div>${more}</article>`;
+  const files = (post.attachments || []).map((item) => {
+    const copy = {...item, post_id: post.id};
+    return `<div class="attachment">${attachmentChip(copy)}</div>`;
+  }).join("");
+  const meta = `#${post.seq} · ${post.author} · ${post.kind}`;
+  return `<article class="item"><div class="meta">${esc(meta)}</div><div class="md">${markdown(post.body || "")}</div>${files}</article>`;
 }
 
 async function loadPost(id) {
   const data = await api(`posts/${encodeURIComponent(id)}`);
   const post = data.post;
-  const summary = post.summary || {};
-  const files = (post.attachments || []).map((a) => `<div class="attachment">${attachmentHtml(a)}</div>`).join("");
-  const summaryLabel = summary.status === "fallback" ? t("posts.summaryFallback") : t("posts.summary");
-  const summaryBlock = summary.text
-    ? `<details class="summary"><summary>${esc(summaryLabel)}</summary><div class="md">${markdown(summary.text)}</div></details>`
-    : "";
+  const files = (post.attachments || []).map(attachmentDetail).join("");
   app.innerHTML = `<p><a href="/app/posts">← ${esc(t("posts.back"))}</a></p>
     <article class="item"><div class="meta">#${post.seq} · ${esc(post.author)} · ${esc(post.kind)}</div>
-    <div class="md">${markdown(post.body || "")}</div>${files}</article>${summaryBlock}`;
+    <div class="md">${markdown(post.body || "")}</div>${files}</article>`;
   renderMath(app);
+  await hydrateMarkdownAttachments(app);
 }
 
 function renderPending() {
