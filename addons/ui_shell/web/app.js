@@ -651,7 +651,7 @@ async function loadSettings() {
         </label>
         <label>${esc(t("settings.baseUrl"))}<input id="advanced-base" autocomplete="off"></label>
         <label>${esc(t("settings.model"))}<input id="advanced-model" autocomplete="off"></label>
-        <label>${esc(t("settings.keyLabel"))}<input id="advanced-key" type="password" autocomplete="off"></label>
+        <label>${esc(t("settings.apiKey"))}<input id="advanced-key" type="password" autocomplete="off"></label>
         <div class="actions"><button type="button" id="advanced-save">${esc(t("settings.save"))}</button>
           <button type="button" id="advanced-test">${esc(t("settings.test"))}</button></div>
         <p class="meta" id="advanced-status"></p>

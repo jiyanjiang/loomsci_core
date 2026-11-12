@@ -1,3 +1,8 @@
+# v0.1.0-beta.22 — UI 修复
+
+- Fix the advanced-provider key label.
+- Bump ui-shell to 0.5.1.
+
 # v0.1.0-beta.21 — IDE 矩阵与 add-on 契约
 
 - Add IDE compatibility matrix.

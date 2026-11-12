@@ -1,3 +1,8 @@
+# v0.1.0-beta.22 — UI fix
+
+- Fix the advanced-provider key label, which incorrectly said "DeepSeek API Key".
+- Bump ui-shell to 0.5.1.
+
 # v0.1.0-beta.21 — IDE matrix and add-on contract
 
 - Add IDE compatibility matrix for CLI and loopback UI integrations.
