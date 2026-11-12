@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.15` | `releases/loomsci_core-0.1.0-beta.15.zip` | API/schema contract |
 | `0.1.0-beta.14` | `releases/loomsci_core-0.1.0-beta.14.zip` | Security audit |
 | `0.1.0-beta.13` | `releases/loomsci_core-0.1.0-beta.13.zip` | Update checker |
 | `0.1.0-beta.12` | `releases/loomsci_core-0.1.0-beta.12.zip` | Project review gate |

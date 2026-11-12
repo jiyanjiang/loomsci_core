@@ -1,3 +1,9 @@
+# v0.1.0-beta.15 — API/schema contract
+
+- Add `schema_version` and `schema_migrations` ledger via SQLite user_version.
+- `/v1/health` and `/v1/version` expose `api_version=core/1` and `schema_version`.
+- Verify add-on manifests declare `api=core/1`.
+
 # v0.1.0-beta.14 — Security audit
 
 - Add Host/Origin/JSON/agent security regression tests.

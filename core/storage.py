@@ -21,6 +21,8 @@ POST_KINDS = frozenset(
 TASK_STATUSES = frozenset(
     {"backlog", "claimed", "in_progress", "blocked", "done", "failed", "cancelled"}
 )
+SCHEMA_VERSION = 1
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS agents (
   handle     TEXT PRIMARY KEY,
@@ -134,6 +136,11 @@ CREATE TABLE IF NOT EXISTS presence (
 );
 
 
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version    INTEGER PRIMARY KEY,
+  applied_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS projects (
   id          TEXT PRIMARY KEY,
   code        TEXT NOT NULL UNIQUE,
@@ -225,6 +232,13 @@ def now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def schema_version(conn: sqlite3.Connection) -> int:
+    try:
+        return int(conn.execute("PRAGMA user_version").fetchone()[0])
+    except (sqlite3.Error, TypeError):
+        return 0
+
+
 def _chmod_private(path: Path) -> None:
     try:
         os.chmod(path, 0o600)
@@ -274,6 +288,11 @@ def init_db(db_path: str | Path) -> None:
                 conn.execute("ALTER TABLE posts DROP COLUMN title")
             except sqlite3.OperationalError:
                 pass
+        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        conn.execute(
+            "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (?,?)",
+            (SCHEMA_VERSION, now()),
+        )
         conn.commit()
     finally:
         conn.close()

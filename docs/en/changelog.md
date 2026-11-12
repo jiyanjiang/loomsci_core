@@ -1,3 +1,9 @@
+# v0.1.0-beta.15 — API/schema contract
+
+- Add `schema_version` and `schema_migrations` ledger.
+- `/v1/health` and `/v1/version` expose `api_version=core/1` and `schema_version`.
+- Add-on manifests must declare `api=core/1`.
+
 # v0.1.0-beta.14 — Security audit
 
 - Add security regression tests for Host, Origin, JSON, and agent boundaries.

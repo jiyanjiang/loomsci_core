@@ -394,6 +394,8 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             "ok": True,
             "service": "loomsci_core",
             "version": _version(),
+            "api_version": "core/1",
+            "schema_version": storage.schema_version(get_db()),
             "profile": registry.profile,
         })
 
@@ -403,6 +405,8 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             "ok": True,
             "product": "loomsci_core",
             "version": _version(),
+            "api_version": "core/1",
+            "schema_version": storage.schema_version(get_db()),
             "profile": registry.profile,
             "protocol": "1.0",
         })
