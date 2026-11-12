@@ -5,6 +5,9 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import os
+import subprocess
+import sys
 import time
 from html import escape
 from pathlib import Path
@@ -13,7 +16,7 @@ from typing import Mapping
 
 from flask import Flask, Response, g, jsonify, redirect, request
 
-from core import alice, handoff, llm_config, project_store, storage, summaries
+from core import alice, handoff, llm_config, project_store, storage, summaries, updates
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -479,6 +482,58 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "post": post}), 201
+
+    @app.get("/v1/update/status")
+    def update_status():
+        return jsonify(updates.status(layout.root))
+
+    @app.post("/v1/update/check")
+    def update_check():
+        try:
+            return jsonify(updates.check(layout.root))
+        except updates.UpdateError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 502
+
+    @app.post("/v1/update/download")
+    def update_download():
+        try:
+            return jsonify(updates.download(layout.root))
+        except updates.UpdateError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 409
+
+    @app.post("/v1/update/apply")
+    def update_apply():
+        state = updates.status(layout.root)
+        downloaded = state.get("downloaded") or {}
+        package = downloaded.get("path")
+        if not package or not Path(package).is_file():
+            return jsonify({"ok": False, "error": "download_required"}), 409
+        python = layout.root / "venv" / "Scripts" / "python.exe"
+        if not python.is_file():
+            python = layout.root / "venv" / "bin" / "python"
+        if not python.is_file():
+            python = Path(sys.executable)
+        command = [
+            str(python), "-m", "cli.loomsci", "--home", str(layout.root),
+            "update", "apply", "--package", str(package), "--port", str(DEFAULT_PORT),
+        ]
+        env = {
+            **os.environ, "PYTHONPATH": str(layout.root / "core"),
+            "LOOMSCI_HOME": str(layout.root), "PYTHONIOENCODING": "utf-8",
+        }
+        log = layout.logs / "update.log"
+        handle = log.open("ab")
+        kwargs = {}
+        if os.name == "nt":
+            kwargs["creationflags"] = 0x00000008 | 0x00000200 | 0x01000000
+        else:
+            kwargs["start_new_session"] = True
+        subprocess.Popen(
+            command, cwd=str(layout.root), env=env, stdin=subprocess.DEVNULL,
+            stdout=handle, stderr=subprocess.STDOUT, close_fds=True, **kwargs,
+        )
+        handle.close()
+        return jsonify({"ok": True, "restarting": True})
 
     @app.get("/v1/projects")
     def projects_list():

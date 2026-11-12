@@ -63,6 +63,7 @@ CORE = PackSpec(
         "/v1/status*",
         "/v1/settings*",
         "/v1/projects*",
+        "/v1/update*",
     ),
     jobs=(),
     nav=("home", "posts", "tasks", "memory", "inbox"),

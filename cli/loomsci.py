@@ -19,6 +19,7 @@ from pathlib import Path
 from core import addon_runtime
 from core import core_runtime
 from core import service as service_mod
+from core import updates as updates_mod
 from core import backup as backup_mod
 from core import doctor as doctor_mod
 from core import migration as migration_mod
@@ -1036,6 +1037,85 @@ def _cmd_project_scan(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_update_status(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    result = updates_mod.status(layout.root)
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"current: {result['current']}")
+        print(f"available: {result['available']}")
+        if result.get("latest"):
+            print(f"latest: {result['latest'].get('version')}")
+        print(f"downloaded: {bool(result.get('downloaded'))}")
+    return 0
+
+
+def _cmd_update_check(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = updates_mod.check(layout.root)
+    except updates_mod.UpdateError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"current: {result['current']}")
+        print(f"available: {result['available']}")
+        if result.get("latest"):
+            print(f"latest: {result['latest'].get('version')}")
+    return 0
+
+
+def _cmd_update_download(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    try:
+        result = updates_mod.download(layout.root)
+    except updates_mod.UpdateError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"downloaded: {result['path']}")
+        print(f"sha256: {result['sha256']}")
+    return 0
+
+
+def _cmd_update_apply(args: argparse.Namespace) -> int:
+    layout = _layout(args)
+    package = Path(args.package).expanduser() if args.package else None
+    if package is None:
+        downloaded = updates_mod.status(layout.root).get("downloaded") or {}
+        package = Path(downloaded["path"]) if downloaded.get("path") else None
+    if package is None or not package.is_file():
+        print("error: no downloaded update; run `loomsci update download`", file=sys.stderr)
+        return 1
+    try:
+        from scripts import upgrade as upgrade_mod
+    except ImportError:
+        print("error: upgrade module not found", file=sys.stderr)
+        return 1
+    try:
+        core_runtime.stop(layout.root)
+        result = upgrade_mod.apply(package, layout.root, backup=True)
+        started = core_runtime.start(layout.root, port=args.port)
+    except Exception as exc:  # noqa: BLE001
+        try:
+            core_runtime.start(layout.root, port=args.port)
+        except Exception:
+            pass
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print({"ok": True, "upgrade": result, "core": started})
+    else:
+        print(f"updated: {result.get('manifest', {}).get('package_version')}")
+        print(f"core: {started.get('host')}:{started.get('port')}")
+    return 0
+
+
 def _cmd_service_install(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
@@ -1776,6 +1856,23 @@ def build_parser() -> argparse.ArgumentParser:
     project_remove.set_defaults(func=_cmd_project_remove)
 
 
+
+    update = sub.add_parser("update", help="check, download, and install updates")
+    update_sub = update.add_subparsers(dest="update_command", required=True)
+    update_status = update_sub.add_parser("status")
+    update_status.add_argument("--json", action="store_true")
+    update_status.set_defaults(func=_cmd_update_status)
+    update_check = update_sub.add_parser("check")
+    update_check.add_argument("--json", action="store_true")
+    update_check.set_defaults(func=_cmd_update_check)
+    update_download = update_sub.add_parser("download")
+    update_download.add_argument("--json", action="store_true")
+    update_download.set_defaults(func=_cmd_update_download)
+    update_apply = update_sub.add_parser("apply")
+    update_apply.add_argument("--package")
+    update_apply.add_argument("--port", type=int, default=8787)
+    update_apply.add_argument("--json", action="store_true")
+    update_apply.set_defaults(func=_cmd_update_apply)
 
     service = sub.add_parser("service", help="manage login-time Core startup")
     service_sub = service.add_subparsers(dest="service_command", required=True)

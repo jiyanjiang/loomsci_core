@@ -1,3 +1,10 @@
+# v0.1.0-beta.13 — 更新检查
+
+- Add update status/check/download/apply APIs and CLI.
+- Add Settings → Updates UI.
+- Verify bytes and SHA-256; install uses pre-upgrade backup and rollback.
+- Automatic installation remains disabled; user confirms.
+
 # v0.1.0-beta.12 — 项目评审门禁
 
 - New projects default to `candidate`; only `selected` are active.

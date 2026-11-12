@@ -543,6 +543,42 @@ async function loadInbox() {
   renderMath(app);
 }
 
+async function loadUpdateStatus() {
+  const statusEl = document.getElementById("update-status");
+  const actions = document.getElementById("update-actions");
+  if (!statusEl || !actions) return;
+  try {
+    const data = await api("update/status");
+    const latest = data.latest || {};
+    const downloaded = data.downloaded;
+    statusEl.textContent = data.available
+      ? t("settings.updateAvailable", {current: data.current, latest: latest.version})
+      : t("settings.updateCurrent", {current: data.current});
+    actions.innerHTML = `<button type="button" id="check-update">${esc(t("settings.checkUpdate"))}</button>` +
+      (data.available ? `<button type="button" id="download-update">${esc(t("settings.downloadUpdate"))}</button>` : "") +
+      (downloaded ? `<button type="button" id="install-update">${esc(t("settings.installUpdate"))}</button>` : "");
+    document.getElementById("check-update").onclick = async () => {
+      statusEl.textContent = t("settings.updateChecking");
+      try { await api("update/check", {method: "POST", body: {}}); await loadUpdateStatus(); }
+      catch (err) { statusEl.textContent = err.message; }
+    };
+    const download = document.getElementById("download-update");
+    if (download) download.onclick = async () => {
+      statusEl.textContent = t("settings.updateDownloading");
+      try { await api("update/download", {method: "POST", body: {}}); await loadUpdateStatus(); }
+      catch (err) { statusEl.textContent = err.message; }
+    };
+    const install = document.getElementById("install-update");
+    if (install) install.onclick = async () => {
+      if (!confirm(t("settings.confirmInstall"))) return;
+      statusEl.textContent = t("settings.updateRestarting");
+      try { await api("update/apply", {method: "POST", body: {}}); }
+      catch (err) { statusEl.textContent = err.message; return; }
+      setTimeout(() => location.reload(), 8000);
+    };
+  } catch (err) { statusEl.textContent = err.message; }
+}
+
 async function loadSettings() {
   const data = await api("settings/llm/deepseek");
   const provider = data.provider;
@@ -562,6 +598,11 @@ async function loadSettings() {
         <button type="button" id="test-key">${esc(t("settings.test"))}</button>
       </form>
       <p class="meta" id="settings-status"></p>
+    </article>
+    <h2>${esc(t("settings.updates"))}</h2>
+    <article class="item">
+      <div class="meta" id="update-status">${esc(t("settings.updateLoading"))}</div>
+      <div class="actions" id="update-actions"></div>
     </article>
   </section>`;
   const form = document.getElementById("key-form");
@@ -584,6 +625,7 @@ async function loadSettings() {
         : t("settings.testFailed", {error: result.error});
     } catch (err) { status.textContent = err.message; }
   };
+  await loadUpdateStatus();
   const clear = document.getElementById("clear-key");
   if (clear) clear.onclick = async () => {
     if (!confirm(t("settings.confirmClear"))) return;

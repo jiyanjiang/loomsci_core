@@ -1,3 +1,10 @@
+# v0.1.0-beta.13 — Update checker
+
+- Add update status/check/download/apply APIs and CLI.
+- Add Settings → Updates UI with check, download, install and restart.
+- Verify bytes and SHA-256; install uses pre-upgrade backup and rollback.
+- Automatic installation remains disabled; user confirms.
+
 # v0.1.0-beta.12 — Project review gate
 
 - New projects default to `candidate`; only `selected` become active.
