@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.18` | `releases/loomsci_core-0.1.0-beta.18.zip` | Project templates |
 | `0.1.0-beta.17` | `releases/loomsci_core-0.1.0-beta.17.zip` | Project evaluation rubric |
 | `0.1.0-beta.16` | `releases/loomsci_core-0.1.0-beta.16.zip` | Project app registry |
 | `0.1.0-beta.15` | `releases/loomsci_core-0.1.0-beta.15.zip` | API/schema contract |

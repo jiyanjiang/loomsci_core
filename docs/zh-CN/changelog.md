@@ -1,3 +1,9 @@
+# v0.1.0-beta.18 — 项目模板
+
+- Add book, research, and OPC 180-day project templates.
+- `project template list/create`.
+- Create only into empty/missing targets; never copy existing project data.
+
 # v0.1.0-beta.17 — 项目评估量表
 
 - Add structured project evaluations.

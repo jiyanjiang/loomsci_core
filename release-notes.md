@@ -1,15 +1,14 @@
-# loomsci_core 0.1.0-beta.17 · Public Beta
+# loomsci_core 0.1.0-beta.18 · Public Beta
 
-- Version: `0.1.0-beta.17`
-- Package: `releases/loomsci_core-0.1.0-beta.17.zip`
-- SHA256: `98f535bc59ea6faf55c7e1740cae8fb33ca7a52c6fb6150d9744d3ec7409d04a`
+- Version: `0.1.0-beta.18`
+- Package: `releases/loomsci_core-0.1.0-beta.18.zip`
+- SHA256: `245b65899369a750f2c1f450611d6c98ca1e1d13b721c9a2d2f6763428a7a921`
 
-## Project evaluation rubric
+## Project templates
 
-- Add structured evaluations: problem clarity, evidence, implementation, output,
-  application, commercial, maintainability.
-- Add `project evaluate` CLI and evaluations API/UI.
-- Human review states: draft, reviewed, approved; no automatic approval.
+- Add book, research, and OPC 180-day project skeletons.
+- `project template list/create`.
+- Templates create new empty projects only; existing project data is never copied.
 
-This release carries beta.16 app registry, beta.15 API/schema contract, and
-beta.14 security audit.
+This release carries beta.17 evaluation rubric, beta.16 app registry, and
+beta.15 API/schema contract.

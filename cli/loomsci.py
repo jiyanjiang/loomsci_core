@@ -24,6 +24,7 @@ from core import backup as backup_mod
 from core import doctor as doctor_mod
 from core import migration as migration_mod
 from core import projects as projects_mod
+from core import project_templates
 from core import project_store
 from core import project_inspect
 from core import storage_ops
@@ -984,6 +985,33 @@ def _cmd_project_app_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_project_template_list(args: argparse.Namespace) -> int:
+    result = project_templates.list_templates()
+    if args.json:
+        _json_print({"templates": result})
+    else:
+        for item in result:
+            print(f"{item['name']:<10} {item['description']} ({len(item['files'])} files)")
+    return 0
+
+
+def _cmd_project_template_create(args: argparse.Namespace) -> int:
+    try:
+        result = project_templates.create(
+            args.template, args.target, code=args.code or "", name=args.name or "",
+            owner=args.owner, description=args.description or "",
+        )
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"created: {result['path']}")
+        print(f"template: {result['template']} code: {result['code']}")
+    return 0
+
+
 def _cmd_project_evaluate(args: argparse.Namespace) -> int:
     layout, conn = _project_conn(args)
     try:
@@ -1922,6 +1950,21 @@ def build_parser() -> argparse.ArgumentParser:
     project_show.add_argument("code")
     project_show.add_argument("--json", action="store_true")
     project_show.set_defaults(func=_cmd_project_show)
+
+    project_template = project_sub.add_parser("template", help="built-in project skeletons")
+    project_template_sub = project_template.add_subparsers(dest="project_template_command", required=True)
+    template_list = project_template_sub.add_parser("list")
+    template_list.add_argument("--json", action="store_true")
+    template_list.set_defaults(func=_cmd_project_template_list)
+    template_create = project_template_sub.add_parser("create")
+    template_create.add_argument("template", choices=["book", "research", "opc"])
+    template_create.add_argument("--target", required=True)
+    template_create.add_argument("--code")
+    template_create.add_argument("--name")
+    template_create.add_argument("--owner", default="owner")
+    template_create.add_argument("--description", default="")
+    template_create.add_argument("--json", action="store_true")
+    template_create.set_defaults(func=_cmd_project_template_create)
 
     project_app = project_sub.add_parser("app", help="project-associated application registry")
     project_app_sub = project_app.add_subparsers(dest="project_app_command", required=True)

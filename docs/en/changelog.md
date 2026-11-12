@@ -1,3 +1,9 @@
+# v0.1.0-beta.18 — Project templates
+
+- Add book, research, and OPC 180-day project templates.
+- `project template list/create`.
+- Create only into empty/missing targets; never copy existing project data.
+
 # v0.1.0-beta.17 — Project evaluation rubric
 
 - Add structured project evaluations.
