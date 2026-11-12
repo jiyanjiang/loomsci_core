@@ -1,3 +1,9 @@
+# v0.1.0-beta.8 — 项目扫描
+
+- Add read-only `loomsci project scan`.
+- Detect project roots, metadata, file counts, DB files, and app hints.
+- No project content is copied and no project code is executed.
+
 # v0.1.0-beta.7 — 登录启动
 
 - Add `loomsci service install/uninstall/status`.

@@ -8,7 +8,7 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.7` public beta.** Local-only, one owner, no login, no
+> **Status: `0.1.0-beta.8` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
@@ -82,6 +82,17 @@ runtime state.
 PID, port, health, version, and primary URL. `open` prefers the ui-shell URL
 when that add-on is running, otherwise it opens the Core `/app` fallback.
 `down` stops only the detached Core process recorded in the runtime state.
+
+## Project scan
+
+Read-only project discovery; it does not copy files or execute project code:
+
+```bash
+~/.loomsci/bin/loomsci project scan --root ~/Downloads --depth 3   --exclude 'share_loomsci_v*' --json
+```
+
+The scan records paths, marker files, counts, README excerpts, database files,
+and app hints for review. Import/register is a separate step.
 
 ## Provider settings
 
@@ -183,7 +194,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.7.zip
+shasum -a 256 loomsci_core-0.1.0-beta.8.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 

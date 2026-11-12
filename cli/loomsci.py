@@ -22,6 +22,7 @@ from core import service as service_mod
 from core import backup as backup_mod
 from core import doctor as doctor_mod
 from core import migration as migration_mod
+from core import projects as projects_mod
 from core import storage_ops
 from core import addons as addons_mod
 from core import export as export_mod
@@ -842,6 +843,33 @@ def _cmd_watch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_project_scan(args: argparse.Namespace) -> int:
+    try:
+        result = projects_mod.scan(
+            args.root,
+            depth=args.depth,
+            min_score=args.min_score,
+            limit=args.limit,
+            exclude=args.exclude or (),
+        )
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(result)
+    else:
+        print(f"root: {result['root']}")
+        print(f"projects: {result['count']} (visited {result['visited']})")
+        for item in result["projects"]:
+            counts = item.get("counts") or {}
+            print(
+                f"{item['recommendation']:<7} {item['code']:<28} "
+                f"md={counts.get('md', 0):<5} py={counts.get('py', 0):<5} "
+                f"db={counts.get('db', 0):<3} {item['relative_path']}"
+            )
+    return 0
+
+
 def _cmd_service_install(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
@@ -1520,6 +1548,17 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--timeout", type=int, default=60)
     watch.add_argument("--json", action="store_true")
     watch.set_defaults(func=_cmd_watch)
+
+    project = sub.add_parser("project", help="read-only project discovery")
+    project_sub = project.add_subparsers(dest="project_command", required=True)
+    project_scan = project_sub.add_parser("scan", help="scan a directory without copying")
+    project_scan.add_argument("--root", required=True)
+    project_scan.add_argument("--depth", type=int, default=3)
+    project_scan.add_argument("--min-score", type=int, default=2)
+    project_scan.add_argument("--limit", type=int, default=200)
+    project_scan.add_argument("--exclude", action="append", default=[])
+    project_scan.add_argument("--json", action="store_true")
+    project_scan.set_defaults(func=_cmd_project_scan)
 
     service = sub.add_parser("service", help="manage login-time Core startup")
     service_sub = service.add_subparsers(dest="service_command", required=True)

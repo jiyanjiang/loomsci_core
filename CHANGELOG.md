@@ -1,3 +1,10 @@
+# v0.1.0-beta.8 — Project scanner
+
+- Add read-only `loomsci project scan`.
+- Detect project roots from manifests, README, docs, scripts, and databases.
+- Record metadata, counts, README excerpt, DB files, and app port hints.
+- Never copy project files or execute project code.
+
 # v0.1.0-beta.7 — Login service
 
 - Add `loomsci service install/uninstall/status`.
