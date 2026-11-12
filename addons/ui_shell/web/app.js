@@ -10,6 +10,8 @@ function viewPath(next) {
   return next === "posts" ? "/app/posts" : `/app/${next}`;
 }
 let view = viewFromPath(location.pathname);
+let pendingFiles = [];
+let documentPasteBound = false;
 let site = {site_name: "loomsci", logo_url: "https://www.loomsci.com/nav-logo.png", links: [], footer: ""};
 
 function showError(message) { errorEl.hidden = !message; errorEl.textContent = message || ""; }
@@ -213,6 +215,39 @@ async function loadPost(id) {
   await hydrateMarkdownAttachments(app);
 }
 
+function renderPending() {
+  const target = document.getElementById("pending-files");
+  if (!target) return;
+  target.innerHTML = pendingFiles.map((file, index) =>
+    `<span class="chip">${esc(file.name)} <button type="button" data-remove="${index}" aria-label="${esc(t("common.remove", {name: file.name}))}">×</button></span>`
+  ).join("");
+  target.querySelectorAll("button[data-remove]").forEach((button) => {
+    button.onclick = () => { pendingFiles.splice(Number(button.dataset.remove), 1); renderPending(); };
+  });
+}
+
+function clipboardImageFiles(event) {
+  const data = event.clipboardData;
+  if (!data) return [];
+  const files = [...(data.files || [])].filter((file) => file.type.startsWith("image/"));
+  if (files.length) return files;
+  return [...(data.items || [])]
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .map((item) => item.getAsFile())
+    .filter(Boolean);
+}
+
+function normalizeFile(file) {
+  if (file.name) return file;
+  const ext = (file.type.split("/")[1] || "png").replace("+xml", "");
+  return new File([file], `pasted-${Date.now()}.${ext}`, {type: file.type || "image/png"});
+}
+
+function addFiles(files) {
+  for (const file of files || []) if (file && file.size) pendingFiles.push(normalizeFile(file));
+  renderPending();
+}
+
 async function siteRequest(method = "GET", body = null) {
   const response = await fetch("/api/site", {
     method,
@@ -413,10 +448,88 @@ async function loadPosts() {
   const since = activeTag ? 0 : Math.max(0, Number(status.last_seq || 0) - 100);
   const tagData = await api("tags?limit=40");
   const data = await api(`posts?since=${since}&limit=200&view=feed${activeTag ? `&tag=${encodeURIComponent(activeTag)}` : ""}`);
-  const search = `<form class="searchbar" id="search-form"><input name="q" placeholder="${esc(t("posts.searchPlaceholder"))}"><button type="submit">${esc(t("posts.search"))}</button></form>`;
-  const notice = `<p class="muted read-only-note">${esc(t("posts.readOnly"))}</p>`;
+  pendingFiles = [];
+  const form = `<form class="compose" id="post-form">
+    <textarea name="body" placeholder="${esc(t("posts.bodyPlaceholder"))}" required></textarea>
+    <input name="tags" placeholder="${esc(t("posts.tagsPlaceholder"))}" autocomplete="off">
+    <input type="file" name="file" multiple>
+    <button type="button" id="paste-image">${esc(t("posts.pasteImage"))}</button>
+    <div id="pending-files" class="pending"></div>
+    <button type="submit">${esc(t("posts.post"))}</button></form>
+    <form class="compose" id="search-form"><input name="q" placeholder="${esc(t("posts.searchPlaceholder"))}"><button type="submit">${esc(t("posts.search"))}</button></form>`;
   const posts = (data.posts || []).slice().reverse().map(postItem).join("");
-  app.innerHTML = search + notice + tagCloud(tagData.tags || [], activeTag) + (posts || `<p class="muted">${esc(t("posts.empty"))}</p>`);
+  app.innerHTML = form + tagCloud(tagData.tags || [], activeTag) + (posts || `<p class="muted">${esc(t("posts.empty"))}</p>`);
+  const fileInput = document.querySelector('#post-form input[type="file"]');
+  fileInput.onchange = () => addFiles(fileInput.files);
+  document.getElementById("paste-image").onclick = async () => {
+    showError("");
+    if (!navigator.clipboard?.read) {
+      showError(t("posts.clipboardUnsupported"));
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      const files = [];
+      for (const item of items) {
+        const type = item.types.find((value) => value.startsWith("image/"));
+        if (type) files.push(new File([await item.getType(type)], `clipboard-${Date.now()}.${type.split("/")[1] || "png"}`, {type}));
+      }
+      if (files.length) addFiles(files);
+      else showError(t("posts.clipboardEmpty"));
+    } catch (err) {
+      showError(t("posts.clipboardFailed", {error: err.message}));
+    }
+  };
+  const bodyInput = document.querySelector('#post-form textarea[name="body"]');
+  if (!documentPasteBound) {
+  documentPasteBound = true;
+  document.addEventListener("paste", (event) => {
+    if (view !== "posts" || !document.getElementById("post-form")) return;
+    const files = clipboardImageFiles(event);
+    if (files.length) {
+      event.preventDefault();
+      addFiles(files);
+      return;
+    }
+    const types = [...(event.clipboardData?.types || [])];
+    if (types.includes("Files") || types.some((type) => type.startsWith("image/"))) {
+      showError(t("posts.clipboardNoFile"));
+    }
+  });
+  }
+  bodyInput.addEventListener("dragover", (event) => {
+    if ([...(event.dataTransfer?.items || [])].some((item) => item.kind === "file" && item.type.startsWith("image/"))) {
+      event.preventDefault();
+    }
+  });
+  bodyInput.addEventListener("drop", (event) => {
+    const files = [...(event.dataTransfer?.files || [])].filter((file) => file.type.startsWith("image/"));
+    if (files.length) { event.preventDefault(); addFiles(files); }
+  });
+  document.getElementById("post-form").onsubmit = async (event) => {
+    event.preventDefault(); showError("");
+    const formData = new FormData(event.target);
+    try {
+      const attachments = [];
+      for (const file of pendingFiles) {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const uploaded = await api("attachments", {method: "POST", body: {
+          filename: file.name, content_type: file.type || "application/octet-stream", content_base64: base64,
+        }});
+        attachments.push(uploaded.attachment.id);
+      }
+      const tags = String(formData.get("tags") || "").split(",").map((value) => value.trim()).filter(Boolean);
+      await api("posts", {method: "POST", body: {
+        body: String(formData.get("body") || ""), attachments, tags,
+      }});
+      await loadPosts();
+    } catch (err) { showError(err.message); }
+  };
   document.getElementById("search-form").onsubmit = async (event) => {
     event.preventDefault();
     const q = new FormData(event.target).get("q") || "";
@@ -433,21 +546,52 @@ async function loadPosts() {
 
 async function loadTasks() {
   const data = await api("tasks?limit=100");
+  const form = `<form class="compose" id="task-form">
+    <input name="title" placeholder="${esc(t("tasks.titlePlaceholder"))}" required maxlength="200">
+    <textarea name="acceptance" placeholder="${esc(t("tasks.acceptancePlaceholder"))}"></textarea>
+    <button type="submit">${esc(t("tasks.add"))}</button></form>`;
   const tasks = (data.tasks || []).map((task) => {
+    const actions = `<div class="actions"><form data-task="${esc(task.id)}" data-action="claim"><button>${esc(t("tasks.claim"))}</button></form>
+      <form data-task="${esc(task.id)}" data-action="done"><input name="evidence" placeholder="${esc(t("tasks.evidencePlaceholder"))}" required><button>${esc(t("tasks.done"))}</button></form></div>`;
     const owner = task.assigned_to || t("tasks.unassigned");
-    return item(task.title || task.id, `${stateLabel("tasks.status", task.status)} · ${owner}`, task.acceptance || "");
+    return item(task.title || task.id, `${stateLabel("tasks.status", task.status)} · ${owner}`, task.acceptance || "", actions);
   }).join("");
-  app.innerHTML = (tasks || `<p class="muted">${esc(t("tasks.empty"))}</p>`);
+  app.innerHTML = form + (tasks || `<p class="muted">${esc(t("tasks.empty"))}</p>`);
+  document.getElementById("task-form").onsubmit = async (event) => {
+    event.preventDefault(); const formData = new FormData(event.target);
+    try { await api("tasks", {method: "POST", body: {title: formData.get("title") || "", acceptance: formData.get("acceptance") || ""}}); await loadTasks(); }
+    catch (err) { showError(err.message); }
+  };
+  app.querySelectorAll("form[data-task]").forEach((form) => {
+    form.onsubmit = async (event) => {
+      event.preventDefault();
+      try {
+        if (form.dataset.action === "claim") await api(`tasks/${form.dataset.task}/claim`, {method: "POST", body: {}});
+        else await api(`tasks/${form.dataset.task}/done`, {method: "POST", body: {evidence: new FormData(form).get("evidence") || ""}});
+        await loadTasks();
+      } catch (err) { showError(err.message); }
+    };
+  });
   renderMath(app);
 }
 
 async function loadMemory() {
   const data = await api("memory?limit=100");
+  const form = `<form class="compose" id="fact-form">
+    <input name="claim" placeholder="${esc(t("memory.claimPlaceholder"))}" required maxlength="500">
+    <input name="source" placeholder="${esc(t("memory.sourcePlaceholder"))}">
+    <textarea name="evidence" placeholder="${esc(t("memory.evidencePlaceholder"))}"></textarea>
+    <button type="submit">${esc(t("memory.add"))}</button></form>`;
   const facts = (data.facts || []).map((fact) => {
     const actions = `<div class="actions"><button data-fact="${esc(fact.id)}" data-status="approved">${esc(t("memory.approve"))}</button><button data-fact="${esc(fact.id)}" data-status="rejected">${esc(t("memory.reject"))}</button></div>`;
     return item(fact.claim, `${stateLabel("memory.status", fact.status)} · ${fact.source || t("memory.noSource")}`, fact.evidence || "", actions);
   }).join("");
-  app.innerHTML = facts || `<p class="muted">${esc(t("memory.empty"))}</p>`;
+  app.innerHTML = form + (facts || `<p class="muted">${esc(t("memory.empty"))}</p>`);
+  document.getElementById("fact-form").onsubmit = async (event) => {
+    event.preventDefault(); const formData = new FormData(event.target);
+    try { await api("memory", {method: "POST", body: {claim: formData.get("claim") || "", source: formData.get("source") || "", evidence: formData.get("evidence") || ""}}); await loadMemory(); }
+    catch (err) { showError(err.message); }
+  };
   app.querySelectorAll("button[data-fact]").forEach((button) => {
     button.onclick = async () => {
       try { await api(`memory/${button.dataset.fact}/review`, {method: "POST", body: {status: button.dataset.status}}); await loadMemory(); }

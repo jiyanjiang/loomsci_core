@@ -255,7 +255,7 @@ class CliTest(unittest.TestCase):
             listed = _run(["addon", "list", "--json"], env=env)
             self.assertEqual(listed.returncode, 0, listed.stderr)
             entry = next(item for item in json.loads(listed.stdout)["addons"] if item["name"] == "ui-shell")
-            self.assertEqual(entry["installed_version"], "0.5.4")
+            self.assertEqual(entry["installed_version"], "0.5.5")
             self.assertIn("team", json.loads(listed.stdout)["profiles"])
 
 

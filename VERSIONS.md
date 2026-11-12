@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.28` | `releases/loomsci_core-0.1.0-beta.28.zip` | Restore authoring |
 | `0.1.0-beta.27` | `releases/loomsci_core-0.1.0-beta.27.zip` | Read-only surface |
 | `0.1.0-beta.26` | `releases/loomsci_core-0.1.0-beta.26.zip` | Tags / tag cloud |
 | `0.1.0-beta.25` | `releases/loomsci_core-0.1.0-beta.25.zip` | Full text / inline MD |

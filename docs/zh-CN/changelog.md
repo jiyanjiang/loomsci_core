@@ -1,3 +1,9 @@
+# v0.1.0-beta.28 — 恢复发帖
+
+- Restore human post/task/fact authoring.
+- Keep AI CLI/API as the bulk publish path.
+- Remove the read-only notice.
+
 # v0.1.0-beta.27 — 只读界面
 
 - Remove human authoring from the UI.

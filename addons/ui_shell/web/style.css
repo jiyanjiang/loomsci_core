@@ -255,7 +255,3 @@ footer { margin-top: var(--space-6); padding-top: var(--space-3); border-top: 1p
 .tag-cloud-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent); text-decoration: none; font-size: 0.82rem; }
 .tag-cloud-chip span { color: var(--muted); font-size: 0.75rem; }
 .tag-cloud-chip.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-
-.searchbar { display: flex; gap: var(--space-2); margin: 0 0 var(--space-2); }
-.searchbar input { flex: 1; }
-.read-only-note { margin: 0 0 var(--space-3); }

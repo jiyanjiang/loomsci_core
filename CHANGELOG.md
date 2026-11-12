@@ -1,3 +1,11 @@
+# v0.1.0-beta.28 — Restore authoring
+
+- Restore the human post composer, tags, file attachment, and paste-image flow.
+- Restore task and fact authoring.
+- Keep AI publish via CLI/API as the primary bulk path.
+- Remove the incorrect "read-only" UI notice.
+- Bump ui-shell to 0.5.5.
+
 # v0.1.0-beta.27 — Read-only reading surface
 
 - Remove human post/Task/Fact authoring from the UI; AI writes through the API/CLI.
