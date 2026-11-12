@@ -21,7 +21,7 @@ WEB = ROOT / "web"
 APP_PATHS = frozenset({
     "/app", "/app/", "/app/posts", "/app/posts/", "/app/tasks", "/app/tasks/",
     "/app/memory", "/app/memory/", "/app/inbox", "/app/inbox/", "/app/site", "/app/site/",
-    "/app/settings", "/app/settings/",
+    "/app/settings", "/app/settings/", "/app/projects", "/app/projects/",
 })
 DEFAULT_SITE = {
     "site_name": "loomsci",

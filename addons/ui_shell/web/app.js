@@ -3,7 +3,7 @@ const app = document.getElementById("app");
 const statusEl = document.getElementById("status");
 const errorEl = document.getElementById("error");
 function viewFromPath(pathname) {
-  const match = String(pathname || "").match(/^\/app\/(posts|tasks|memory|inbox|site|settings)\/?$/);
+  const match = String(pathname || "").match(/^\/app\/(posts|tasks|memory|inbox|site|settings|projects)\/?$/);
   return match ? match[1] : "posts";
 }
 function viewPath(next) {
@@ -289,6 +289,79 @@ async function refreshHealth() {
   }
 }
 
+function humanBytes(value) {
+  let n = Number(value || 0);
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(i ? 1 : 0)} ${units[i]}`;
+}
+
+function projectCard(project) {
+  const count = (project.entries ?? 0).toLocaleString();
+  const bytes = humanBytes(project.bytes);
+  return `<a class="project-card" href="?project=${encodeURIComponent(project.code)}">
+    <div class="project-title">${esc(project.name)}</div>
+    <div class="meta">${esc(project.code)} · ${esc(project.machine_id || "")}</div>
+    <div class="project-meta">${count} ${esc(t("projects.entries"))} · ${bytes}</div>
+    <div class="project-meta">${esc(project.type || "unknown")} · ${esc(project.status || "")}</div>
+  </a>`;
+}
+
+function timelineHtml(rows) {
+  if (!rows.length) return `<p class="muted">—</p>`;
+  const max = Math.max(...rows.map((row) => Number(row.entries || 0)), 1);
+  return `<div class="timeline">${rows.map((row) => `
+    <div class="timeline-row"><span>${esc(row.month || "")}</span>
+      <div class="bar"><i style="width:${Math.max(2, Math.round(Number(row.entries || 0) / max * 100))}%"></i></div>
+      <b>${Number(row.entries || 0)}</b></div>`).join("")}</div>`;
+}
+
+async function loadProject(code) {
+  const [detail, stats] = await Promise.all([
+    api(`projects/${encodeURIComponent(code)}`),
+    api(`projects/${encodeURIComponent(code)}/stats`),
+  ]);
+  const project = detail.project;
+  const kinds = (stats.kinds || []).map((row) =>
+    `<span class="chip">${esc(row.kind)} ${Number(row.entries || 0)} · ${humanBytes(row.bytes)}</span>`).join("");
+  const sources = (project.sources || []).map((source) =>
+    `<div class="project-row"><b>${esc(source.role)}</b><span>${esc(source.source_state)}</span>
+      <code>${esc(source.root_path)}</code>
+      <span class="muted">${esc(t("projects.dataAsOf"))} ${esc(source.data_as_of || "—")}</span></div>`).join("");
+  const apps = (project.apps || []).map((app) =>
+    `<div class="project-row"><b>${esc(app.name)}</b><span>${esc(app.status)}</span>
+      <code>${esc(app.url || "")}</code></div>`).join("") || `<p class="muted">—</p>`;
+  const schemas = (project.schemas || []).map((schema) => {
+    let tables = [];
+    try { tables = JSON.parse(schema.tables_json || "[]"); } catch { tables = []; }
+    return `<div class="project-row"><b>${esc(schema.engine)}</b><code>${esc(schema.db_path)}</code>
+      <span class="muted">${tables.map((table) => `${esc(table.name || "")} ${Number(table.rows || 0).toLocaleString()}`).join(" · ")}</span></div>`;
+  }).join("") || `<p class="muted">—</p>`;
+  const recent = (stats.recent || []).map((row) =>
+    `<div class="project-row"><span class="chip">${esc(row.kind)}</span><code>${esc(row.path)}</code>
+      <span class="muted">${humanBytes(row.bytes)} · ${esc(row.mtime || "")}</span></div>`).join("") || `<p class="muted">—</p>`;
+  app.innerHTML = `<p><a href="/app/projects">← ${esc(t("projects.back"))}</a></p>
+    <h2>${esc(project.name)}</h2>
+    <div class="meta">${esc(project.code)} · ${esc(t("projects.machine"))}: ${esc(project.machine_id || "")} · ${esc(project.type)}</div>
+    <div class="project-section"><h3>${esc(t("projects.kinds"))}</h3><div class="chips">${kinds || "—"}</div></div>
+    <div class="project-section"><h3>${esc(t("projects.sources"))}</h3>${sources}</div>
+    <div class="project-section"><h3>${esc(t("projects.apps"))}</h3>${apps}</div>
+    <div class="project-section"><h3>${esc(t("projects.schemas"))}</h3>${schemas}</div>
+    <div class="project-section"><h3>${esc(t("projects.timeline"))}</h3>${timelineHtml(stats.timeline || [])}</div>
+    <div class="project-section"><h3>${esc(t("projects.recent"))}</h3>${recent}</div>`;
+  renderMath(app);
+}
+
+async function loadProjects() {
+  const code = new URLSearchParams(location.search).get("project");
+  if (code) return loadProject(code);
+  const data = await api("projects");
+  const projects = (data.projects || []).map((project) => projectCard(project)).join("");
+  app.innerHTML = `<h2>${esc(t("nav.projects"))}</h2>` +
+    (projects ? `<div class="project-grid">${projects}</div>` : `<p class="muted">${esc(t("projects.empty"))}</p>`);
+}
+
 async function loadPosts() {
   const postId = new URLSearchParams(location.search).get("post");
   if (postId) return loadPost(postId);
@@ -513,7 +586,7 @@ async function loadSettings() {
   };
 }
 
-const views = {posts: loadPosts, tasks: loadTasks, memory: loadMemory, inbox: loadInbox, site: loadSiteView, settings: loadSettings};
+const views = {projects: loadProjects, posts: loadPosts, tasks: loadTasks, memory: loadMemory, inbox: loadInbox, site: loadSiteView, settings: loadSettings};
 
 async function render(next = view) {
   view = next; showError("");

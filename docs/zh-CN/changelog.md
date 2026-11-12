@@ -1,3 +1,10 @@
+# v0.1.0-beta.11 — 项目仪表盘
+
+- Add project list/detail/stats/entries APIs.
+- Add `/app/projects` and project detail views.
+- Show sources, file types, monthly activity, database schemas, apps, recent files.
+- Reference-only; no source files are copied.
+
 # v0.1.0-beta.10 — 数据库结构检查
 
 - Add read-only SQLite and DuckDB inspection via `project inspect`.

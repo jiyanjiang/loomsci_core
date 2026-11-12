@@ -176,7 +176,8 @@ def create_project(
 def list_projects(conn) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT p.*, (SELECT COUNT(*) FROM project_sources s WHERE s.project_id=p.id) AS sources, "
-        "(SELECT COUNT(*) FROM project_entries e WHERE e.project_id=p.id) AS entries "
+        "(SELECT COUNT(*) FROM project_entries e WHERE e.project_id=p.id) AS entries, "
+        "(SELECT COALESCE(SUM(bytes),0) FROM project_entries e WHERE e.project_id=p.id) AS bytes "
         "FROM projects p ORDER BY p.updated_at DESC"
     ).fetchall()
     return [_project_dict(row) for row in rows]
@@ -245,3 +246,70 @@ def remove_project(conn, code: str) -> bool:
     conn.execute("DELETE FROM projects WHERE id=?", (project_id,))
     conn.commit()
     return True
+
+
+def entries(
+    conn,
+    code: str,
+    *,
+    kind: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> dict[str, Any]:
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    limit = max(1, min(int(limit), 500))
+    offset = max(0, int(offset))
+    where = ["project_id=?"]
+    params: list[Any] = [project["id"]]
+    if kind:
+        where.append("kind=?")
+        params.append(str(kind))
+    clause = " AND ".join(where)
+    total = int(conn.execute(f"SELECT COUNT(*) FROM project_entries WHERE {clause}", params).fetchone()[0])
+    rows = conn.execute(
+        f"SELECT path, kind, title, bytes, mtime, summary FROM project_entries "
+        f"WHERE {clause} ORDER BY mtime DESC, path LIMIT ? OFFSET ?",
+        (*params, limit, offset),
+    ).fetchall()
+    return {"total": total, "limit": limit, "offset": offset, "entries": [dict(row) for row in rows]}
+
+
+def stats(conn, code: str) -> dict[str, Any]:
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    project_id = project["id"]
+    kinds = [
+        dict(row)
+        for row in conn.execute(
+            "SELECT kind, COUNT(*) AS entries, COALESCE(SUM(bytes),0) AS bytes "
+            "FROM project_entries WHERE project_id=? GROUP BY kind ORDER BY entries DESC",
+            (project_id,),
+        )
+    ]
+    timeline = [
+        dict(row)
+        for row in conn.execute(
+            "SELECT substr(mtime,1,7) AS month, COUNT(*) AS entries, "
+            "COALESCE(SUM(bytes),0) AS bytes FROM project_entries "
+            "WHERE project_id=? AND mtime IS NOT NULL AND mtime != '' "
+            "GROUP BY month ORDER BY month DESC LIMIT 24",
+            (project_id,),
+        )
+    ]
+    recent = [
+        dict(row)
+        for row in conn.execute(
+            "SELECT path, kind, title, bytes, mtime FROM project_entries "
+            "WHERE project_id=? ORDER BY mtime DESC, path LIMIT 12",
+            (project_id,),
+        )
+    ]
+    return {
+        "project": project,
+        "kinds": kinds,
+        "timeline": list(reversed(timeline)),
+        "recent": recent,
+    }

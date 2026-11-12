@@ -1,3 +1,10 @@
+# v0.1.0-beta.11 — Project dashboard
+
+- Add project list/detail/stats/entries API.
+- Add `/app/projects` list and detail views.
+- Show sources, file-type counts, monthly activity, schemas, apps, recent files.
+- All project views remain reference-only; no source content is copied.
+
 # v0.1.0-beta.10 — Database schema inspector
 
 - Add read-only SQLite and DuckDB schema inspection.

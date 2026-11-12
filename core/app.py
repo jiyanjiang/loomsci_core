@@ -13,7 +13,7 @@ from typing import Mapping
 
 from flask import Flask, Response, g, jsonify, redirect, request
 
-from core import alice, handoff, llm_config, storage, summaries
+from core import alice, handoff, llm_config, project_store, storage, summaries
 from core.home import HomeError, ensure_layout, resolve_home
 from core.local_auth import check_request
 from core.packs import Registry
@@ -479,6 +479,38 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         except Exception as exc:  # noqa: BLE001 - mapped below
             return _storage_error(exc)
         return jsonify({"ok": True, "post": post}), 201
+
+    @app.get("/v1/projects")
+    def projects_list():
+        return jsonify({"ok": True, "projects": project_store.list_projects(get_db())})
+
+    @app.get("/v1/projects/<code>/stats")
+    def projects_stats(code: str):
+        try:
+            return jsonify({"ok": True, **project_store.stats(get_db(), code)})
+        except LookupError:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+
+    @app.get("/v1/projects/<code>/entries")
+    def projects_entries(code: str):
+        try:
+            limit = int(request.args.get("limit", "50"))
+            offset = int(request.args.get("offset", "0"))
+        except ValueError:
+            return jsonify({"ok": False, "error": "bad_pagination"}), 400
+        try:
+            return jsonify({"ok": True, **project_store.entries(
+                get_db(), code, kind=request.args.get("kind"), limit=limit, offset=offset
+            )})
+        except LookupError:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+
+    @app.get("/v1/projects/<code>")
+    def projects_show(code: str):
+        project = project_store.get_project(get_db(), code)
+        if project is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        return jsonify({"ok": True, "project": project})
 
     def _provider(provider: str):
         if provider not in llm_config.PROVIDERS:
