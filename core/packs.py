@@ -52,6 +52,7 @@ CORE = PackSpec(
         "/v1/echo",
         "/v1/presence*",
         "/v1/posts*",
+        "/v1/tags*",
         "/v1/tasks*",
         "/v1/handoff*",
         "/v1/inbox*",

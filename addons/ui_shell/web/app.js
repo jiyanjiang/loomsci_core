@@ -179,13 +179,28 @@ function item(title, meta, body, actions = "", attachments = []) {
   return `<article class="item">${heading}<div class="meta">${esc(meta)}</div><div class="md">${markdown(body || "")}</div>${files}${actions}</article>`;
 }
 
+function tagChip(tag) {
+  const name = typeof tag === "string" ? tag : String(tag.name || "");
+  return `<a class="tag-chip" href="?tag=${encodeURIComponent(name)}">#${esc(name)}</a>`;
+}
+
+function tagCloud(tags, active) {
+  if (!tags.length) return "";
+  const chips = tags.map((item) => {
+    const name = String(item.name || "");
+    return `<a class="tag-cloud-chip${name === active ? " active" : ""}" href="?tag=${encodeURIComponent(name)}">#${esc(name)} <span>${Number(item.count || 0)}</span></a>`;
+  }).join("");
+  return `<section class="tag-cloud"><div class="meta">${esc(t("posts.tags"))}${active ? ` · #${esc(active)} <a href="?">${esc(t("posts.clear"))}</a>` : ""}</div>${chips}</section>`;
+}
+
 function postItem(post) {
   const files = (post.attachments || []).map((item) => {
     const copy = {...item, post_id: post.id};
     return `<div class="attachment">${attachmentChip(copy)}</div>`;
   }).join("");
   const meta = `#${post.seq} · ${post.author} · ${post.kind}`;
-  return `<article class="item"><div class="meta">${esc(meta)}</div><div class="md">${markdown(post.body || "")}</div>${files}</article>`;
+  const tags = (post.tags || []).map(tagChip).join(" ");
+  return `<article class="item"><div class="meta">${esc(meta)}</div><div class="tags">${tags}</div><div class="md">${markdown(post.body || "")}</div>${files}</article>`;
 }
 
 async function loadPost(id) {
@@ -194,6 +209,7 @@ async function loadPost(id) {
   const files = (post.attachments || []).map(attachmentDetail).join("");
   app.innerHTML = `<p><a href="/app/posts">← ${esc(t("posts.back"))}</a></p>
     <article class="item"><div class="meta">#${post.seq} · ${esc(post.author)} · ${esc(post.kind)}</div>
+    <div class="tags">${(post.tags || []).map(tagChip).join(" ")}</div>
     <div class="md">${markdown(post.body || "")}</div>${files}</article>`;
   renderMath(app);
   await hydrateMarkdownAttachments(app);
@@ -424,21 +440,25 @@ async function loadProjects() {
 }
 
 async function loadPosts() {
-  const postId = new URLSearchParams(location.search).get("post");
+  const params = new URLSearchParams(location.search);
+  const postId = params.get("post");
   if (postId) return loadPost(postId);
+  const activeTag = params.get("tag") || "";
   const status = await api("status");
-  const since = Math.max(0, Number(status.last_seq || 0) - 100);
-  const data = await api(`posts?since=${since}&limit=100&view=feed`);
+  const since = activeTag ? 0 : Math.max(0, Number(status.last_seq || 0) - 100);
+  const tagData = await api("tags?limit=40");
+  const data = await api(`posts?since=${since}&limit=200&view=feed${activeTag ? `&tag=${encodeURIComponent(activeTag)}` : ""}`);
   pendingFiles = [];
   const form = `<form class="compose" id="post-form">
     <textarea name="body" placeholder="${esc(t("posts.bodyPlaceholder"))}" required></textarea>
+    <input name="tags" placeholder="${esc(t("posts.tagsPlaceholder"))}" autocomplete="off">
     <input type="file" name="file" multiple>
     <button type="button" id="paste-image">${esc(t("posts.pasteImage"))}</button>
     <div id="pending-files" class="pending"></div>
     <button type="submit">${esc(t("posts.post"))}</button></form>
     <form class="compose" id="search-form"><input name="q" placeholder="${esc(t("posts.searchPlaceholder"))}"><button type="submit">${esc(t("posts.search"))}</button></form>`;
   const posts = (data.posts || []).slice().reverse().map(postItem).join("");
-  app.innerHTML = form + (posts || `<p class="muted">${esc(t("posts.empty"))}</p>`);
+  app.innerHTML = form + tagCloud(tagData.tags || [], activeTag) + (posts || `<p class="muted">${esc(t("posts.empty"))}</p>`);
   const fileInput = document.querySelector('#post-form input[type="file"]');
   fileInput.onchange = () => addFiles(fileInput.files);
   document.getElementById("paste-image").onclick = async () => {
@@ -503,8 +523,9 @@ async function loadPosts() {
         }});
         attachments.push(uploaded.attachment.id);
       }
+      const tags = String(formData.get("tags") || "").split(",").map((value) => value.trim()).filter(Boolean);
       await api("posts", {method: "POST", body: {
-        body: String(formData.get("body") || ""), attachments,
+        body: String(formData.get("body") || ""), attachments, tags,
       }});
       await loadPosts();
     } catch (err) { showError(err.message); }

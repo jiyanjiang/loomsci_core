@@ -1,3 +1,11 @@
+# v0.1.0-beta.26 — Tags and tag cloud
+
+- Add `tags`, `post_tags`, and `tag_aliases` (schema version 2).
+- Accept AI-generated tags on `POST /v1/posts`.
+- Add tag filtering, tag chips, and a tag cloud.
+- Add `PATCH /v1/posts/<id>/tags` for human correction.
+- Normalize tags and cap each post at 8 tags.
+
 # v0.1.0-beta.25 — Full text and inline Markdown
 
 - Show full post bodies in the feed; remove automatic summary truncation.

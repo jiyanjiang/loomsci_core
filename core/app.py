@@ -463,8 +463,34 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             since=since,
             limit=limit,
             thread_id=request.args.get("thread"),
+            tag=request.args.get("tag"),
         )
         return jsonify({"ok": True, "posts": posts})
+
+    @app.get("/v1/tags")
+    def tags_list():
+        try:
+            limit = int(request.args.get("limit", "100"))
+        except ValueError:
+            return jsonify({"ok": False, "error": "bad_limit"}), 400
+        return jsonify({
+            "ok": True,
+            "tags": storage.list_tags(get_db(), limit=limit, q=request.args.get("q") or ""),
+        })
+
+    @app.patch("/v1/posts/<post_id>/tags")
+    def post_tags_update(post_id: str):
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or not isinstance(body.get("tags"), list):
+            return jsonify({"ok": False, "error": "tags_required"}), 400
+        try:
+            tags = storage.set_post_tags(
+                get_db(), post_id=post_id,
+                tags=[str(item) for item in body["tags"]], source="human",
+            )
+        except Exception as exc:  # noqa: BLE001 - mapped below
+            return _storage_error(exc)
+        return jsonify({"ok": True, "tags": tags})
 
     @app.get("/v1/posts/<post_id>")
     def posts_detail(post_id: str):
@@ -489,6 +515,7 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
                 parent_id=body.get("parent_id"),
                 meta=body.get("meta") if isinstance(body.get("meta"), dict) else {},
                 attachments=[str(item) for item in body.get("attachments") or []],
+                tags=[str(item) for item in body.get("tags") or []],
             )
             post = storage.get_post(get_db(), post["id"]) or post
         except Exception as exc:  # noqa: BLE001 - mapped below

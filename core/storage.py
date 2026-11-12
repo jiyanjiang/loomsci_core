@@ -21,7 +21,7 @@ POST_KINDS = frozenset(
 TASK_STATUSES = frozenset(
     {"backlog", "claimed", "in_progress", "blocked", "done", "failed", "cancelled"}
 )
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS agents (
@@ -61,6 +61,29 @@ CREATE TABLE IF NOT EXISTS post_summaries (
   updated_at  TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS post_summaries_status ON post_summaries(status);
+
+CREATE TABLE IF NOT EXISTS tags (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS post_tags (
+  post_id    TEXT NOT NULL,
+  tag_id     TEXT NOT NULL,
+  source     TEXT NOT NULL DEFAULT 'human',
+  confidence REAL,
+  model      TEXT,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (post_id, tag_id)
+);
+CREATE INDEX IF NOT EXISTS post_tags_tag ON post_tags(tag_id, post_id);
+
+CREATE TABLE IF NOT EXISTS tag_aliases (
+  alias      TEXT PRIMARY KEY COLLATE NOCASE,
+  tag_id     TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS tasks (
   id            TEXT PRIMARY KEY,
@@ -587,6 +610,99 @@ def _post_dict(row: sqlite3.Row) -> dict[str, Any]:
     return item
 
 
+def _tag_name(value: str) -> str:
+    name = re.sub(r"\s+", " ", str(value or "").strip().lstrip("#")).casefold()
+    name = re.sub(r"[^\w\u4e00-\u9fff .-]+", "", name, flags=re.UNICODE).strip(" .-")
+    return name[:40]
+
+
+def _tag_id(name: str) -> str:
+    return "t-" + hashlib.sha256(name.encode("utf-8")).hexdigest()[:12]
+
+
+def set_post_tags(
+    conn: sqlite3.Connection,
+    *,
+    post_id: str,
+    tags: list[str] | tuple[str, ...],
+    source: str = "human",
+    model: str | None = None,
+) -> list[dict[str, Any]]:
+    if get_post(conn, post_id) is None:
+        raise NotFound("post not found")
+    stamp = now()
+    names: list[str] = []
+    for value in list(tags or [])[:8]:
+        name = _tag_name(value)
+        if name and name not in names:
+            names.append(name)
+    conn.execute("DELETE FROM post_tags WHERE post_id=?", (post_id,))
+    for name in names:
+        tag_id = _tag_id(name)
+        conn.execute(
+            "INSERT OR IGNORE INTO tags(id, name, created_at) VALUES (?,?,?)",
+            (tag_id, name, stamp),
+        )
+        conn.execute(
+            "INSERT INTO post_tags(post_id, tag_id, source, confidence, model, created_at) "
+            "VALUES (?,?,?,?,?,?)",
+            (post_id, tag_id, source, None, model, stamp),
+        )
+    conn.commit()
+    return list_post_tags(conn, post_id=post_id)
+
+
+def list_post_tags(conn: sqlite3.Connection, *, post_id: str) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        "SELECT t.id, t.name, pt.source, pt.confidence, pt.model "
+        "FROM post_tags pt JOIN tags t ON t.id=pt.tag_id "
+        "WHERE pt.post_id=? ORDER BY t.name",
+        (post_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def list_tags(conn: sqlite3.Connection, *, limit: int = 100, q: str = "") -> list[dict[str, Any]]:
+    limit = max(1, min(int(limit), 500))
+    sql = (
+        "SELECT t.id, t.name, COUNT(pt.post_id) AS count "
+        "FROM tags t JOIN post_tags pt ON pt.tag_id=t.id "
+        "WHERE 1=1"
+    )
+    params: list[Any] = []
+    if q:
+        sql += " AND t.name LIKE ?"
+        params.append(f"%{_tag_name(q)}%")
+    sql += " GROUP BY t.id, t.name ORDER BY count DESC, t.name LIMIT ?"
+    params.append(limit)
+    return [dict(row) for row in conn.execute(sql, params).fetchall()]
+
+
+def _attach_tags(conn: sqlite3.Connection, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not items:
+        return items
+    ids = [str(item["id"]) for item in items]
+    placeholders = ",".join("?" for _ in ids)
+    rows = conn.execute(
+        "SELECT pt.post_id, t.id, t.name, pt.source, pt.confidence, pt.model "
+        f"FROM post_tags pt JOIN tags t ON t.id=pt.tag_id WHERE pt.post_id IN ({placeholders}) "
+        "ORDER BY t.name",
+        ids,
+    ).fetchall()
+    by_post: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        by_post.setdefault(str(row["post_id"]), []).append({
+            "id": row["id"],
+            "name": row["name"],
+            "source": row["source"],
+            "confidence": row["confidence"],
+            "model": row["model"],
+        })
+    for item in items:
+        item["tags"] = by_post.get(str(item["id"]), [])
+    return items
+
+
 def create_post(
     conn: sqlite3.Connection,
     *,
@@ -597,6 +713,7 @@ def create_post(
     parent_id: str | None = None,
     meta: dict | None = None,
     attachments: list[str] | None = None,
+    tags: list[str] | None = None,
 ) -> dict[str, Any]:
     if kind not in POST_KINDS:
         raise ValueError(f"unknown post kind: {kind}")
@@ -636,10 +753,13 @@ def create_post(
     for attachment_id in attachment_ids:
         attach_to_post(conn, attachment_id=attachment_id, post_id=post_id)
     conn.commit()
+    if tags:
+        set_post_tags(conn, post_id=post_id, tags=tags, source="human")
     row = conn.execute(POST_SELECT + " WHERE p.id=?", (post_id,)).fetchone()
     item = _post_dict(row)
     item["mentions"] = list_mentions(conn, post_id=post_id)
     item["attachments"] = list_attachments(conn, post_id=post_id)
+    item["tags"] = list_post_tags(conn, post_id=post_id)
     return item
 
 
@@ -650,6 +770,7 @@ def get_post(conn: sqlite3.Connection, post_id: str) -> dict[str, Any] | None:
     item = _post_dict(row)
     item["mentions"] = list_mentions(conn, post_id=item["id"])
     item["attachments"] = list_attachments(conn, post_id=item["id"])
+    item["tags"] = list_post_tags(conn, post_id=item["id"])
     return item
 
 
@@ -659,6 +780,7 @@ def list_posts(
     since: int = 0,
     limit: int = 50,
     thread_id: str | None = None,
+    tag: str | None = None,
 ) -> list[dict[str, Any]]:
     limit = max(1, min(int(limit), 200))
     sql = POST_SELECT + " WHERE p.seq > ?"
@@ -666,6 +788,12 @@ def list_posts(
     if thread_id:
         sql += " AND p.thread_id=?"
         params.append(thread_id)
+    if tag:
+        sql += (
+            " AND p.id IN (SELECT pt.post_id FROM post_tags pt "
+            "JOIN tags t ON t.id=pt.tag_id WHERE t.name=?)"
+        )
+        params.append(_tag_name(tag))
     sql += " ORDER BY p.seq ASC LIMIT ?"
     params.append(limit)
     items = []
@@ -674,7 +802,7 @@ def list_posts(
         item["mentions"] = list_mentions(conn, post_id=item["id"])
         item["attachments"] = list_attachments(conn, post_id=item["id"])
         items.append(item)
-    return items
+    return _attach_tags(conn, items)
 
 
 def _task_dict(row: sqlite3.Row) -> dict[str, Any]:

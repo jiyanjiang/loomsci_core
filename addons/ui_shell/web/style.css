@@ -247,3 +247,11 @@ footer { margin-top: var(--space-6); padding-top: var(--space-3); border-top: 1p
 .md-attachment > summary::marker { color: var(--accent); }
 .attachment-download { margin-left: var(--space-2); font-size: 0.8rem; color: var(--accent); }
 .attachment-body { padding: var(--space-2) var(--space-3) var(--space-3); border-top: 1px solid var(--border); max-height: 70vh; overflow: auto; }
+
+.tags { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: 0 0 var(--space-2); }
+.tag-chip { color: var(--accent); text-decoration: none; font-size: 0.82rem; }
+.tag-chip:hover { text-decoration: underline; }
+.tag-cloud { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-4); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.tag-cloud-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--accent); text-decoration: none; font-size: 0.82rem; }
+.tag-cloud-chip span { color: var(--muted); font-size: 0.75rem; }
+.tag-cloud-chip.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }

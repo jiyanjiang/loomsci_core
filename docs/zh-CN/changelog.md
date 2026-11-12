@@ -1,3 +1,9 @@
+# v0.1.0-beta.26 — 标签与标签云
+
+- Add tags/post_tags/tag_aliases and schema version 2.
+- Accept tags on post creation.
+- Add tag filtering, chips, and tag cloud.
+
 # v0.1.0-beta.25 — 全文与内嵌 Markdown
 
 - Show full post bodies; no automatic summary truncation.
