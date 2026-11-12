@@ -1,3 +1,9 @@
+# v0.1.0-beta.10 — Database schema inspector
+
+- Add read-only SQLite and DuckDB inspection via `project inspect`.
+- Store table/column metadata, row counts, and schema hashes in `project_schemas`.
+- No database files are copied or modified.
+
 # v0.1.0-beta.9 — Reference projects
 
 - Add reference-only project registry and metadata index.

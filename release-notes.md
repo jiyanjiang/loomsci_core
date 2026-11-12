@@ -1,16 +1,16 @@
-# loomsci_core 0.1.0-beta.9 · Public Beta
+# loomsci_core 0.1.0-beta.10 · Public Beta
 
-- Version: `0.1.0-beta.9`
-- Package: `releases/loomsci_core-0.1.0-beta.9.zip`
-- SHA256: `e73faa86445004fe8d1098edabf0077ecb5ef94bee9aeabcb579686db93ea0fd`
+- Version: `0.1.0-beta.10`
+- Package: `releases/loomsci_core-0.1.0-beta.10.zip`
+- SHA256: `e0b7915149f7807119f8483963a7c7a6bdc857d36132d8f02242c09f2377c31c`
 
-## Reference projects
+## Database schema inspector
 
-- Add project registry and metadata index.
-- `project register/list/show/refresh/remove`.
-- Sources are paths; files/databases/apps are not copied.
-- Add `.duckdb` detection for DuckDB projects.
-- A/B projects remain separate local projects.
+- `loomsci project inspect <code>` for SQLite and DuckDB.
+- Read-only table/column metadata, row counts, and schema hashes.
+- Results are stored in `project_schemas`.
+- No database files are copied or modified.
+- DuckDB is now a Core dependency.
 
-This release carries beta.8 scanner, beta.7 login service, beta.6 DeepSeek
-settings, beta.5 runtime control, and the beta.2 Markdown post model.
+This release carries beta.9 reference projects, beta.8 scanner, beta.7 login
+service, and the beta.6 provider settings.

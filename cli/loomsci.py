@@ -24,6 +24,7 @@ from core import doctor as doctor_mod
 from core import migration as migration_mod
 from core import projects as projects_mod
 from core import project_store
+from core import project_inspect
 from core import storage_ops
 from core import addons as addons_mod
 from core import export as export_mod
@@ -925,6 +926,34 @@ def _cmd_project_show(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_project_inspect(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_inspect.inspect_project(conn, args.code)
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(project)
+    else:
+        for schema in project.get("schemas", []):
+            print(f"{schema['engine']:<7} {schema['db_path']} schema={schema['schema_hash'][:12]}")
+            try:
+                tables = json.loads(schema.get("tables_json") or "[]")
+            except ValueError:
+                tables = []
+            for table in tables:
+                if not isinstance(table, dict):
+                    continue
+                if table.get("error"):
+                    print(f"  error: {table['error']}")
+                else:
+                    print(f"  {table.get('name')}: rows={table.get('rows')} columns={len(table.get('columns') or [])}")
+    return 0
+
+
 def _cmd_project_refresh(args: argparse.Namespace) -> int:
     layout, conn = _project_conn(args)
     try:
@@ -1691,6 +1720,11 @@ def build_parser() -> argparse.ArgumentParser:
     project_show.add_argument("code")
     project_show.add_argument("--json", action="store_true")
     project_show.set_defaults(func=_cmd_project_show)
+
+    project_inspect_cmd = project_sub.add_parser("inspect", help="inspect project database schemas read-only")
+    project_inspect_cmd.add_argument("code")
+    project_inspect_cmd.add_argument("--json", action="store_true")
+    project_inspect_cmd.set_defaults(func=_cmd_project_inspect)
 
     project_refresh = project_sub.add_parser("refresh", help="refresh metadata index")
     project_refresh.add_argument("code")

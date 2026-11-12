@@ -1,3 +1,10 @@
+# v0.1.0-beta.10 — Database schema inspector
+
+- Add read-only SQLite and DuckDB schema inspection.
+- `project inspect` stores tables, columns, row estimates, and schema hash.
+- DuckDB support is a Core dependency; databases are opened read-only.
+- No database files are copied.
+
 # v0.1.0-beta.9 — Reference projects
 
 - Add `projects`, `project_sources`, `project_entries`, `project_schemas`, `project_apps`.
