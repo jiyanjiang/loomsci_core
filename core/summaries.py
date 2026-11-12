@@ -19,10 +19,11 @@ SHORT_POST_MAX = 800
 SUMMARY_MIN = 300
 SUMMARY_MAX = 500
 SUMMARY_TARGET = 400
+AI_MIN = 150
 CHAT_URL = os.environ.get(
     "DEEPSEEK_CHAT_URL", "https://api.deepseek.com/chat/completions"
 )
-MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")
 _SENTENCE_END = re.compile(r"[。！？!?]|\.(?=\s|$)")
 _MARKDOWN = (
     (re.compile(r"```.*?```", re.S), " "),
@@ -71,10 +72,10 @@ def _source_hash(body: str) -> str:
     return hashlib.sha256(str(body or "").encode("utf-8")).hexdigest()
 
 
-def _settings(home: Path | None) -> tuple[str, str]:
-    """Return (mode, key); mode is ai or extractive."""
+def _settings(home: Path | None) -> tuple[str, str, str]:
+    """Return (mode, key, model); mode is ai or extractive."""
     if home is None:
-        return "extractive", ""
+        return "extractive", "", MODEL
     path = Path(home) / "config.yaml"
     data: dict[str, Any] = {}
     if path.is_file():
@@ -90,7 +91,8 @@ def _settings(home: Path | None) -> tuple[str, str]:
     summary = posts.get("summary") if isinstance(posts.get("summary"), dict) else {}
     mode = str(summary.get("mode") or "ai").strip().lower()
     key = llm_config.get_key(home, "deepseek")
-    return ("ai" if mode == "ai" and key else "extractive"), key
+    model = str(llm_config.public(home, "deepseek").get("model") or MODEL)
+    return ("ai" if mode == "ai" and key else "extractive"), key, model
 
 
 def enqueue_for_post(
@@ -102,7 +104,7 @@ def enqueue_for_post(
 ) -> None:
     if not needs_summary(body):
         return
-    mode, _ = _settings(Path(home).expanduser() if home else None)
+    mode, _key, _model = _settings(Path(home).expanduser() if home else None)
     status = "pending" if mode == "ai" else "fallback"
     stamp = storage.now()
     conn.execute(
@@ -123,6 +125,63 @@ def enqueue_for_post(
     conn.commit()
 
 
+def ensure_for_posts(
+    conn, posts: list[dict[str, Any]], *, home: str | Path | None = None
+) -> int:
+    """Queue long posts whose cached summary is missing, stale, or extractive.
+
+    The summary itself lives in ``post_summaries``; calling this on every feed
+    render is idempotent and does not call the model synchronously.
+    """
+    root = Path(home).expanduser() if home else None
+    mode, _key, model = _settings(root)
+    if mode != "ai":
+        return 0
+    stamp = storage.now()
+    queued = 0
+    for post in posts:
+        body = str(post.get("body") or "")
+        if not needs_summary(body):
+            continue
+        digest = _source_hash(body)
+        row = conn.execute(
+            "SELECT status, model, source_hash FROM post_summaries WHERE post_id=?",
+            (post["id"],),
+        ).fetchone()
+        missing = row is None
+        stale = False
+        if row is not None:
+            status = str(row["status"] or "")
+            if status == "failed":
+                continue
+            if status == "pending":
+                continue
+            if status == "fallback":
+                # Extractively generated fallback is upgraded once a key exists.
+                stale = str(row["model"] or "") == "extractive" or str(row["source_hash"] or "") != digest
+            elif status == "ready":
+                stale = str(row["model"] or "") != model or str(row["source_hash"] or "") != digest
+        if not (missing or stale):
+            continue
+        if missing:
+            conn.execute(
+                "INSERT INTO post_summaries"
+                "(post_id, summary, status, model, source_hash, error, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (post["id"], fallback(body), "pending", None, digest, None, stamp, stamp),
+            )
+        else:
+            conn.execute(
+                "UPDATE post_summaries SET status='pending', error=NULL, source_hash=?, updated_at=? "
+                "WHERE post_id=?",
+                (digest, stamp, post["id"]),
+            )
+        queued += 1
+    if queued:
+        conn.commit()
+    return queued
+
+
 def _prompt(body: str) -> str:
     return (
         f"Summarize this research post in about {SUMMARY_TARGET} characters "
@@ -133,12 +192,13 @@ def _prompt(body: str) -> str:
     )
 
 
-def _generate_ai(body: str, key: str) -> str:
+def _generate_ai(body: str, key: str, model: str = MODEL) -> str:
     payload = json.dumps(
         {
-            "model": MODEL,
+            "model": model,
             "temperature": 0.3,
             "max_tokens": 800,
+            "thinking": {"type": "disabled"},
             "messages": [
                 {"role": "system", "content": "You write faithful, compact research summaries."},
                 {"role": "user", "content": _prompt(body)},
@@ -174,7 +234,7 @@ def generate_one(conn, *, post_id: str, home: str | Path | None = None) -> bool:
     if row is None or row["status"] not in {"pending", "failed"}:
         return False
     body = str(row["body"] or "")
-    mode, key = _settings(Path(home).expanduser() if home else None)
+    mode, key, model = _settings(Path(home).expanduser() if home else None)
     stamp = storage.now()
     if mode != "ai":
         conn.execute(
@@ -185,14 +245,12 @@ def generate_one(conn, *, post_id: str, home: str | Path | None = None) -> bool:
         conn.commit()
         return True
     try:
-        summary = _generate_ai(body, key)
-        if len(summary) < SUMMARY_MIN:
+        summary = _generate_ai(body, key, model)
+        if len(summary) < AI_MIN:
             summary = fallback(body)
             status = "fallback"
-            model = "extractive"
         else:
             status = "ready"
-            model = MODEL
         conn.execute(
             "UPDATE post_summaries SET summary=?, status=?, model=?, error=NULL, "
             "source_hash=?, updated_at=? WHERE post_id=?",

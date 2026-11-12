@@ -1,3 +1,16 @@
+# v0.1.0-beta.24 — Flash summaries
+
+- Disable thinking mode for summary requests; DeepSeek Flash defaults to thinking and could return empty content under the summary token budget.
+- Keep `deepseek-flash`, non-thinking, for cheap deterministic summaries.
+- Accept concise AI summaries above 150 characters instead of discarding them.
+
+# v0.1.0-beta.23 — Summary cache
+
+- Use `deepseek-flash` by default for summaries and research.
+- Reuse cached `post_summaries`; queue missing, stale, or extractive summaries once on the first feed render.
+- Do not regenerate ready summaries on every render.
+- Add tests for one-time cache upgrade.
+
 # v0.1.0-beta.22 — UI fix
 
 - Fix the advanced-provider key label, which incorrectly said "DeepSeek API Key".

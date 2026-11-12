@@ -439,6 +439,7 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
             limit=limit,
             thread_id=request.args.get("thread"),
         )
+        summaries.ensure_for_posts(get_db(), posts, home=layout.root)
         if request.args.get("view") == "feed":
             for post in posts:
                 if post["body_chars"] > summaries.SHORT_POST_MAX:

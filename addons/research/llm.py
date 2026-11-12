@@ -23,7 +23,7 @@ from . import gate
 
 SEARCH_URL = os.environ.get("DEEPSEEK_SEARCH_URL", "https://api.deepseek.com/v1/tools/search")
 CHAT_URL = os.environ.get("DEEPSEEK_CHAT_URL", "https://api.deepseek.com/chat/completions")
-MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-flash")
 
 SOURCE_SYSTEM = (
     "你是严谨的调研助手。你只能依据下方【检索来源】回答，不得凭记忆补事实。\n"

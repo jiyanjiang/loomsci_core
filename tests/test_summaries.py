@@ -63,6 +63,29 @@ class SummariesTest(unittest.TestCase):
             storage.get_post(self.conn, post["id"])["summary"]["status"], "fallback"
         )
 
+    def test_ensure_queues_extractive_fallback_once_after_key(self) -> None:
+        from unittest.mock import patch
+
+        body = "这是一个长文。" * 120
+        post = storage.create_post(self.conn, author=AGENT, kind="note", body=body)
+        summaries.enqueue_for_post(self.conn, post_id=post["id"], body=body, home=self.home)
+        self.assertEqual(
+            storage.get_post(self.conn, post["id"])["summary"]["status"], "fallback"
+        )
+        (self.home / "config.yaml").write_text(
+            "llm:\n  providers:\n    deepseek:\n      api_key: test-key\n",
+            encoding="utf-8",
+        )
+        posts = [storage.get_post(self.conn, post["id"])]
+        self.assertEqual(summaries.ensure_for_posts(self.conn, posts, home=self.home), 1)
+        self.assertEqual(summaries.ensure_for_posts(self.conn, posts, home=self.home), 0)
+        with patch.object(summaries, "_generate_ai", return_value="摘要内容。" * 80):
+            self.assertTrue(summaries.generate_one(self.conn, post_id=post["id"], home=self.home))
+        summary = storage.get_post(self.conn, post["id"])["summary"]
+        self.assertEqual(summary["status"], "ready")
+        self.assertEqual(summary["model"], "deepseek-flash")
+        self.assertEqual(summaries.ensure_for_posts(self.conn, posts, home=self.home), 0)
+
     def test_pending_summary_uses_model_when_key_configured(self) -> None:
         from unittest.mock import patch
 

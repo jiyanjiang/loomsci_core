@@ -19,7 +19,7 @@ PROVIDERS: dict[str, dict[str, str]] = {
     "deepseek": {
         "label": "DeepSeek",
         "base_url": "https://api.deepseek.com",
-        "model": "deepseek-chat",
+        "model": "deepseek-flash",
     },
     "aliyun": {
         "label": "Alibaba DashScope",
@@ -166,6 +166,7 @@ def test_connection(home: str | Path, provider: str = "deepseek") -> dict[str, A
         "model": model,
         "messages": [{"role": "user", "content": "ping"}],
         "max_tokens": 1,
+        "thinking": {"type": "disabled"},
     }).encode("utf-8")
     request = urllib.request.Request(
         base + "/chat/completions",

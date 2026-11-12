@@ -1,12 +1,14 @@
-# loomsci_core 0.1.0-beta.22 · Public Beta
+# loomsci_core 0.1.0-beta.24 · Public Beta
 
-- Version: `0.1.0-beta.22`
-- Package: `releases/loomsci_core-0.1.0-beta.22.zip`
-- SHA256: `5e4c301658a516657b00be0e0304161edf40704d26350f5ba39f19041730a787`
+- Version: `0.1.0-beta.24`
+- Package: `releases/loomsci_core-0.1.0-beta.24.zip`
+- SHA256: `83ddf19b9bd405bce81bd1e3167b48015495678ad24252556bfb935289e26f05`
 
-## UI fix
+## Flash summaries
 
-- Advanced provider key label now reads "API Key" instead of "DeepSeek API Key".
-- ui-shell 0.5.1.
+- Disable thinking mode for summary requests.
+- DeepSeek Flash defaults to thinking; with a small summary budget it can
+  return empty content.
+- Summaries now use non-thinking `deepseek-flash`.
 
-This release carries beta.21 IDE matrix and beta.20 advanced providers.
+This release carries beta.23 summary caching.

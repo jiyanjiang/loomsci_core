@@ -2,6 +2,8 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.24` | `releases/loomsci_core-0.1.0-beta.24.zip` | Flash non-thinking summaries |
+| `0.1.0-beta.23` | `releases/loomsci_core-0.1.0-beta.23.zip` | Summary cache / flash |
 | `0.1.0-beta.22` | `releases/loomsci_core-0.1.0-beta.22.zip` | Advanced-provider label fix |
 | `0.1.0-beta.21` | `releases/loomsci_core-0.1.0-beta.21.zip` | IDE matrix / add-on contract |
 | `0.1.0-beta.20` | `releases/loomsci_core-0.1.0-beta.20.zip` | Advanced providers |
