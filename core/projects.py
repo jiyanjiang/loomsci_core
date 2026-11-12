@@ -18,7 +18,7 @@ STRONG_FILES = {
     "project.yaml", "project.yml", "project.json",
 }
 README_FILES = ("README.md", "README.zh-CN.md", "readme.md", "README.rst")
-DB_SUFFIXES = {".db", ".sqlite", ".sqlite3"}
+DB_SUFFIXES = {".db", ".sqlite", ".sqlite3", ".duckdb"}
 DEFAULT_EXCLUDES = {
     ".git", ".hg", ".svn", "node_modules", "venv", ".venv", "__pycache__",
     ".cache", "site-packages", ".pytest_cache", ".mypy_cache",

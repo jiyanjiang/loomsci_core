@@ -132,6 +132,68 @@ CREATE TABLE IF NOT EXISTS presence (
   last_seen  TEXT NOT NULL,
   PRIMARY KEY (agent, tool, workspace)
 );
+
+
+CREATE TABLE IF NOT EXISTS projects (
+  id          TEXT PRIMARY KEY,
+  code        TEXT NOT NULL UNIQUE,
+  name        TEXT NOT NULL,
+  description TEXT,
+  type        TEXT NOT NULL DEFAULT 'unknown',
+  status      TEXT NOT NULL DEFAULT 'active',
+  machine_id  TEXT,
+  created_at  TEXT NOT NULL,
+  updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_sources (
+  id           TEXT PRIMARY KEY,
+  project_id   TEXT NOT NULL,
+  role         TEXT NOT NULL,
+  root_path    TEXT NOT NULL,
+  source_state TEXT NOT NULL DEFAULT 'available',
+  data_as_of   TEXT,
+  last_seen_at TEXT,
+  meta_json    TEXT NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS project_sources_project ON project_sources(project_id);
+
+CREATE TABLE IF NOT EXISTS project_entries (
+  project_id TEXT NOT NULL,
+  source_id  TEXT NOT NULL,
+  path       TEXT NOT NULL,
+  kind       TEXT NOT NULL,
+  title      TEXT,
+  bytes      INTEGER NOT NULL DEFAULT 0,
+  mtime      TEXT,
+  sha256     TEXT,
+  summary    TEXT,
+  PRIMARY KEY (source_id, path)
+);
+CREATE INDEX IF NOT EXISTS project_entries_project ON project_entries(project_id, kind);
+
+CREATE TABLE IF NOT EXISTS project_schemas (
+  project_id  TEXT NOT NULL,
+  source_id   TEXT NOT NULL,
+  db_path     TEXT NOT NULL,
+  engine      TEXT NOT NULL,
+  schema_hash TEXT,
+  tables_json TEXT,
+  row_json    TEXT,
+  inspected_at TEXT NOT NULL,
+  PRIMARY KEY (source_id, db_path)
+);
+
+CREATE TABLE IF NOT EXISTS project_apps (
+  project_id TEXT NOT NULL,
+  source_id  TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  command    TEXT,
+  port       INTEGER,
+  url        TEXT,
+  status     TEXT NOT NULL DEFAULT 'registered',
+  PRIMARY KEY (source_id, name)
+);
 """
 
 

@@ -1,3 +1,10 @@
+# v0.1.0-beta.9 — Reference projects
+
+- Add reference-only project registry and metadata index.
+- Add `project register/list/show/refresh/remove`.
+- Source files, DuckDB/SQLite databases, and app code are never copied.
+- Add `.duckdb` detection.
+
 # v0.1.0-beta.8 — Project scanner
 
 - Add read-only `loomsci project scan`.

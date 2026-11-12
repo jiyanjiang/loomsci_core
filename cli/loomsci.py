@@ -23,6 +23,7 @@ from core import backup as backup_mod
 from core import doctor as doctor_mod
 from core import migration as migration_mod
 from core import projects as projects_mod
+from core import project_store
 from core import storage_ops
 from core import addons as addons_mod
 from core import export as export_mod
@@ -843,6 +844,116 @@ def _cmd_watch(args: argparse.Namespace) -> int:
     return 0
 
 
+def _project_conn(args: argparse.Namespace):
+    layout = _layout(args)
+    storage.init_db(layout.db)
+    return layout, storage.connect(layout.db)
+
+
+def _cmd_project_register(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        root = Path(args.root).expanduser()
+        sources = []
+        for raw in args.source or []:
+            if "=" not in raw:
+                raise CliError("--source must be role=path")
+            role, path = raw.split("=", 1)
+            sources.append({"role": role.strip(), "path": path.strip()})
+        if not sources:
+            sources = [{"role": "root", "path": str(root)}]
+        scan = projects_mod.scan(root, depth=1, min_score=0, limit=1)
+        candidate = scan["projects"][0] if scan.get("projects") else {}
+        project = project_store.create_project(
+            conn,
+            code=args.code or candidate.get("code") or root.name,
+            name=args.name or candidate.get("name") or root.name,
+            description=args.description if args.description is not None else candidate.get("description", ""),
+            project_type=args.type or candidate.get("type", "unknown"),
+            sources=sources,
+            app_port=args.app_port or candidate.get("app_port"),
+            exclude=args.exclude or (),
+        )
+    except Exception as exc:  # noqa: BLE001 - CLI boundary
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(project)
+    else:
+        print(f"registered: {project['code']} ({project['id']})")
+        print(f"entries: {project['counts']['entries']} bytes={project['counts']['bytes']}")
+        for source in project["sources"]:
+            print(f"source: {source['role']} {source['source_state']} {source['root_path']}")
+    return 0
+
+
+def _cmd_project_list(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        rows = project_store.list_projects(conn)
+    finally:
+        conn.close()
+    if args.json:
+        _json_print({"projects": rows})
+    else:
+        for row in rows:
+            print(f"{row['code']:<28} entries={row['entries']:<6} sources={row['sources']} {row['name']}")
+    return 0
+
+
+def _cmd_project_show(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_store.get_project(conn, args.code)
+    finally:
+        conn.close()
+    if project is None:
+        print("error: project not found", file=sys.stderr)
+        return 1
+    if args.json:
+        _json_print(project)
+    else:
+        print(f"{project['code']}  {project['name']}")
+        print(f"type: {project['type']} status: {project['status']} machine: {project['machine_id']}")
+        print(f"entries: {project['counts']['entries']} bytes={project['counts']['bytes']}")
+        for source in project["sources"]:
+            print(f"source: {source['role']} {source['source_state']} data_as_of={source['data_as_of'] or '-'} {source['root_path']}")
+        for app in project["apps"]:
+            print(f"app: {app['name']} port={app['port']} {app['url']} {app['status']}")
+    return 0
+
+
+def _cmd_project_refresh(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_store.refresh_project(conn, args.code, exclude=args.exclude or ())
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(project)
+    else:
+        print(f"refreshed: {project['code']} entries={project['counts']['entries']}")
+    return 0
+
+
+def _cmd_project_remove(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        removed = project_store.remove_project(conn, args.code)
+    finally:
+        conn.close()
+    if not removed:
+        print("error: project not found", file=sys.stderr)
+        return 1
+    print(f"removed: {args.code}")
+    return 0
+
+
 def _cmd_project_scan(args: argparse.Namespace) -> int:
     try:
         result = projects_mod.scan(
@@ -1559,6 +1670,39 @@ def build_parser() -> argparse.ArgumentParser:
     project_scan.add_argument("--exclude", action="append", default=[])
     project_scan.add_argument("--json", action="store_true")
     project_scan.set_defaults(func=_cmd_project_scan)
+
+    project_register = project_sub.add_parser("register", help="register a local project by reference")
+    project_register.add_argument("--root", required=True)
+    project_register.add_argument("--code")
+    project_register.add_argument("--name")
+    project_register.add_argument("--description")
+    project_register.add_argument("--type", default="unknown")
+    project_register.add_argument("--source", action="append", default=[])
+    project_register.add_argument("--app-port", type=int)
+    project_register.add_argument("--exclude", action="append", default=[])
+    project_register.add_argument("--json", action="store_true")
+    project_register.set_defaults(func=_cmd_project_register)
+
+    project_list = project_sub.add_parser("list", help="list registered projects")
+    project_list.add_argument("--json", action="store_true")
+    project_list.set_defaults(func=_cmd_project_list)
+
+    project_show = project_sub.add_parser("show", help="show one project")
+    project_show.add_argument("code")
+    project_show.add_argument("--json", action="store_true")
+    project_show.set_defaults(func=_cmd_project_show)
+
+    project_refresh = project_sub.add_parser("refresh", help="refresh metadata index")
+    project_refresh.add_argument("code")
+    project_refresh.add_argument("--exclude", action="append", default=[])
+    project_refresh.add_argument("--json", action="store_true")
+    project_refresh.set_defaults(func=_cmd_project_refresh)
+
+    project_remove = project_sub.add_parser("remove", help="remove a project reference")
+    project_remove.add_argument("code")
+    project_remove.set_defaults(func=_cmd_project_remove)
+
+
 
     service = sub.add_parser("service", help="manage login-time Core startup")
     service_sub = service.add_subparsers(dest="service_command", required=True)

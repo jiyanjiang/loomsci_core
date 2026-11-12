@@ -1,3 +1,10 @@
+# v0.1.0-beta.9 — Reference projects
+
+- Add `projects`, `project_sources`, `project_entries`, `project_schemas`, `project_apps`.
+- Add `project register/list/show/refresh/remove`.
+- Project sources are references; files and databases are never copied.
+- Add `.duckdb` detection to the scanner.
+
 # v0.1.0-beta.8 — Project scanner
 
 - Add read-only `loomsci project scan`.
