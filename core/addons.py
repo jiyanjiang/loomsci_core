@@ -18,6 +18,19 @@ from typing import Any, Iterable
 ROOT = Path(__file__).resolve().parent.parent
 BUNDLED = ROOT / "addons"
 STATE_SCHEMA = 2
+CONTRACT = {
+    "api": "core/1",
+    "required": ["name", "version", "api", "package", "entry", "port", "health"],
+    "defaults": {"package": "name with '-' replaced by '_'", "entry": "server", "port": 0, "health": "/"},
+    "optional": ["requires", "routes", "storage", "jobs", "nav", "preserve"],
+    "rules": [
+        "Core never imports add-on code.",
+        "Add-ons use public Core /v1 APIs; no core.storage imports.",
+        "Each add-on has an isolated package, storage namespace, port, and health path.",
+        "Manifest api must equal core/1.",
+        "Installed data lives in packs/<package>/data/ and survives update.",
+    ],
+}
 PROFILES = {
     "minimal": [],
     "personal": ["ui-shell", "notify"],

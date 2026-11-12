@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.21` | `releases/loomsci_core-0.1.0-beta.21.zip` | IDE matrix / add-on contract |
 | `0.1.0-beta.20` | `releases/loomsci_core-0.1.0-beta.20.zip` | Advanced providers |
 | `0.1.0-beta.19` | `releases/loomsci_core-0.1.0-beta.19.zip` | FTS5 search |
 | `0.1.0-beta.18` | `releases/loomsci_core-0.1.0-beta.18.zip` | Project templates |

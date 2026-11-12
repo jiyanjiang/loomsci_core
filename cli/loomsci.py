@@ -1335,6 +1335,21 @@ def _cmd_addon_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_addon_contract(args: argparse.Namespace) -> int:
+    data = {"contract": addons_mod.CONTRACT, "profiles": addons_mod.PROFILES}
+    if args.json:
+        _json_print(data)
+    else:
+        contract = data["contract"]
+        print(f"api: {contract['api']}")
+        print("required: " + ", ".join(contract["required"]))
+        print("optional: " + ", ".join(contract["optional"]))
+        for rule in contract["rules"]:
+            print(f"- {rule}")
+        print("profiles: " + ", ".join(data["profiles"]))
+    return 0
+
+
 def _cmd_addon_install(args: argparse.Namespace) -> int:
     layout = _layout(args)
     try:
@@ -2077,6 +2092,10 @@ def build_parser() -> argparse.ArgumentParser:
     addon_update.add_argument("--all", action="store_true")
     addon_update.add_argument("--json", action="store_true")
     addon_update.set_defaults(func=_cmd_addon_update)
+
+    addon_contract = addon_sub.add_parser("contract", help="print the add-on manifest contract")
+    addon_contract.add_argument("--json", action="store_true")
+    addon_contract.set_defaults(func=_cmd_addon_contract)
 
     addon_verify = addon_sub.add_parser("verify", help="verify installed add-on files and versions")
     addon_verify.add_argument("--json", action="store_true")

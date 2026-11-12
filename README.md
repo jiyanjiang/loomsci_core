@@ -1,6 +1,6 @@
 # loomsci_core · Public Beta
 
-[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
+[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [IDE matrix](docs/en/ide-compatibility.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
 
 **A local-first research workspace for people who work with AI IDEs.**
 
@@ -8,7 +8,7 @@ LoomSci keeps the durable parts of your work — notes, posts, tasks, facts,
 attachments, and agent instructions — on your computer. Your AI IDE is the
 execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
-> **Status: `0.1.0-beta.20` public beta.** Local-only, one owner, no login, no
+> **Status: `0.1.0-beta.21` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
 
 ## Requirements
@@ -241,7 +241,7 @@ commands rather than claiming success.
 ## Verify a release
 
 ```bash
-shasum -a 256 loomsci_core-0.1.0-beta.20.zip
+shasum -a 256 loomsci_core-0.1.0-beta.21.zip
 # compare with release-manifest.json / SHA256SUMS
 ```
 

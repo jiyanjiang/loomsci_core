@@ -1,3 +1,9 @@
+# v0.1.0-beta.21 — IDE matrix and add-on contract
+
+- Add IDE compatibility matrix.
+- Document the add-on manifest contract.
+- Add `loomsci addon contract`.
+
 # v0.1.0-beta.20 — Advanced providers
 
 - Add Aliyun DashScope and Volcengine Ark advanced settings.
