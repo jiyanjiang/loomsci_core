@@ -1093,6 +1093,11 @@ def _cmd_update_apply(args: argparse.Namespace) -> int:
         print("error: no downloaded update; run `loomsci update download`", file=sys.stderr)
         return 1
     try:
+        package = updates_mod.verify_downloaded(layout.root)
+    except updates_mod.UpdateError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    try:
         from scripts import upgrade as upgrade_mod
     except ImportError:
         print("error: upgrade module not found", file=sys.stderr)

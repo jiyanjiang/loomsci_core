@@ -15,7 +15,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 DEFAULT_URL = "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/releases/latest.json"
 MAX_BYTES = 200 * 1024 * 1024
@@ -58,6 +58,22 @@ def latest_url() -> str:
     return env or DEFAULT_URL
 
 
+def _validate_url(url: str, *, label: str) -> str:
+    value = str(url or "").strip()
+    parsed = urlsplit(value)
+    host = (parsed.hostname or "").lower()
+    loopback = host in {"127.0.0.1", "localhost", "::1"}
+    if parsed.scheme == "https":
+        pass
+    elif parsed.scheme == "http" and loopback:
+        pass
+    else:
+        raise UpdateError(f"{label} must use HTTPS (or loopback HTTP)")
+    if parsed.username or parsed.password:
+        raise UpdateError(f"{label} must not contain credentials")
+    return value
+
+
 def _state_path(home: Path) -> Path:
     return home / "runtime" / "update.json"
 
@@ -81,7 +97,10 @@ def _write_state(home: Path, data: dict[str, Any]) -> None:
 
 def check(home: str | Path, *, timeout: int = 15) -> dict[str, Any]:
     home = Path(home).expanduser()
-    request = urllib.request.Request(latest_url(), headers={"User-Agent": "loomsci-updater"})
+    request = urllib.request.Request(
+        _validate_url(latest_url(), label="update URL"),
+        headers={"User-Agent": "loomsci-updater"},
+    )
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
@@ -112,7 +131,9 @@ def download(home: str | Path, *, timeout: int = 60) -> dict[str, Any]:
     latest = state.get("latest")
     if not isinstance(latest, dict) or not latest.get("url"):
         raise UpdateError("check for updates first")
-    package_url = urljoin(latest_url(), str(latest["url"]))
+    package_url = _validate_url(
+        urljoin(latest_url(), str(latest["url"])), label="package URL"
+    )
     expected = str(latest.get("sha256") or "").lower()
     folder = home / "updates"
     folder.mkdir(parents=True, exist_ok=True)
@@ -148,6 +169,24 @@ def download(home: str | Path, *, timeout: int = 60) -> dict[str, Any]:
     }
     _write_state(home, state)
     return {"ok": True, "path": str(target), "sha256": digest.hexdigest(), "bytes": total}
+
+
+def verify_downloaded(home: str | Path) -> Path:
+    state = read_state(home)
+    downloaded = state.get("downloaded") or {}
+    path = Path(str(downloaded.get("path") or "")).expanduser()
+    if not path.is_file():
+        raise UpdateError("downloaded package missing")
+    expected = str(downloaded.get("sha256") or "").lower()
+    digest = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            digest.update(chunk)
+    if expected and digest.hexdigest() != expected:
+        raise UpdateError("downloaded package SHA-256 mismatch")
+    if downloaded.get("bytes") and path.stat().st_size != int(downloaded["bytes"]):
+        raise UpdateError("downloaded package size mismatch")
+    return path
 
 
 def status(home: str | Path) -> dict[str, Any]:

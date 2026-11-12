@@ -1,16 +1,15 @@
-# loomsci_core 0.1.0-beta.13 · Public Beta
+# loomsci_core 0.1.0-beta.14 · Public Beta
 
-- Version: `0.1.0-beta.13`
-- Package: `releases/loomsci_core-0.1.0-beta.13.zip`
-- SHA256: `52e1778ba2c5b66243c9bb2c18918607775a34ef42a9487f3f1cf328fec0650d`
+- Version: `0.1.0-beta.14`
+- Package: `releases/loomsci_core-0.1.0-beta.14.zip`
+- SHA256: `030b52ad7fce6d7f76122a063c0916540e717f0a39045752fa7d61a09f24cf1a`
 
-## Update checker
+## Security audit
 
-- Add update status/check/download/apply APIs and CLI.
-- Settings → Updates: check, download, install and restart.
-- Verify bytes and SHA-256.
-- Install uses pre-upgrade backup and rollback.
-- Automatic installation remains disabled; the user confirms.
+- Host/Origin/JSON/agent regression tests.
+- HTTPS required for non-loopback update/package URLs.
+- Downloaded bytes/SHA re-verified before install.
+- Local-process trust boundary documented; no per-install token yet.
 
-This release carries beta.12 review gate, beta.11 dashboard, beta.10 schema
-inspection, and beta.9 reference projects.
+This release carries beta.13 update checker, beta.12 review gate, and beta.11
+project dashboard.

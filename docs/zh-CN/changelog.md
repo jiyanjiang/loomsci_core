@@ -1,3 +1,10 @@
+# v0.1.0-beta.14 — 安全审计
+
+- Add security regression tests for Host, Origin, JSON, and agent boundaries.
+- Require HTTPS for non-loopback update/package URLs.
+- Re-verify downloaded bytes/SHA before installation.
+- Document local-process trust and the absence of a capability token.
+
 # v0.1.0-beta.13 — 更新检查
 
 - Add update status/check/download/apply APIs and CLI.

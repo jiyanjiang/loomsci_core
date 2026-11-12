@@ -1,3 +1,10 @@
+# v0.1.0-beta.14 — Security audit
+
+- Add Host/Origin/JSON/agent security regression tests.
+- Require HTTPS for non-loopback update and package URLs.
+- Re-verify downloaded bytes/SHA before install.
+- Document the local-process trust boundary.
+
 # v0.1.0-beta.13 — Update checker
 
 - Add update status/check/download/apply APIs and CLI.

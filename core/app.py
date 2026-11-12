@@ -508,6 +508,10 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         package = downloaded.get("path")
         if not package or not Path(package).is_file():
             return jsonify({"ok": False, "error": "download_required"}), 409
+        try:
+            package = updates.verify_downloaded(layout.root)
+        except updates.UpdateError:
+            return jsonify({"ok": False, "error": "download_verification_failed"}), 409
         python = layout.root / "venv" / "Scripts" / "python.exe"
         if not python.is_file():
             python = layout.root / "venv" / "bin" / "python"

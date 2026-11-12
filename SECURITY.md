@@ -20,6 +20,30 @@ If private reporting is unavailable, open a minimal public issue asking for a
 private channel; do not include exploit details, credentials, personal data, or
 internal addresses.
 
+## Local API threat model
+
+The Core trusts other processes running as the same local OS account. There is
+no login or per-install capability token in the current beta, so a malicious
+local process can impersonate the UI by sending the expected agent header.
+This is an explicit single-user boundary, not a multi-user boundary.
+
+Protections that are enforced and tested:
+
+- loopback `Host` values only; non-loopback Host headers are rejected;
+- cross-origin writes are rejected; missing/`null` origins are rejected;
+- writes require JSON and a declared agent handle;
+- browser pages cannot use a simple HTML form to mutate state;
+- no CORS wildcard is returned;
+- update metadata and package URLs require HTTPS (loopback HTTP is allowed for
+  tests), cannot contain credentials, and downloaded bytes/SHA are re-checked
+  before installation;
+- API keys are write-only, never returned by API responses, and are excluded
+  from backups/exports.
+
+Local-process trust will be revisited if a per-install capability token is
+added. A future multi-user or LAN mode must add authentication, authorization,
+and per-user isolation.
+
 ## Post summaries and model calls
 
 Posts are stored locally. AI summaries are optional and are the only automatic
