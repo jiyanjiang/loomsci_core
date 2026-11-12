@@ -199,6 +199,24 @@ CREATE TABLE IF NOT EXISTS project_schemas (
   PRIMARY KEY (source_id, db_path)
 );
 
+
+CREATE TABLE IF NOT EXISTS project_evaluations (
+  id                 TEXT PRIMARY KEY,
+  project_id         TEXT NOT NULL,
+  status             TEXT NOT NULL DEFAULT 'draft',
+  problem_clarity    INTEGER,
+  evidence           INTEGER,
+  implementation     INTEGER,
+  output             INTEGER,
+  application        INTEGER,
+  commercial         INTEGER,
+  maintainability    INTEGER,
+  rationale          TEXT,
+  reviewer           TEXT,
+  created_at         TEXT NOT NULL,
+  updated_at         TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS project_apps (
   project_id TEXT NOT NULL,
   source_id  TEXT NOT NULL,

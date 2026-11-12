@@ -317,6 +317,12 @@ function timelineHtml(rows) {
       <b>${Number(row.entries || 0)}</b></div>`).join("")}</div>`;
 }
 
+function project_store_eval_fields(ev) {
+  return ["problem_clarity", "evidence", "implementation", "output", "application", "commercial", "maintainability"]
+    .map((key) => `<span class="chip">${esc(key.replace(/_/g, " "))} ${ev[key] ?? "—"}/5</span>`).join("") +
+    `<span class="chip">${esc(ev.status)}</span>`;
+}
+
 async function loadProject(code) {
   const [detail, stats] = await Promise.all([
     api(`projects/${encodeURIComponent(code)}`),
@@ -353,6 +359,12 @@ async function loadProject(code) {
       <span class="chip">${esc(t("projects.commercial"))} ${project.commercial_potential ?? "—"}/5</span></div>
       ${project.direction ? `<p>${esc(project.direction)}</p>` : ""}
       ${project.review_notes ? `<p class="meta">${esc(project.review_notes)}</p>` : ""}
+    </div>
+    <div class="project-section"><h3>${esc(t("projects.evaluation"))}</h3>
+      ${(project.evaluations && project.evaluations.length) ? (() => {
+        const ev = project.evaluations[0];
+        return `<div class="chips">${project_store_eval_fields(ev)}</div>${ev.rationale ? `<p>${esc(ev.rationale)}</p>` : ""}`;
+      })() : `<p class="muted">—</p>`}
     </div>
     <div class="project-section"><h3>${esc(t("projects.kinds"))}</h3><div class="chips">${kinds || "—"}</div></div>
     <div class="project-section"><h3>${esc(t("projects.sources"))}</h3>${sources}</div>

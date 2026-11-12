@@ -1,15 +1,15 @@
-# loomsci_core 0.1.0-beta.16 · Public Beta
+# loomsci_core 0.1.0-beta.17 · Public Beta
 
-- Version: `0.1.0-beta.16`
-- Package: `releases/loomsci_core-0.1.0-beta.16.zip`
-- SHA256: `eb1492bad318e83876567744eb75398c4a5f3f572b152b3bcd8d4c9431591736`
+- Version: `0.1.0-beta.17`
+- Package: `releases/loomsci_core-0.1.0-beta.17.zip`
+- SHA256: `98f535bc59ea6faf55c7e1740cae8fb33ca7a52c6fb6150d9744d3ec7409d04a`
 
-## Project app registry
+## Project evaluation rubric
 
-- Add project app add/list/check.
-- Status: registered, running, unreachable.
-- Health checks are read-only; project commands are never executed.
-- UI displays app status and a check action.
+- Add structured evaluations: problem clarity, evidence, implementation, output,
+  application, commercial, maintainability.
+- Add `project evaluate` CLI and evaluations API/UI.
+- Human review states: draft, reviewed, approved; no automatic approval.
 
-This release carries beta.15 API/schema contract, beta.14 security audit, and
-beta.13 update checker.
+This release carries beta.16 app registry, beta.15 API/schema contract, and
+beta.14 security audit.

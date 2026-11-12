@@ -76,6 +76,19 @@ class ProjectStoreTest(unittest.TestCase):
         self.assertEqual(reviewed["status"], "active")
         self.assertEqual(len(project_store.list_projects(self.conn, selected_only=True)), 1)
 
+    def test_evaluation_is_human_recorded(self) -> None:
+        project_store.create_project(
+            self.conn, code="alpha", name="Alpha", sources=[{"role": "root", "path": str(self.project)}]
+        )
+        project = project_store.evaluate_project(
+            self.conn, "alpha",
+            scores={"problem_clarity": 4, "evidence": 3, "implementation": 4,
+                    "output": 3, "application": 4, "commercial": 3, "maintainability": 4},
+            status="reviewed", rationale="human review", reviewer="owner",
+        )
+        self.assertEqual(project["evaluations"][0]["status"], "reviewed")
+        self.assertEqual(project["evaluations"][0]["problem_clarity"], 4)
+
     def test_app_registry_and_unreachable_check(self) -> None:
         project_store.create_project(
             self.conn, code="alpha", name="Alpha", sources=[{"role": "root", "path": str(self.project)}]

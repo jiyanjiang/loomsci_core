@@ -599,6 +599,32 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
         except LookupError:
             return jsonify({"ok": False, "error": "not_found"}), 404
 
+    @app.get("/v1/projects/<code>/evaluations")
+    def project_evaluations_list(code: str):
+        project = project_store.get_project(get_db(), code)
+        if project is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        return jsonify({"ok": True, "evaluations": project["evaluations"]})
+
+    @app.post("/v1/projects/<code>/evaluations")
+    def project_evaluations_create(code: str):
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_object_required"}), 400
+        scores = {field: body.get(field) for field in project_store.EVALUATION_FIELDS}
+        try:
+            project = project_store.evaluate_project(
+                get_db(), code, scores=scores,
+                status=str(body.get("status") or "draft"),
+                rationale=str(body.get("rationale") or ""),
+                reviewer=str(body.get("reviewer") or "owner"),
+            )
+        except LookupError:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": "bad_request", "detail": str(exc)}), 400
+        return jsonify({"ok": True, "evaluation": project["evaluations"][0]})
+
     @app.get("/v1/projects/<code>")
     def projects_show(code: str):
         project = project_store.get_project(get_db(), code)

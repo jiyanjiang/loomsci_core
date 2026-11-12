@@ -210,6 +210,12 @@ def get_project(conn, code: str) -> dict[str, Any] | None:
         dict(item)
         for item in conn.execute("SELECT * FROM project_schemas WHERE project_id=? ORDER BY db_path", (project["id"],))
     ]
+    project["evaluations"] = [
+        dict(item)
+        for item in conn.execute(
+            "SELECT * FROM project_evaluations WHERE project_id=? ORDER BY updated_at DESC", (project["id"],)
+        )
+    ]
     return project
 
 
@@ -431,3 +437,45 @@ def check_all_apps(conn, code: str) -> list[dict[str, Any]]:
     if project is None:
         raise LookupError("project not found")
     return [check_app(conn, code, item["name"]) for item in project["apps"]]
+
+
+EVALUATION_FIELDS = (
+    "problem_clarity", "evidence", "implementation", "output",
+    "application", "commercial", "maintainability",
+)
+
+
+def evaluate_project(
+    conn,
+    code: str,
+    *,
+    scores: dict[str, int],
+    status: str = "draft",
+    rationale: str = "",
+    reviewer: str = "owner",
+) -> dict[str, Any]:
+    if status not in {"draft", "reviewed", "approved"}:
+        raise ValueError("invalid evaluation status")
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    values = {}
+    for field in EVALUATION_FIELDS:
+        value = scores.get(field)
+        if value is not None and not 0 <= int(value) <= 5:
+            raise ValueError(f"{field} must be 0-5")
+        values[field] = int(value) if value is not None else None
+    stamp = _now()
+    evaluation_id = "ev-" + secrets.token_hex(6)
+    columns = ", ".join(("id", "project_id", "status", *EVALUATION_FIELDS, "rationale", "reviewer", "created_at", "updated_at"))
+    placeholders = ", ".join("?" for _ in range(4 + len(EVALUATION_FIELDS) + 3))
+    conn.execute(
+        f"INSERT INTO project_evaluations({columns}) VALUES ({placeholders})",
+        (
+            evaluation_id, project["id"], status,
+            *[values[field] for field in EVALUATION_FIELDS],
+            rationale, reviewer, stamp, stamp,
+        ),
+    )
+    conn.commit()
+    return get_project(conn, code) or project

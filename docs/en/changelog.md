@@ -1,3 +1,9 @@
+# v0.1.0-beta.17 — Project evaluation rubric
+
+- Add structured project evaluations.
+- Add `project evaluate` CLI and evaluations API/UI.
+- Human review states: draft, reviewed, approved. No automatic approval.
+
 # v0.1.0-beta.16 — Project app registry
 
 - Add project app add/list/check.

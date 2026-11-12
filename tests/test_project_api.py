@@ -62,6 +62,19 @@ class ProjectApiTest(unittest.TestCase):
         self.assertEqual(checked.status_code, 200)
         self.assertEqual(checked.json["app"]["status"], "unreachable")
 
+    def test_evaluation_api(self) -> None:
+        response = self.client.post(
+            "/v1/projects/alpha/evaluations",
+            json={"status": "reviewed", "problem_clarity": 4, "evidence": 3,
+                  "implementation": 4, "output": 3, "application": 4,
+                  "commercial": 3, "maintainability": 4, "rationale": "ok"},
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["evaluation"]["status"], "reviewed")
+        listed = self.client.get("/v1/projects/alpha/evaluations", headers=self.headers)
+        self.assertEqual(len(listed.json["evaluations"]), 1)
+
     def test_unknown_project(self) -> None:
         response = self.client.get("/v1/projects/missing", headers=self.headers)
         self.assertEqual(response.status_code, 404)

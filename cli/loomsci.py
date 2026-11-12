@@ -984,6 +984,39 @@ def _cmd_project_app_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_project_evaluate(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_store.evaluate_project(
+            conn, args.code,
+            scores={
+                "problem_clarity": args.problem,
+                "evidence": args.evidence,
+                "implementation": args.implementation,
+                "output": args.output,
+                "application": args.application,
+                "commercial": args.commercial,
+                "maintainability": args.maintainability,
+            },
+            status=args.status,
+            rationale=args.rationale or "",
+            reviewer=args.reviewer,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(project)
+    else:
+        evaluation = project["evaluations"][0]
+        print(f"evaluation: {evaluation['status']} by {evaluation['reviewer']}")
+        for field in project_store.EVALUATION_FIELDS:
+            print(f"{field}: {evaluation[field] if evaluation[field] is not None else '-'}/5")
+    return 0
+
+
 def _cmd_project_review(args: argparse.Namespace) -> int:
     layout, conn = _project_conn(args)
     try:
@@ -1909,6 +1942,16 @@ def build_parser() -> argparse.ArgumentParser:
     app_check.add_argument("--name")
     app_check.add_argument("--json", action="store_true")
     app_check.set_defaults(func=_cmd_project_app_check)
+
+    project_evaluate = project_sub.add_parser("evaluate", help="record a human project evaluation")
+    project_evaluate.add_argument("code")
+    project_evaluate.add_argument("--status", choices=["draft", "reviewed", "approved"], default="draft")
+    for name in ("problem", "evidence", "implementation", "output", "application", "commercial", "maintainability"):
+        project_evaluate.add_argument(f"--{name}", type=int)
+    project_evaluate.add_argument("--rationale")
+    project_evaluate.add_argument("--reviewer", default="owner")
+    project_evaluate.add_argument("--json", action="store_true")
+    project_evaluate.set_defaults(func=_cmd_project_evaluate)
 
     project_review = project_sub.add_parser("review", help="record human project review")
     project_review.add_argument("code")

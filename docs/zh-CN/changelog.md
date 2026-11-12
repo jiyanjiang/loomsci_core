@@ -1,3 +1,9 @@
+# v0.1.0-beta.17 — 项目评估量表
+
+- Add structured project evaluations.
+- Add `project evaluate` CLI and evaluations API/UI.
+- Human review states: draft, reviewed, approved. No automatic approval.
+
 # v0.1.0-beta.16 — 项目应用注册
 
 - Add project app add/list/check.

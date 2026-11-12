@@ -1,3 +1,9 @@
+# v0.1.0-beta.17 — Project evaluation rubric
+
+- Add project evaluations with problem clarity, evidence, implementation, output, application, commercial, maintainability.
+- Add `project evaluate` CLI and evaluations API/UI.
+- Evaluations are human-recorded drafts/reviewed/approved; no automatic approval.
+
 # v0.1.0-beta.16 — Project app registry
 
 - Add project app add/list/check.
