@@ -1,3 +1,11 @@
+# v0.1.0-beta.27 — Read-only reading surface
+
+- Remove human post/Task/Fact authoring from the UI; AI writes through the API/CLI.
+- Keep human reading, search, tag filtering, Markdown attachment expansion, and fact review.
+- Add `loomsci post --body-file` and repeatable `--tag`.
+- Set attachment MIME types for Markdown and text files.
+- Bump ui-shell to 0.5.4.
+
 # v0.1.0-beta.26 — Tags and tag cloud
 
 - Add `tags`, `post_tags`, and `tag_aliases` (schema version 2).

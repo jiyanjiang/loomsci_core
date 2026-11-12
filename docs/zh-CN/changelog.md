@@ -1,3 +1,9 @@
+# v0.1.0-beta.27 — 只读界面
+
+- Remove human authoring from the UI.
+- AI publishes via API/CLI.
+- Keep reading, tags, search, attachment expansion, and review.
+
 # v0.1.0-beta.26 — 标签与标签云
 
 - Add tags/post_tags/tag_aliases and schema version 2.

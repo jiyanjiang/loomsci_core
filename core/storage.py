@@ -754,7 +754,7 @@ def create_post(
         attach_to_post(conn, attachment_id=attachment_id, post_id=post_id)
     conn.commit()
     if tags:
-        set_post_tags(conn, post_id=post_id, tags=tags, source="human")
+        set_post_tags(conn, post_id=post_id, tags=tags, source="ai")
     row = conn.execute(POST_SELECT + " WHERE p.id=?", (post_id,)).fetchone()
     item = _post_dict(row)
     item["mentions"] = list_mentions(conn, post_id=post_id)

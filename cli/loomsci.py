@@ -7,6 +7,7 @@ import base64
 import getpass
 import sys
 import json
+import mimetypes
 import os
 import socket
 import sys
@@ -330,28 +331,33 @@ def _cmd_features(args: argparse.Namespace) -> int:
 
 def _cmd_post(args: argparse.Namespace) -> int:
     _require_agent(args)
+    body = str(args.body or "")
+    if args.body_file:
+        body = Path(args.body_file).expanduser().read_text(encoding="utf-8")
     attachment_ids = []
     for raw_path in args.attach or []:
         path = Path(raw_path).expanduser()
         data = path.read_bytes()
+        content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         uploaded = _request(
             args,
             "POST",
             "/v1/attachments",
             {
                 "filename": path.name,
-                "content_type": "application/octet-stream",
+                "content_type": content_type,
                 "content_base64": base64.b64encode(data).decode("ascii"),
             },
         )
         attachment_ids.append(uploaded["attachment"]["id"])
     payload = {
         "kind": args.kind,
-        "body": args.body,
+        "body": body,
         "thread_id": args.thread,
         "parent_id": args.parent,
         "meta": {"to": args.to} if args.to else {},
         "attachments": attachment_ids,
+        "tags": list(args.tag or []),
     }
     result = _request(args, "POST", "/v1/posts", payload)
     if args.json:
@@ -1793,7 +1799,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     post = sub.add_parser("post", help="create a post")
     post.add_argument("--kind", default="note")
-    post.add_argument("--body", required=True)
+    post.add_argument("--body", default="", help="post body")
+    post.add_argument("--body-file", help="read the post body from a UTF-8 file")
+    post.add_argument("--tag", action="append", help="tag (repeatable, max 8)")
     post.add_argument("--thread")
     post.add_argument("--parent")
     post.add_argument("--to")

@@ -1,6 +1,6 @@
 {
   "name": "ui-shell",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "api": "core/1",
   "requires": [
     "core/1"
