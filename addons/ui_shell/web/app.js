@@ -304,7 +304,7 @@ function projectCard(project) {
     <div class="project-title">${esc(project.name)}</div>
     <div class="meta">${esc(project.code)} · ${esc(project.machine_id || "")}</div>
     <div class="project-meta">${count} ${esc(t("projects.entries"))} · ${bytes}</div>
-    <div class="project-meta">${esc(project.type || "unknown")} · ${esc(project.status || "")}</div>
+    <div class="project-meta">${esc(project.type || "unknown")} · ${esc(project.review_status || "candidate")}</div>
   </a>`;
 }
 
@@ -344,6 +344,14 @@ async function loadProject(code) {
   app.innerHTML = `<p><a href="/app/projects">← ${esc(t("projects.back"))}</a></p>
     <h2>${esc(project.name)}</h2>
     <div class="meta">${esc(project.code)} · ${esc(t("projects.machine"))}: ${esc(project.machine_id || "")} · ${esc(project.type)}</div>
+    <div class="project-section"><h3>${esc(t("projects.review"))}</h3>
+      <div class="chips"><span class="chip">${esc(project.review_status || "candidate")}</span>
+      <span class="chip">${esc(t("projects.completeness"))} ${project.completeness ?? "—"}/5</span>
+      <span class="chip">${esc(t("projects.maturity"))} ${project.maturity ?? "—"}/5</span>
+      <span class="chip">${esc(t("projects.commercial"))} ${project.commercial_potential ?? "—"}/5</span></div>
+      ${project.direction ? `<p>${esc(project.direction)}</p>` : ""}
+      ${project.review_notes ? `<p class="meta">${esc(project.review_notes)}</p>` : ""}
+    </div>
     <div class="project-section"><h3>${esc(t("projects.kinds"))}</h3><div class="chips">${kinds || "—"}</div></div>
     <div class="project-section"><h3>${esc(t("projects.sources"))}</h3>${sources}</div>
     <div class="project-section"><h3>${esc(t("projects.apps"))}</h3>${apps}</div>

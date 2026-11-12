@@ -482,7 +482,8 @@ pre {{ white-space: pre-wrap; margin: 6px 0 0; }}
 
     @app.get("/v1/projects")
     def projects_list():
-        return jsonify({"ok": True, "projects": project_store.list_projects(get_db())})
+        selected = request.args.get("selected") in {"1", "true", "yes"}
+        return jsonify({"ok": True, "projects": project_store.list_projects(get_db(), selected_only=selected)})
 
     @app.get("/v1/projects/<code>/stats")
     def projects_stats(code: str):

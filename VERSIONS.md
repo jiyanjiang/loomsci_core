@@ -2,6 +2,7 @@
 
 | Version | Package | Notes |
 |---|---|---|
+| `0.1.0-beta.12` | `releases/loomsci_core-0.1.0-beta.12.zip` | Project review gate |
 | `0.1.0-beta.11` | `releases/loomsci_core-0.1.0-beta.11.zip` | Project dashboard |
 | `0.1.0-beta.10` | `releases/loomsci_core-0.1.0-beta.10.zip` | Database schema inspector |
 | `0.1.0-beta.9` | `releases/loomsci_core-0.1.0-beta.9.zip` | Reference projects |

@@ -1,3 +1,10 @@
+# v0.1.0-beta.12 — 项目评审门禁
+
+- New projects default to `candidate`; only `selected` are active.
+- Add completeness, maturity, commercial potential, direction, notes, reviewer.
+- Add `project review` CLI and review badges in the dashboard.
+- Review is metadata-only; no content is copied.
+
 # v0.1.0-beta.11 — 项目仪表盘
 
 - Add project list/detail/stats/entries APIs.

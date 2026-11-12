@@ -893,7 +893,7 @@ def _cmd_project_register(args: argparse.Namespace) -> int:
 def _cmd_project_list(args: argparse.Namespace) -> int:
     layout, conn = _project_conn(args)
     try:
-        rows = project_store.list_projects(conn)
+        rows = project_store.list_projects(conn, selected_only=args.selected)
     finally:
         conn.close()
     if args.json:
@@ -923,6 +923,32 @@ def _cmd_project_show(args: argparse.Namespace) -> int:
             print(f"source: {source['role']} {source['source_state']} data_as_of={source['data_as_of'] or '-'} {source['root_path']}")
         for app in project["apps"]:
             print(f"app: {app['name']} port={app['port']} {app['url']} {app['status']}")
+    return 0
+
+
+def _cmd_project_review(args: argparse.Namespace) -> int:
+    layout, conn = _project_conn(args)
+    try:
+        project = project_store.review_project(
+            conn, args.code,
+            review_status=args.status,
+            completeness=args.completeness,
+            maturity=args.maturity,
+            commercial_potential=args.commercial,
+            direction=args.direction or "",
+            notes=args.notes or "",
+            reviewer=args.reviewer,
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        conn.close()
+    if args.json:
+        _json_print(project)
+    else:
+        print(f"{project['code']}: {project['review_status']} status={project['status']}")
+        print(f"completeness={project['completeness']} maturity={project['maturity']} commercial={project['commercial_potential']}")
     return 0
 
 
@@ -1713,6 +1739,7 @@ def build_parser() -> argparse.ArgumentParser:
     project_register.set_defaults(func=_cmd_project_register)
 
     project_list = project_sub.add_parser("list", help="list registered projects")
+    project_list.add_argument("--selected", action="store_true")
     project_list.add_argument("--json", action="store_true")
     project_list.set_defaults(func=_cmd_project_list)
 
@@ -1720,6 +1747,18 @@ def build_parser() -> argparse.ArgumentParser:
     project_show.add_argument("code")
     project_show.add_argument("--json", action="store_true")
     project_show.set_defaults(func=_cmd_project_show)
+
+    project_review = project_sub.add_parser("review", help="record human project review")
+    project_review.add_argument("code")
+    project_review.add_argument("--status", required=True, choices=["candidate", "reviewed", "selected", "rejected"])
+    project_review.add_argument("--completeness", type=int)
+    project_review.add_argument("--maturity", type=int)
+    project_review.add_argument("--commercial", type=int)
+    project_review.add_argument("--direction")
+    project_review.add_argument("--notes")
+    project_review.add_argument("--reviewer", default="owner")
+    project_review.add_argument("--json", action="store_true")
+    project_review.set_defaults(func=_cmd_project_review)
 
     project_inspect_cmd = project_sub.add_parser("inspect", help="inspect project database schemas read-only")
     project_inspect_cmd.add_argument("code")

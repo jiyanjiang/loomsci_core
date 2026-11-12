@@ -139,7 +139,7 @@ def create_project(
     conn.execute(
         "INSERT INTO projects(id, code, name, description, type, status, machine_id, created_at, updated_at) "
         "VALUES (?,?,?,?,?,?,?,?,?)",
-        (project_id, code, name, description, project_type, "active", _machine_id(), stamp, stamp),
+        (project_id, code, name, description, project_type, "candidate", _machine_id(), stamp, stamp),
     )
     for source in sources:
         role = str(source.get("role") or "code").strip() or "code"
@@ -173,12 +173,13 @@ def create_project(
     return get_project(conn, code) or {"id": project_id}
 
 
-def list_projects(conn) -> list[dict[str, Any]]:
+def list_projects(conn, *, selected_only: bool = False) -> list[dict[str, Any]]:
+    where = " WHERE p.review_status='selected'" if selected_only else ""
     rows = conn.execute(
         "SELECT p.*, (SELECT COUNT(*) FROM project_sources s WHERE s.project_id=p.id) AS sources, "
         "(SELECT COUNT(*) FROM project_entries e WHERE e.project_id=p.id) AS entries, "
         "(SELECT COALESCE(SUM(bytes),0) FROM project_entries e WHERE e.project_id=p.id) AS bytes "
-        "FROM projects p ORDER BY p.updated_at DESC"
+        "FROM projects p" + where + " ORDER BY p.updated_at DESC"
     ).fetchall()
     return [_project_dict(row) for row in rows]
 
@@ -313,3 +314,44 @@ def stats(conn, code: str) -> dict[str, Any]:
         "timeline": list(reversed(timeline)),
         "recent": recent,
     }
+
+
+def review_project(
+    conn,
+    code: str,
+    *,
+    review_status: str,
+    completeness: int | None = None,
+    maturity: int | None = None,
+    commercial_potential: int | None = None,
+    direction: str = "",
+    notes: str = "",
+    reviewer: str = "owner",
+) -> dict[str, Any]:
+    allowed = {"candidate", "reviewed", "selected", "rejected"}
+    if review_status not in allowed:
+        raise ValueError("invalid review status")
+    scores = {
+        "completeness": completeness,
+        "maturity": maturity,
+        "commercial_potential": commercial_potential,
+    }
+    for name, value in scores.items():
+        if value is not None and not 0 <= int(value) <= 5:
+            raise ValueError(f"{name} must be 0-5")
+    project = get_project(conn, code)
+    if project is None:
+        raise LookupError("project not found")
+    stamp = _now()
+    state = {"selected": "active", "rejected": "archived"}.get(review_status, "candidate")
+    conn.execute(
+        "UPDATE projects SET review_status=?, status=?, completeness=?, maturity=?, "
+        "commercial_potential=?, direction=?, review_notes=?, reviewed_at=?, reviewed_by=?, "
+        "updated_at=? WHERE id=?",
+        (
+            review_status, state, completeness, maturity, commercial_potential,
+            direction, notes, stamp, reviewer, stamp, project["id"],
+        ),
+    )
+    conn.commit()
+    return get_project(conn, code) or project

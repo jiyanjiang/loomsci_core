@@ -142,6 +142,14 @@ CREATE TABLE IF NOT EXISTS projects (
   type        TEXT NOT NULL DEFAULT 'unknown',
   status      TEXT NOT NULL DEFAULT 'active',
   machine_id  TEXT,
+  review_status TEXT NOT NULL DEFAULT 'candidate',
+  completeness INTEGER,
+  maturity INTEGER,
+  commercial_potential INTEGER,
+  direction TEXT,
+  review_notes TEXT,
+  reviewed_at TEXT,
+  reviewed_by TEXT,
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL
 );
@@ -244,6 +252,20 @@ def init_db(db_path: str | Path) -> None:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(attachments)")}
         if "meta_json" not in columns:
             conn.execute("ALTER TABLE attachments ADD COLUMN meta_json TEXT NOT NULL DEFAULT '{}'")
+        project_columns = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
+        project_additions = {
+            "review_status": "TEXT NOT NULL DEFAULT 'candidate'",
+            "completeness": "INTEGER",
+            "maturity": "INTEGER",
+            "commercial_potential": "INTEGER",
+            "direction": "TEXT",
+            "review_notes": "TEXT",
+            "reviewed_at": "TEXT",
+            "reviewed_by": "TEXT",
+        }
+        for column, definition in project_additions.items():
+            if column not in project_columns:
+                conn.execute(f"ALTER TABLE projects ADD COLUMN {column} {definition}")
         post_columns = {row[1] for row in conn.execute("PRAGMA table_info(posts)")}
         if "title" in post_columns:
             # Title is no longer part of the post model. Old values are discarded

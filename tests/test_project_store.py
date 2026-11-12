@@ -61,6 +61,21 @@ class ProjectStoreTest(unittest.TestCase):
         refreshed = project_store.refresh_project(self.conn, "alpha")
         self.assertGreater(refreshed["counts"]["entries"], first["counts"]["entries"])
 
+    def test_review_defaults_to_candidate_and_selected_only(self) -> None:
+        project = project_store.create_project(
+            self.conn, code="alpha", name="Alpha", sources=[{"role": "root", "path": str(self.project)}]
+        )
+        self.assertEqual(project["review_status"], "candidate")
+        self.assertEqual(project["status"], "candidate")
+        self.assertEqual(project_store.list_projects(self.conn, selected_only=True), [])
+        reviewed = project_store.review_project(
+            self.conn, "alpha", review_status="selected", completeness=4,
+            maturity=5, commercial_potential=3, direction="research data", notes="ok"
+        )
+        self.assertEqual(reviewed["review_status"], "selected")
+        self.assertEqual(reviewed["status"], "active")
+        self.assertEqual(len(project_store.list_projects(self.conn, selected_only=True)), 1)
+
     def test_remove(self) -> None:
         project_store.create_project(
             self.conn, code="alpha", name="Alpha", sources=[{"role": "root", "path": str(self.project)}]

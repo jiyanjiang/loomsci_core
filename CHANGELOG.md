@@ -1,3 +1,10 @@
+# v0.1.0-beta.12 — Project review gate
+
+- New projects default to `candidate`; only `selected` become active.
+- Add completeness, maturity, commercial potential, direction, notes, reviewer.
+- Add `project review` CLI and review badges/scores in the project UI.
+- Project review is metadata-only; no project content is copied.
+
 # v0.1.0-beta.11 — Project dashboard
 
 - Add project list/detail/stats/entries API.
