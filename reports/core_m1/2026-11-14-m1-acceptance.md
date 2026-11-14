@@ -3,7 +3,8 @@
 - Scope: Core v0 + App Host + backup/restore + migrated workspace
 - Platforms: macOS A + Windows B
 - Result: **PASS** for the M1 slice
-- Not included: production package layout, updater, signed full installer
+- Not included: production package layout, full signed installer
+- Updater prototype separately passed on macOS/Windows
 
 ## 1. Test
 
