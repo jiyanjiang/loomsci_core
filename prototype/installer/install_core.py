@@ -21,8 +21,8 @@ ROOT = Path(__file__).resolve().parent.parent
 TRUST = Path(os.environ.get("LOOMSCI_TRUST_SCRIPT", str(Path(__file__).with_name("trust.py"))))
 
 
-def run(*args: str) -> tuple[int, str]:
-    result = subprocess.run(args, text=True, capture_output=True)
+def run(*args: str, env: dict | None = None) -> tuple[int, str]:
+    result = subprocess.run(args, text=True, capture_output=True, env=env)
     return result.returncode, result.stdout + result.stderr
 
 
@@ -39,7 +39,9 @@ def install(package: Path, home: Path, trust: Path, uv: Path | None) -> dict:
     package = package.resolve()
     home = home.expanduser()
     if home.exists():
-        raise SystemExit(f"target_exists: {home}")
+        existing = {child.name for child in home.iterdir()}
+        if not existing <= {"runtime"}:
+            raise SystemExit(f"target_exists: {home}")
     manifest = package / "manifest.json"
     sig = package / "manifest.sig"
     payload = package / "payload.tar.gz"
@@ -52,6 +54,7 @@ def install(package: Path, home: Path, trust: Path, uv: Path | None) -> dict:
     )
     if code != 0:
         raise SystemExit("package_verify_failed: " + out)
+    clean_env = dict(os.environ)
     tmp = home.with_name(home.name + ".tmp-" + str(os.getpid()))
     if tmp.exists():
         shutil.rmtree(tmp)
@@ -60,7 +63,7 @@ def install(package: Path, home: Path, trust: Path, uv: Path | None) -> dict:
         safe_extract(payload, tmp / "core")
         venv_dir = tmp / "venv"
         if uv:
-            code, out = run(str(uv), "venv", "--python", "3.12", str(venv_dir))
+            code, out = run(str(uv), "venv", "--python", "3.12", str(venv_dir), env=clean_env)
         else:
             code, out = run(sys.executable, "-m", "venv", str(venv_dir))
         if code != 0:
@@ -70,7 +73,7 @@ def install(package: Path, home: Path, trust: Path, uv: Path | None) -> dict:
         requirements = tmp / "core" / "requirements-core.txt"
         if requirements.is_file():
             if uv:
-                code, out = run(str(uv), "pip", "install", "--python", str(python), "-r", str(requirements))
+                code, out = run(str(uv), "pip", "install", "--python", str(python), "-r", str(requirements), env=clean_env)
             else:
                 code, out = run(str(python), "-m", "pip", "install", "-r", str(requirements))
             if code != 0:
@@ -98,7 +101,12 @@ def install(package: Path, home: Path, trust: Path, uv: Path | None) -> dict:
             "launcher": str(home / "bin" / launcher.name),
         }
         (tmp / "install.json").write_text(json.dumps(install_meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        tmp.rename(home)
+        if home.exists():
+            for child in list(tmp.iterdir()):
+                child.rename(home / child.name)
+            tmp.rmdir()
+        else:
+            tmp.rename(home)
         return install_meta
     except Exception:
         if tmp.exists():

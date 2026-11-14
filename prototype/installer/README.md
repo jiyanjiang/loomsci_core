@@ -63,3 +63,20 @@ Validated:
 
 The installer itself still needs a Python interpreter; clean no-Python
 bootstrap is the next step.
+
+
+## No-Python bootstrap
+
+`bootstrap_core.sh` / `bootstrap_core.ps1` use an explicit uv binary and a
+Python directory. If `--python-dir` / `-PythonDir` is provided, no download is
+needed; otherwise uv installs Python 3.12 into the target home.
+
+Tested with a preloaded Python directory:
+
+```text
+macOS:   bootstrap + start/status/stop PASS
+Windows: bootstrap + start/status/stop PASS
+```
+
+A production package must bundle Python and wheels for a fully offline,
+no-Python first run.
