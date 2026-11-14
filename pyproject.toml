@@ -20,6 +20,7 @@ dependencies = ["Flask>=3.0,<4", "PyYAML>=6.0,<7", "cryptography>=42,<51"]
 
 [project.scripts]
 loomsci = "cli.loomsci:main"
+loomsci-v0 = "loomsci_core.cli:main"
 
 [project.optional-dependencies]
 dev = []
@@ -30,4 +31,4 @@ Issues = "https://github.com/jiyanjiang/loomsci_core/issues"
 Security = "https://github.com/jiyanjiang/loomsci_core/security"
 
 [tool.setuptools]
-packages = ["core", "cli", "addons", "addons.ui_shell", "addons.collab", "addons.notify", "addons.media", "addons.research"]
+packages = ["core", "cli", "loomsci_core", "addons", "addons.ui_shell", "addons.collab", "addons.notify", "addons.media", "addons.research"]
