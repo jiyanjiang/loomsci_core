@@ -105,7 +105,7 @@ on failure. The public key is `loomsci_core/update_public_key.pem`.
 
 ## Current limitations
 
-- No automatic updater yet.
+- Core self-update is implemented through CLI; it is not yet surfaced in Settings.
 - No GitHub app installer yet.
 - No Report app yet.
 - No load/stress test yet.

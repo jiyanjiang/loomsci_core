@@ -1,6 +1,6 @@
 # Release evidence: v0.2.0 Core Web UI
 
-Status: `v0.2.0-rc.1` pre-release. Not public beta. Help: [help](en/core-v0/help.md).
+Status: `v0.2.0-rc.2` pre-release. Help: [help](en/core-v0/help.md).
 
 ## A machine — macOS real browser
 
@@ -65,3 +65,17 @@ SHA256: `6704f0e800ac54e75b55d25bf1dca3cb5c86dd8da7f67b17b9036803ec57d196`
 - 9 tests PASS
 - B machine clean venv + 9 tests + UI HTTP PASS
 - B tag-cloud and gallery click-through PASS
+
+## rc.2 signed updater
+
+Artifact: `loomsci_core-0.2.0-rc.2-a65056d.zip`
+SHA256: `12536d539de8cdc0eb423c0c83d65a04db3583d97d8402a7c86a0497eea67438`
+
+- Ed25519 manifest signature verification: PASS
+- `update check`: PASS on macOS and Windows
+- staged apply with data backup and code snapshot: unit test PASS
+- rollback after start failure: unit test PASS
+- B machine: 11 tests PASS, UI HTTP PASS
+- B machine signed update check: PASS
+
+Not yet run: live apply on a disposable installed copy on both machines.

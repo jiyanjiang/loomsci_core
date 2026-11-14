@@ -113,7 +113,7 @@ one example app
 Out of scope for this version:
 
 ```text
-installer, automatic updater, signed distribution
+installer, app auto-update, signed distribution
 migration
 app update/remove CLI
 marketplace, accounts, federation
@@ -123,6 +123,7 @@ legacy LoomSci beta features
 ## Documentation
 
 - [Help](docs/en/core-v0/help.md)
+- [Update CLI](docs/en/core-v0/help.md#update)
 - [Platform](docs/en/core-v0/platform.md)
 - [Core API](docs/en/core-v0/core-api.md)
 - [App developer](docs/en/core-v0/app-developer.md)
