@@ -116,7 +116,7 @@ class AppHost:
         stdout.close()
         stderr.close()
         url = f"http://127.0.0.1:{port}{manifest['health']}"
-        deadline = time.monotonic() + 30
+        deadline = time.monotonic() + 90
         while time.monotonic() < deadline:
             if proc.poll() is not None:
                 raise AppHostError(f"app exited during startup: {proc.returncode}")
@@ -130,7 +130,8 @@ class AppHost:
             except Exception:
                 time.sleep(0.25)
         proc.terminate()
-        raise AppHostError("app health timeout")
+        detail = (logs / "stderr.log").read_text(encoding="utf-8", errors="replace") if (logs / "stderr.log").is_file() else ""
+        raise AppHostError("app health timeout\n" + detail)
 
     def stop(self, slug: str) -> dict[str, Any]:
         proc = self.procs.pop(slug, None)
