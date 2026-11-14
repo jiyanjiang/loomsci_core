@@ -8,8 +8,10 @@ POST /write
 → Core /v1/items
 ```
 
-Install through Core:
+Install through the Core API (the preview has no app CLI yet):
 
 ```bash
-python -m loomsci_core --home /tmp/core app install ./examples/hello-app
+curl -sS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"source":"/absolute/path/to/examples/hello-app"}' \
+  http://127.0.0.1:8795/v1/apps/install
 ```

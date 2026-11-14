@@ -1,6 +1,6 @@
 # loomsci_core · Public Beta
 
-[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Core cutoff](docs/en/core-cutoff.md) · [Core contract](docs/en/core-contract.md) · [App manifest](docs/en/app-manifest.md) · [Report spec](docs/en/report-app.md) · [Distribution](docs/en/distribution.md) · [Signing/trust](docs/en/signing-trust.md) · [Platform matrix](docs/en/platform-test-matrix.md) · [IDE matrix](docs/en/ide-compatibility.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
+[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Core v0 guide](docs/en/core-v0/platform.md) · [API](docs/en/core-v0/core-api.md) · [App developer](docs/en/core-v0/app-developer.md) · [Core cutoff](docs/en/core-cutoff.md) · [Core contract](docs/en/core-contract.md) · [App manifest](docs/en/app-manifest.md) · [Report spec](docs/en/report-app.md) · [Distribution](docs/en/distribution.md) · [Signing/trust](docs/en/signing-trust.md) · [Platform matrix](docs/en/platform-test-matrix.md) · [IDE matrix](docs/en/ide-compatibility.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
 
 **A local-first research workspace for people who work with AI IDEs.**
 

@@ -1,0 +1,203 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LoomSci Core v0.1 API",
+    "version": "0.1.0",
+    "description": "Local-first Core API. Status: App Platform Preview, not stable."
+  },
+  "servers": [
+    {"url": "http://127.0.0.1:8795", "description": "local Core"}
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {"type": "http", "scheme": "bearer"}
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "ok": {"type": "boolean", "example": false},
+          "error": {"type": "string"}
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "tag": {"type": "string"},
+          "source": {"type": "string"},
+          "confidence": {"type": "number", "nullable": true}
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "app": {"type": "string"},
+          "type": {"type": "string"},
+          "title": {"type": "string"},
+          "body": {"type": "string"},
+          "metadata": {"type": "object"},
+          "tags": {"type": "array", "items": {"$ref": "#/components/schemas/Tag"}},
+          "created_at": {"type": "string"},
+          "updated_at": {"type": "string"}
+        }
+      },
+      "ItemInput": {
+        "type": "object",
+        "required": ["app", "type"],
+        "properties": {
+          "id": {"type": "string"},
+          "app": {"type": "string", "example": "report"},
+          "type": {"type": "string", "example": "report.note"},
+          "title": {"type": "string"},
+          "body": {"type": "string"},
+          "metadata": {"type": "object"},
+          "tags": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "Blob": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "item_id": {"type": "string", "nullable": true},
+          "filename": {"type": "string"},
+          "content_type": {"type": "string"},
+          "bytes": {"type": "integer"},
+          "sha256": {"type": "string"},
+          "created_at": {"type": "string"}
+        }
+      },
+      "App": {
+        "type": "object",
+        "properties": {
+          "slug": {"type": "string"},
+          "version": {"type": "string"},
+          "manifest_json": {"type": "string"},
+          "installed_at": {"type": "string"}
+        }
+      }
+    }
+  },
+  "security": [{"BearerAuth": []}],
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "security": [],
+        "responses": {"200": {"description": "OK"}}
+      }
+    },
+    "/v1/version": {
+      "get": {
+        "security": [],
+        "responses": {"200": {"description": "OK"}}
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "responses": {"200": {"description": "Counts"}}
+      }
+    },
+    "/v1/items": {
+      "get": {
+        "parameters": [
+          {"name": "app", "in": "query", "schema": {"type": "string"}},
+          {"name": "type", "in": "query", "schema": {"type": "string"}},
+          {"name": "tag", "in": "query", "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 200}},
+          {"name": "offset", "in": "query", "schema": {"type": "integer", "minimum": 0}}
+        ],
+        "responses": {
+          "200": {"description": "Items", "content": {"application/json": {"schema": {"type": "object", "properties": {"ok": {"type": "boolean"}, "items": {"type": "array", "items": {"$ref": "#/components/schemas/Item"}}}}}}},
+          "401": {"description": "Unauthorized", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}
+        }
+      },
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ItemInput"}}}},
+        "responses": {
+          "201": {"description": "Created", "content": {"application/json": {"schema": {"type": "object", "properties": {"ok": {"type": "boolean"}, "item": {"$ref": "#/components/schemas/Item"}}}}}},
+          "400": {"description": "Bad request", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}},
+          "403": {"description": "Scoped app namespace violation"}
+        }
+      }
+    },
+    "/v1/items/{item_id}": {
+      "parameters": [{"name": "item_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "get": {"responses": {"200": {"description": "Item"}, "404": {"description": "Not found"}}},
+      "patch": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "properties": {"title": {"type": "string"}, "body": {"type": "string"}, "metadata": {"type": "object"}}}}}},
+        "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}
+      },
+      "delete": {"responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
+    },
+    "/v1/items/{item_id}/tags": {
+      "parameters": [{"name": "item_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["tags"], "properties": {"tags": {"type": "array", "items": {"type": "string"}}, "source": {"type": "string"}}}}}},
+        "responses": {"200": {"description": "Tags replaced"}}
+      }
+    },
+    "/v1/tags": {
+      "get": {
+        "parameters": [{"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 500}}],
+        "responses": {"200": {"description": "Tag counts"}}
+      }
+    },
+    "/v1/search": {
+      "get": {
+        "parameters": [
+          {"name": "q", "in": "query", "required": true, "schema": {"type": "string"}},
+          {"name": "limit", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 100}}
+        ],
+        "responses": {"200": {"description": "Matching items"}}
+      }
+    },
+    "/v1/blobs": {
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["filename", "content_type", "content_base64"], "properties": {"filename": {"type": "string"}, "content_type": {"type": "string"}, "content_base64": {"type": "string"}, "item_id": {"type": "string"}}}}}},
+        "responses": {"201": {"description": "Blob created"}}
+      }
+    },
+    "/v1/blobs/{blob_id}": {
+      "parameters": [{"name": "blob_id", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "get": {
+        "parameters": [{"name": "inline", "in": "query", "schema": {"type": "string"}}],
+        "responses": {"200": {"description": "Blob bytes or inline JSON"}, "404": {"description": "Not found"}}
+      }
+    },
+    "/v1/backups": {
+      "get": {"responses": {"200": {"description": "Backup list"}}},
+      "post": {"responses": {"201": {"description": "Backup created"}}}
+    },
+    "/v1/backups/restore": {
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["backup", "target"], "properties": {"backup": {"type": "string"}, "target": {"type": "string"}}}}}},
+        "responses": {"200": {"description": "Restored"}, "400": {"description": "Invalid backup or target"}}
+      }
+    },
+    "/v1/apps": {
+      "get": {"responses": {"200": {"description": "Apps"}}}
+    },
+    "/v1/apps/install": {
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["source"], "properties": {"source": {"type": "string"}}}}}},
+        "responses": {"201": {"description": "Installed"}}
+      }
+    },
+    "/v1/apps/{slug}/start": {
+      "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "post": {"responses": {"200": {"description": "Started"}}}
+    },
+    "/v1/apps/{slug}/stop": {
+      "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "post": {"responses": {"200": {"description": "Stopped"}}}
+    },
+    "/v1/apps/{slug}/update": {
+      "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "post": {"responses": {"200": {"description": "Updated"}}}
+    },
+    "/v1/apps/{slug}": {
+      "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
+      "delete": {"responses": {"200": {"description": "Removed; data kept"}}}
+    }
+  }
+}
