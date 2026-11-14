@@ -24,6 +24,17 @@ jobs:
       - name: Test backup and restore
         run: python -m unittest tests.test_loomsci_core.FormalCoreTest.test_backup_and_restore -v
       - name: Test CLI lifecycle
-        run: python -m unittest tests.test_loomsci_core.FormalCoreTest.test_module_cli_lifecycle -v
+        shell: bash
+        run: |
+          set +e
+          python -m unittest tests.test_loomsci_core.FormalCoreTest.test_module_cli_lifecycle -v > /tmp/cli.log 2>&1
+          rc=$?
+          cat /tmp/cli.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r line; do
+              echo "::error title=CLI failure::$line"
+            done < <(grep -E 'Error|Traceback|FAIL|timeout|exited|assert|core_' /tmp/cli.log || true)
+          fi
+          exit "$rc"
       - name: Test SDK and App Host
         run: python -m unittest tests.test_loomsci_core_sdk -v
