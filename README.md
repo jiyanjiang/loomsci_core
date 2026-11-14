@@ -49,7 +49,8 @@ http://127.0.0.1:8795/
 ```
 
 The token is created at `core-home/local.token` (`core-home\local.token` on
-Windows). Treat it as a secret.
+Windows). Treat it as a secret. CLI and SDK use it as a Bearer token; the Web UI
+uses an HttpOnly SameSite=Strict cookie and never receives the token in HTML.
 
 ## First item
 

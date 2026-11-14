@@ -2,7 +2,8 @@
 
 - Base URL: `http://127.0.0.1:<port>`
 - API version: `core/1`
-- Auth: `Authorization: Bearer <token>`
+- CLI / SDK auth: `Authorization: Bearer <token>`
+- Web UI auth: HttpOnly SameSite=Strict cookie, set by `GET /`
 - Public: `/v1/health`, `/v1/version`
 - JSON only for write endpoints
 
@@ -133,6 +134,12 @@ Lists backup directories with manifests.
 ### POST `/v1/backups`
 
 Creates a data-only backup under `<home>/backups/` and returns `{name,path}`.
+
+### POST `/v1/backups/verify`
+
+```json
+{"backup": "/path/to/backup"}
+```
 
 ### POST `/v1/backups/restore`
 

@@ -1,7 +1,7 @@
 # Core v0 维护者指南
 
 - 读者：`loomsci_core` 维护者
-- 状态：最小版 `0.1.0`；API `core/1`
+- 状态：最小版 `0.2.0`；API `core/1`
 - 测试：`python -m unittest discover -s tests -q`
 
 ## 1. 仓库结构

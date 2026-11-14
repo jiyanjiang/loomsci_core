@@ -78,11 +78,14 @@ The `loomsci-v0` console script is also defined in `pyproject.toml`.
 ## 4. Local security
 
 ```text
-Authorization: Bearer <local.token>
+CLI / SDK: Authorization: Bearer <local.token>
+Web UI: HttpOnly SameSite=Strict cookie set by GET /
 ```
 
 - `/v1/health` and `/v1/version` are public.
-- Every other endpoint requires the master token or a scoped app token.
+- CLI / SDK use the master token or a scoped app token.
+- The browser UI uses an HttpOnly SameSite=Strict session cookie; the token is
+  not injected into HTML.
 - App tokens can only access their own `app` namespace.
 - v0 has no cross-app read permission.
 - No user account or cloud identity is required.

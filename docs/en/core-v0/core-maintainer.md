@@ -1,7 +1,7 @@
 # Core v0 Maintainer Guide
 
 - Audience: maintainers of `loomsci_core`
-- Status: minimal `0.1.0`; API `core/1`
+- Status: minimal `0.2.0`; API `core/1`
 - Tests: `python -m unittest discover -s tests -q`
 
 ## 1. Repository layout
@@ -22,7 +22,15 @@ tests/               Core and SDK tests
 docs/                minimal platform, API, app, maintainer guides
 ```
 
-## 2. Data
+## 2. Schema
+
+`PRAGMA user_version` is the schema version (`SCHEMA_VERSION = 1`).
+
+- fresh DB: create schema and set version 1
+- older DB: copy to `core.db.pre-v1-<timestamp>` before migration
+- newer DB: refuse to start
+
+## 3. Data
 
 ```text
 <home>/data/core.db
@@ -36,7 +44,7 @@ docs/                minimal platform, API, app, maintainer guides
 - Never put app-specific tables into Core.
 - FTS is derived; rebuild from items.
 
-## 3. API rules
+## 4. API rules
 
 `core/1` is additive.
 
@@ -56,7 +64,7 @@ Not allowed without `core/2`:
 
 App-specific requirements stay in the app.
 
-## 4. App isolation
+## 5. App isolation
 
 - Scoped tokens map token to app slug.
 - App tokens cannot read another app.
@@ -64,7 +72,7 @@ App-specific requirements stay in the app.
 - App code and venv are not in data backups.
 - App data lives under `apps/<slug>/data/`.
 
-## 5. Backup
+## 6. Backup
 
 Data-only:
 
@@ -79,7 +87,7 @@ manifest.json
 Excluded: token, logs, venv, code, cache.
 Restore requires an empty target; the token is regenerated.
 
-## 6. Tests
+## 7. Tests
 
 ```bash
 python -m unittest discover -s tests -q
@@ -89,7 +97,7 @@ python -m unittest tests.test_loomsci_core_sdk -v
 
 Target platforms: macOS and Windows.
 
-## 7. Release checklist
+## 8. Release checklist
 
 - [ ] tests green
 - [ ] API docs and OpenAPI updated
@@ -101,7 +109,7 @@ Target platforms: macOS and Windows.
 - [ ] `VERSION`, `pyproject.toml`, and `loomsci_core.version` agree
 - [ ] tag and release notes
 
-## 8. Security
+## 9. Security
 
 - bind loopback only
 - local token mode `0600`
@@ -110,7 +118,7 @@ Target platforms: macOS and Windows.
 - no secrets in logs
 - no app-to-app RPC
 
-## 9. Out of scope
+## 10. Out of scope
 
 Not part of this version:
 
