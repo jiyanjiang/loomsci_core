@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.1 帮助
+# LoomSci Core 0.2.0-rc.2 帮助
 
 ## 启动
 
@@ -73,6 +73,18 @@ core-home/local.token
 ```
 
 schema 版本为 `PRAGMA user_version = 1`。旧库升级前会先复制备份；未来版本会拒绝启动。
+
+## 更新
+
+```bash
+python -m loomsci_core update check <manifest.json>
+python -m loomsci_core update apply <manifest.json> --package <payload.zip>
+```
+
+manifest 必须使用 HTTPS（测试可用本地文件），使用 Ed25519 签名，包含
+`product`、`version`、`min_core`、`sha256`、`signature`。apply 会备份数据、保存代码快照、
+停止 Core、替换包、启动 Core，失败时回滚。公钥位于
+`loomsci_core/update_public_key.pem`。
 
 ## API / SDK
 

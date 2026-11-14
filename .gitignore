@@ -31,6 +31,7 @@ backups/
 # Secrets and local metadata
 *.key
 *.pem
+!loomsci_core/update_public_key.pem
 *.p12
 .teamai/
 .DS_Store

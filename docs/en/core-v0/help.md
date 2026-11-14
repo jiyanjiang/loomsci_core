@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.1 — Help
+# LoomSci Core 0.2.0-rc.2 — Help
 
 ## Start
 
@@ -77,6 +77,18 @@ core-home/local.token
 
 Schema version is `PRAGMA user_version = 1`. A pre-migration copy is created
 before an older database is upgraded. A newer schema is rejected.
+
+## Update
+
+```bash
+python -m loomsci_core update check <manifest.json>
+python -m loomsci_core update apply <manifest.json> --package <payload.zip>
+```
+
+The manifest must be HTTPS (or local in tests), signed with Ed25519, and include
+`product`, `version`, `min_core`, `sha256`, and `signature`. Apply backs up data,
+snapshots the code, stops Core, swaps the package, starts Core, and rolls back
+on failure. The public key is `loomsci_core/update_public_key.pem`.
 
 ## API / SDK
 

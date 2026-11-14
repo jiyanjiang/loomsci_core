@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0-rc.2 — signed update mechanism
+
+- Added Ed25519-signed update manifest verification.
+- Added `update check` and `update apply` CLI.
+- Update apply backs up data, snapshots code, swaps the package, starts Core,
+  and rolls back on failure.
+- Added `cryptography` to Core requirements.
+- Added update rollback test.
+
 ## 0.2.0-rc.1 — Core UI / P0 pre-release
 
 - Three-column Core UI: navigation, list, detail.

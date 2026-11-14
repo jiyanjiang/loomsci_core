@@ -161,12 +161,28 @@ def main() -> int:
     for name in ("start", "stop", "status"):
         cmd = sub.add_parser(name)
         cmd.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
+    update = sub.add_parser("update")
+    update_sub = update.add_subparsers(dest="update_command", required=True)
+    check_cmd = update_sub.add_parser("check")
+    check_cmd.add_argument("manifest")
+    apply_cmd = update_sub.add_parser("apply")
+    apply_cmd.add_argument("manifest")
+    apply_cmd.add_argument("--package", required=True)
     args = parser.parse_args()
     home = Path(args.home)
     if args.command == "start":
         result = start(home, args.port)
     elif args.command == "stop":
         result = stop(home)
+    elif args.command == "update":
+        from . import update
+        manifest = update.load_manifest(args.manifest)
+        if args.update_command == "check":
+            result = {"ok": True, "update": update.check_manifest(manifest)}
+        else:
+            result = update.apply_package(
+                Path(args.package).expanduser(), manifest, home=home, port=args.port
+            )
     else:
         result = status(home)
     if args.json:

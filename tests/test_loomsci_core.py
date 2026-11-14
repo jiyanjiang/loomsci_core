@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import os
+import zipfile
 import socket
 import sqlite3
 import subprocess
@@ -14,6 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from loomsci_core.server import create_app  # noqa: E402
+from loomsci_core import update  # noqa: E402
 
 
 def free_port() -> int:
@@ -117,6 +121,82 @@ class FormalCoreTest(unittest.TestCase):
         conn.commit(); conn.close()
         with self.assertRaises(RuntimeError):
             create_app(self.home)
+
+    def test_signed_update_manifest(self) -> None:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        key = Ed25519PrivateKey.generate()
+        private = Path(self.tmp.name) / "private.pem"
+        public = Path(self.tmp.name) / "public.pem"
+        private.write_bytes(key.private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        ))
+        public.write_bytes(key.public_key().public_bytes(
+            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo,
+        ))
+        package = Path(self.tmp.name) / "core.zip"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("loomsci_core/__init__.py", "")
+        manifest = {
+            "product": "loomsci_core", "version": "0.2.1", "min_core": "0.2.0",
+            "sha256": update.sha256_file(package),
+        }
+        manifest["signature"] = update.sign_manifest(manifest, private)
+        old = os.environ.get("LOOMSCI_UPDATE_PUBLIC_KEY")
+        os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = str(public)
+        try:
+            self.assertEqual(update.check_manifest(manifest)["version"], "0.2.1")
+            update.verify_package(package, manifest)
+            bad = dict(manifest)
+            bad["version"] = "0.2.2"
+            with self.assertRaises(update.UpdateError):
+                update.check_manifest(bad)
+        finally:
+            if old is None:
+                os.environ.pop("LOOMSCI_UPDATE_PUBLIC_KEY", None)
+            else:
+                os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = old
+
+    def test_update_apply_rolls_back(self) -> None:
+        from unittest.mock import patch
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        key = Ed25519PrivateKey.generate()
+        private = Path(self.tmp.name) / "private.pem"
+        public = Path(self.tmp.name) / "public.pem"
+        private.write_bytes(key.private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        ))
+        public.write_bytes(key.public_key().public_bytes(
+            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo,
+        ))
+        install = Path(self.tmp.name) / "install"
+        target = install / "loomsci_core"
+        target.mkdir(parents=True)
+        (target / "old.txt").write_text("old", encoding="utf-8")
+        package = Path(self.tmp.name) / "new.zip"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("loomsci_core/__init__.py", "")
+        manifest = {
+            "product": "loomsci_core", "version": "0.2.1", "min_core": "0.2.0",
+            "sha256": update.sha256_file(package),
+        }
+        manifest["signature"] = update.sign_manifest(manifest, private)
+        old = os.environ.get("LOOMSCI_UPDATE_PUBLIC_KEY")
+        os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = str(public)
+        try:
+            with patch.object(update, "_stop", lambda _home: None), \
+                 patch.object(update, "_start", side_effect=RuntimeError("health failed")):
+                with self.assertRaises(update.UpdateError):
+                    update.apply_package(package, manifest, home=self.home, port=8795, install_root=install)
+            self.assertTrue((target / "old.txt").is_file())
+        finally:
+            if old is None:
+                os.environ.pop("LOOMSCI_UPDATE_PUBLIC_KEY", None)
+            else:
+                os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = old
 
     def test_module_cli_lifecycle(self) -> None:
         port = free_port()

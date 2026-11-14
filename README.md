@@ -1,6 +1,6 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.2.0-rc.1` release candidate. The Core Web UI is available at
+**Status: `0.2.0-rc.2` release candidate. The Core Web UI is available at
 `http://127.0.0.1:8795/`. P0 hardening is complete: macOS browser acceptance,
 Windows runtime/UI checks, Windows mouse-click tests, gallery, tag filter, token
 cookie, schema migration, and backup/restore UI passed. This is a pre-release,
