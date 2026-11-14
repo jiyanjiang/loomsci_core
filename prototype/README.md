@@ -28,3 +28,15 @@ Platform status:
 - Linux: not yet tested
 
 This is a prototype, not the final Core App Host.
+
+
+## Signing prototype
+
+```bash
+python3 prototype/test_signing.py
+```
+
+Validates Ed25519 manifest signing, payload hash binding, tampered manifest,
+tampered payload, and wrong key.
+
+Tested on macOS and Windows: PASS.
