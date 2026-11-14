@@ -104,3 +104,14 @@ code snapshot: created
 
 Both machines used the signed package and manifest. This closes the live
 updater gate for the pre-release. It is not a public-beta declaration.
+
+## Report app and single-port proxy
+
+- Core catalog detection: PASS
+- GitHub repo install: PASS on macOS; Windows network clone failed, local-source install PASS
+- Installed app navigation: PASS
+- App URL through Core: `http://127.0.0.1:8795/apps/report/`
+- A machine: Report background job wrote Core item PASS
+- B machine: Report app through proxy PASS; job wrote Core item PASS
+- B machine: 12 tests PASS
+- Internal app ports stay hidden behind the Core proxy
