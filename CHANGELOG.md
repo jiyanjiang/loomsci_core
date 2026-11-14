@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0-rc.1 — Core UI / P0 pre-release
+
+- Three-column Core UI: navigation, list, detail.
+- Markdown and KaTeX rendering; nested Markdown attachments.
+- Clipboard image paste with thumbnail preview, SHA-256 attachment names.
+- Unified thumbnails and looped gallery.
+- Top-1000 tag cloud and tag filtering; 20-item pagination.
+- Settings, site name/logo, CN/EN switch.
+- HttpOnly SameSite=Strict UI session.
+- Schema version 1 with pre-migration backup.
+- Backup verify and restore-to-empty-directory UI.
+- Windows mouse-click, gallery, tag, and settings acceptance.
+
 ## 0.2.0 — Core Web UI
 
 - Added a built-in Core Web UI at `/` and `/app`.

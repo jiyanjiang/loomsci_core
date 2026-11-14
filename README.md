@@ -1,10 +1,10 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.2.0` minimal product candidate. The Core Web UI is available at
+**Status: `0.2.0-rc.1` release candidate. The Core Web UI is available at
 `http://127.0.0.1:8795/`. P0 hardening is complete: macOS browser acceptance,
 Windows runtime/UI checks, Windows mouse-click tests, gallery, tag filter, token
-cookie, schema migration, and backup/restore UI passed. This is still a
-developer candidate, not a public-beta release.**
+cookie, schema migration, and backup/restore UI passed. This is a pre-release,
+not a public-beta release.**
 
 A local-first minimal core product for one owner. The authoritative product
 definition is [PRODUCT.md](PRODUCT.md). Apps extend Core; they are not a
@@ -113,7 +113,7 @@ one example app
 Out of scope for this version:
 
 ```text
-installer, updater, signed distribution
+installer, automatic updater, signed distribution
 migration
 app update/remove CLI
 marketplace, accounts, federation
@@ -122,6 +122,7 @@ legacy LoomSci beta features
 
 ## Documentation
 
+- [Help](docs/en/core-v0/help.md)
 - [Platform](docs/en/core-v0/platform.md)
 - [Core API](docs/en/core-v0/core-api.md)
 - [App developer](docs/en/core-v0/app-developer.md)

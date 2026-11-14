@@ -1,6 +1,6 @@
 # Release evidence: v0.2.0 Core Web UI
 
-Status: candidate, not public beta yet.
+Status: `v0.2.0-rc.1` pre-release. Not public beta. Help: [help](en/core-v0/help.md).
 
 ## A machine — macOS real browser
 
