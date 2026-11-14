@@ -85,7 +85,9 @@ def start(home: Path, port: int) -> dict:
     stderr = (logs / "core.stderr.log").open("ab")
     kwargs = {}
     if os.name == "nt":
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+        flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+        flags |= getattr(subprocess, "CREATE_BREAKAWAY_FROM_JOB", 0)
+        kwargs["creationflags"] = flags
     else:
         kwargs["start_new_session"] = True
     proc = subprocess.Popen(
