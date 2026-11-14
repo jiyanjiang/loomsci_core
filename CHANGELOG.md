@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — Core Web UI
+
+- Added a built-in Core Web UI at `/` and `/app`.
+- Create, list, edit, delete, tag, search, attach files, and create backups from
+  the browser.
+- Item responses now include their blobs.
+- UI assets are served from `/assets/` without requiring a bearer token; API
+  calls still require the local token.
+- macOS browser acceptance passed: create, edit, delete, search, attachment,
+  backup, and restart persistence.
+
 ## 0.1.1 — Windows quickstart
 
 - Added Windows PowerShell install and run commands to README and platform docs.

@@ -1,0 +1,83 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --text: #17202a;
+  --muted: #667085;
+  --border: #d0d5dd;
+  --accent: #2557a7;
+  --danger: #b42318;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111418;
+    --panel: #1a1f25;
+    --text: #e8eaed;
+    --muted: #98a2b3;
+    --border: #344054;
+    --accent: #84adf7;
+    --danger: #f97066;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+header strong { font-size: 20px; }
+main {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 20px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; padding: 12px; }
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+h2 { margin: 0 0 12px; font-size: 16px; }
+input, textarea, button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+input, textarea { width: 100%; margin-bottom: 10px; }
+textarea { resize: vertical; }
+button { cursor: pointer; background: var(--panel); }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.actions, .toolbar { display: flex; gap: 8px; align-items: center; }
+.toolbar input { margin: 0; }
+.muted { color: var(--muted); }
+.message { min-height: 1.5em; color: var(--muted); }
+.message.error { color: var(--danger); }
+.item {
+  border-top: 1px solid var(--border);
+  padding: 14px 0;
+}
+.item:first-child { border-top: 0; }
+.item h3 { margin: 0 0 6px; font-size: 16px; }
+.item .body { white-space: pre-wrap; margin: 6px 0; }
+.item .meta { display: flex; gap: 8px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+.item .tag { border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.item .row-actions { display: flex; gap: 8px; margin-top: 8px; }
+.item .row-actions button { padding: 3px 8px; font-size: 13px; }

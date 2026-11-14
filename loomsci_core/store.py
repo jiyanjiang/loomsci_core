@@ -130,6 +130,13 @@ def _tags(conn: sqlite3.Connection, item_id: str) -> list[dict]:
     ).fetchall()]
 
 
+def _blobs(conn: sqlite3.Connection, item_id: str) -> list[dict]:
+    return [dict(row) for row in conn.execute(
+        "SELECT id, filename, content_type, bytes, created_at FROM blobs WHERE item_id=? ORDER BY created_at",
+        (item_id,),
+    ).fetchall()]
+
+
 def create_item(
     conn: sqlite3.Connection,
     *,
@@ -180,7 +187,9 @@ def get_item(conn: sqlite3.Connection, item_id: str) -> dict[str, Any] | None:
     row = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
     if row is None:
         return None
-    return _item(row, _tags(conn, item_id))
+    item = _item(row, _tags(conn, item_id))
+    item["blobs"] = _blobs(conn, item_id)
+    return item
 
 
 def list_items(
@@ -215,7 +224,12 @@ def list_items(
             ids,
         ):
             by_id.setdefault(tag_row["item_id"], []).append(dict(tag_row))
-    return [_item(row, by_id.get(row["id"], [])) for row in rows]
+    out = []
+    for row in rows:
+        item = _item(row, by_id.get(row["id"], []))
+        item["blobs"] = _blobs(conn, row["id"])
+        out.append(item)
+    return out
 
 
 def update_item(conn: sqlite3.Connection, item_id: str, **fields: Any) -> dict[str, Any] | None:

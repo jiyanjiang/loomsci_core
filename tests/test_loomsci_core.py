@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import socket
 import subprocess
@@ -44,6 +45,31 @@ class FormalCoreTest(unittest.TestCase):
         self.assertEqual(item["tags"][0]["tag"], "pkg")
         found = self.client.get("/v1/search?q=formal", headers=self.headers)
         self.assertEqual([row["id"] for row in found.json["items"]], [item["id"]])
+
+    def test_ui_and_asset_routes(self) -> None:
+        page = self.client.get("/")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("LoomSci Core", page.get_data(as_text=True))
+        self.assertIn("__LOOMSCI_TOKEN__", page.get_data(as_text=True))
+        asset = self.client.get("/assets/app.js")
+        self.assertEqual(asset.status_code, 200)
+        self.assertIn("create-form", asset.get_data(as_text=True))
+        asset.close()
+
+    def test_item_includes_blobs(self) -> None:
+        created = self.client.post("/v1/items", headers=self.headers, json={
+            "app": "report", "type": "report.note", "title": "attached",
+            "body": "with file",
+        })
+        item = created.json["item"]
+        blob = self.client.post("/v1/blobs", headers=self.headers, json={
+            "filename": "note.txt", "content_type": "text/plain",
+            "content_base64": base64.b64encode(b"hello").decode("ascii"),
+            "item_id": item["id"],
+        })
+        self.assertEqual(blob.status_code, 201, blob.get_data(as_text=True))
+        fetched = self.client.get("/v1/items/" + item["id"], headers=self.headers)
+        self.assertEqual(fetched.json["item"]["blobs"][0]["filename"], "note.txt")
 
     def test_backup_and_restore(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={

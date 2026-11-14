@@ -13,12 +13,14 @@ import binascii
 import secrets
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, request
+from flask import Flask, Response, g, jsonify, request, send_from_directory
 
 from . import backup as backup_store
 from .version import __version__
 from . import store
 from .app_host import AppHost, AppHostError
+
+WEB = Path(__file__).resolve().parent / "web"
 
 
 def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
@@ -56,7 +58,9 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
 
     @app.before_request
     def auth():
-        if request.path in {"/v1/health", "/v1/version"}:
+        if request.path in {"/v1/health", "/v1/version", "/", "/app"}:
+            return None
+        if request.path.startswith("/assets/"):
             return None
         header = request.headers.get("Authorization", "")
         supplied = header[7:].strip() if header.startswith("Bearer ") else request.headers.get("X-LoomSci-Token", "")
@@ -71,6 +75,17 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
 
     def allowed(app_name: str) -> bool:
         return getattr(g, "app_slug", None) in (None, app_name)
+
+    @app.get("/")
+    @app.get("/app")
+    def ui_index():
+        html = (WEB / "index.html").read_text(encoding="utf-8")
+        html = html.replace("__TOKEN__", token)
+        return Response(html, mimetype="text/html")
+
+    @app.get("/assets/<path:filename>")
+    def ui_static(filename: str):
+        return send_from_directory(WEB, filename)
 
     @app.get("/v1/health")
     def health():
