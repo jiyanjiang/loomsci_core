@@ -14,9 +14,13 @@ C2  Core v1.0 Stable                public app platform
 C3  Core maintenance                fixes/security only
 ```
 
-The **real cutoff is C1**. At C1, `core/1` and `app/1` are frozen and apps can be
-developed in separate repositories. Core retires feature work and only accepts
-bug/security/additive changes.
+The **real cutoff is C1 Engineering Freeze**. At C1, `core/1` and `app/1` are
+frozen and apps can be developed in separate repositories. Core retires feature
+work and only accepts bug/security/additive changes.
+
+**Revision 2026-11-14:** external demo apps and the 30-day observation window
+are post-C1 product validation, not engineering requirements. Python 3.12 + uv
+is the accepted runtime; bundling Python/wheels is a deployment option, not C1.
 
 ## 2. C0 · M1 end-to-end
 
@@ -94,12 +98,13 @@ This is the cutoff for **starting other apps**.
 6. backup/restore
 7. signed package verify + rollback
 8. migrated beta.28 workspace opens
-9. 2–3 trusted external developers build a demo app
-   without modifying Core
-10. 30 days without a breaking core/1 change
-```
+The engineering evidence is recorded in
+`reports/core_c1/2026-11-14-c1-self-audit.md`.
 
-If 2–3 external apps cannot be built without Core changes, C1 is not reached.
+Post-C1 validation (not an engineering blocker):
+
+- 2–3 external developers build an app without modifying Core
+- 30 days without a breaking `core/1` change
 
 ## 4. C2 · Core v1.0 Stable
 

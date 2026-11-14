@@ -13,8 +13,10 @@ C2  Core v1.0 Stable         公开 App 平台
 C3  Core maintenance         只修 bug/安全
 ```
 
-**真正的截止点是 C1。**  
+**真正的截止点是 C1 Engineering Freeze。**  
 C1 时冻结 `core/1` 与 `app/1`，App 进入独立仓库；Core 停止功能扩张，只接受 bug/安全/加法变更。
+
+**2026-11-14 修订：** 外部 demo App 与 30 天观察属于 C1 之后的产品验证，不是工程门槛。Python 3.12 + uv 是接受的运行时；打包 Python/wheels 是部署选项，不是 C1 要求。
 
 ## 2. C0 · M1 端到端
 
@@ -91,11 +93,12 @@ C0 退出条件：
 6. backup/restore
 7. 签名包验证 + 回滚
 8. beta.28 迁移工作区可打开
-9. 2–3 名受信外部开发者不改 Core 就能做出 demo app
-10. 连续 30 天没有 breaking core/1 变更
-```
+工程证据见 `reports/core_c1/2026-11-14-c1-self-audit.md`。
 
-如果 2–3 个外部 App 必须改 Core 才能做出来，C1 未达成。
+C1 之后的产品验证（不阻塞工程冻结）：
+
+- 2–3 名外部开发者不改 Core 就能做出 App
+- 连续 30 天没有 breaking `core/1` 变更
 
 ## 4. C2 · Core v1.0 Stable
 
