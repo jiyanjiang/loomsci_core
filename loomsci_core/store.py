@@ -317,22 +317,3 @@ def upsert_app(conn: sqlite3.Connection, *, slug: str, version: str, manifest: d
     conn.commit()
     row = conn.execute("SELECT * FROM apps WHERE slug=?", (slug,)).fetchone()
     return dict(row)
-
-
-def get_app(conn: sqlite3.Connection, slug: str) -> dict[str, Any] | None:
-    row = conn.execute("SELECT * FROM apps WHERE slug=?", (slug,)).fetchone()
-    return dict(row) if row else None
-
-
-def remove_app(conn: sqlite3.Connection, slug: str) -> bool:
-    changed = conn.execute("DELETE FROM apps WHERE slug=?", (slug,)).rowcount
-    conn.commit()
-    return bool(changed)
-
-
-def stats(conn: sqlite3.Connection) -> dict[str, int]:
-    return {
-        "items": conn.execute("SELECT COUNT(*) FROM items").fetchone()[0],
-        "tags": conn.execute("SELECT COUNT(*) FROM item_tags").fetchone()[0],
-        "blobs": conn.execute("SELECT COUNT(*) FROM blobs").fetchone()[0],
-    }

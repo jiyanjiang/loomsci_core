@@ -37,14 +37,6 @@
 {"ok": true, "product": "loomsci_core", "version": "0.1.0", "api": "core/1"}
 ```
 
-### GET `/v1/status`
-
-需要鉴权。
-
-```json
-{"ok": true, "items": 4, "tags": 7, "blobs": 2}
-```
-
 ## Items
 
 ### POST `/v1/items`
@@ -167,15 +159,6 @@ app, type, tag, limit (1..200), offset
 
 ### POST `/v1/apps/<slug>/stop`
 
-### POST `/v1/apps/<slug>/update`
-
-```json
-{"source": "/path/to/app"}
-```
-
-### DELETE `/v1/apps/<slug>`
-
-默认保留 App data。
 
 ## Scoped app token
 

@@ -12,7 +12,7 @@
 LoomSci Core is a small, local-first runtime for AI-native applications.
 
 ```text
-Core = workspace + items + blobs + tags + search + app host + backup + updater
+Core = workspace + items + blobs + tags + search + app host + backup
 App  = domain model + UI + workflows + content
 ```
 
@@ -140,7 +140,7 @@ This is a **preview**:
 - no multi-user/auth
 - no cross-app reads
 - app CLI helpers are not complete
-- signing and updater are prototypes
+- no package signing or updater
 - no cloud sync
 
 Do not promise production stability to end users.

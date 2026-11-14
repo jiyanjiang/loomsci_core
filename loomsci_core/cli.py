@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Minimal Core v0 lifecycle CLI prototype."""
+"""Minimal Core v0 lifecycle CLI."""
 
 from __future__ import annotations
 
@@ -153,7 +153,7 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=8795)
     parser.add_argument("--json", action="store_true")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("start", "stop", "status", "doctor"):
+    for name in ("start", "stop", "status"):
         cmd = sub.add_parser(name)
         cmd.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -164,11 +164,6 @@ def main() -> int:
         result = stop(home)
     else:
         result = status(home)
-        if args.command == "doctor":
-            token = home / "local.token"
-            result["token_exists"] = token.is_file()
-            result["token_mode"] = oct(token.stat().st_mode & 0o777) if token.is_file() else None
-            result["db_exists"] = (home / "data" / "core.db").is_file()
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:

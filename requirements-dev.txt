@@ -1,2 +1,0 @@
-# Development-only tools are added with the first code slice.
-# Runtime dependencies stay in requirements.txt and will be locked for release.

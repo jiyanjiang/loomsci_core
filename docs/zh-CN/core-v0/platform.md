@@ -12,7 +12,7 @@
 LoomSci Core 是面向 AI 原生应用的本地优先运行时。
 
 ```text
-Core = 工作区 + items + blobs + tags + search + App Host + backup + updater
+Core = 工作区 + items + blobs + tags + search + App Host + backup
 App  = 领域模型 + UI + 工作流 + 内容
 ```
 
@@ -137,7 +137,7 @@ Core 维护者指南：[core-maintainer](core-maintainer.md)。
 - 没有多用户/账号
 - 没有跨 App 读
 - App CLI 辅助命令未完整
-- 签名/updater 仍是原型
+- 没有签名/updater
 - 没有云同步
 
 不要向最终用户承诺生产稳定性。

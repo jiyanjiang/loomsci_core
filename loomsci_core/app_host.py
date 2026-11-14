@@ -1,4 +1,4 @@
-"""Minimal Core v0 App Host prototype."""
+"""Minimal Core v0 App Host."""
 
 from __future__ import annotations
 
@@ -144,26 +144,3 @@ class AppHost:
         except subprocess.TimeoutExpired:
             proc.kill()
         return {"slug": slug, "stopped": True}
-
-    def update(self, slug: str, source: Path) -> dict[str, Any]:
-        self.stop(slug)
-        return self.install(source)
-
-    def remove(self, slug: str) -> dict[str, Any]:
-        self.stop(slug)
-        target = self._dir(slug)
-        if target.exists():
-            for child in target.iterdir():
-                if child.name == "data":
-                    continue
-                if child.is_dir():
-                    shutil.rmtree(child)
-                else:
-                    child.unlink()
-        from . import store
-        conn = store.connect(self.home / "data" / "core.db")
-        try:
-            store.remove_app(conn, slug)
-        finally:
-            conn.close()
-        return {"slug": slug, "removed": True, "data": str(target / "data")}

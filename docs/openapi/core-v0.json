@@ -92,11 +92,6 @@
         "responses": {"200": {"description": "OK"}}
       }
     },
-    "/v1/status": {
-      "get": {
-        "responses": {"200": {"description": "Counts"}}
-      }
-    },
     "/v1/items": {
       "get": {
         "parameters": [
@@ -190,14 +185,6 @@
     "/v1/apps/{slug}/stop": {
       "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
       "post": {"responses": {"200": {"description": "Stopped"}}}
-    },
-    "/v1/apps/{slug}/update": {
-      "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
-      "post": {"responses": {"200": {"description": "Updated"}}}
-    },
-    "/v1/apps/{slug}": {
-      "parameters": [{"name": "slug", "in": "path", "required": true, "schema": {"type": "string"}}],
-      "delete": {"responses": {"200": {"description": "Removed; data kept"}}}
     }
   }
 }

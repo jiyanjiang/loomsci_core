@@ -1,29 +1,26 @@
 # Core v0 维护者指南
 
 - 读者：`loomsci_core` 维护者
-- 状态：preview；`core/1`
+- 状态：最小版 `0.1.0`；API `core/1`
 - 测试：`python -m unittest discover -s tests -q`
 
-## 1. 目录
+## 1. 仓库结构
 
 ```text
-loomsci_core/          正式 Core 包
-├─ store.py            SQLite items/tags/blobs/apps/FTS
-├─ server.py           Flask API 与鉴权
-├─ app_host.py         App 进程与 scoped token
-├─ backup.py           数据型备份/恢复
-├─ cli.py              start/stop/status/doctor
-├─ sdk.py              公共 SDK
-├─ version.py          版本/API 常量
-└─ __main__.py         python -m loomsci_core
+loomsci_core/
+├─ store.py       SQLite items/tags/blobs/apps/FTS
+├─ server.py      Flask API 与鉴权
+├─ app_host.py    App 安装/启动/停止与 scoped token
+├─ backup.py      数据备份/恢复
+├─ cli.py         start/stop/status
+├─ sdk.py         公开 SDK
+├─ version.py     版本/API 常量
+└─ __main__.py    python -m loomsci_core
 
-examples/hello-app/    SDK 参考 App
-prototype/             非产品研究/原型
-tests/                 现有产品 + 正式包测试
-docs/                  契约与指南
+examples/hello-app/  SDK 参考 App
+tests/               Core 与 SDK 测试
+docs/                最小平台/API/App/维护者文档
 ```
-
-`prototype/` 不是产品，不能交付，也不能让 App 开发者依赖它。
 
 ## 2. 数据
 
@@ -34,42 +31,42 @@ docs/                  契约与指南
 <home>/local.token
 ```
 
-- items/tags/blobs/apps/items_fts 属于 Core
-- App data 属于 App
-- 不把 App 专用表塞进 Core
-- FTS 是派生数据，可从 items 重建
+- items/tags/blobs/apps/items_fts 属于 Core。
+- App data 属于 App。
+- 不把 App 专用表塞进 Core。
+- FTS 是派生数据，可从 items 重建。
 
-## 3. API 变更
+## 3. API 规则
 
 `core/1` 只做加法。
 
 允许：
 
-- 新可选字段
-- 新端点
-- 新响应字段
+- 新增可选字段
+- 新增端点
+- 新增响应字段
 
 没有 `core/2` 不允许：
 
 - 删除/重命名字段
-- 改变 item/blob 身份
-- 改变 backup 格式
-- 改变 App 生命周期
-- 改变 token 语义
+- 改 item/blob 身份
+- 改备份格式
+- 改 App 生命周期
+- 改 token 语义
 
-App 专用需求推回 App 层。
+App 专用需求留在 App。
 
 ## 4. App 隔离
 
-- scoped token 映射 token -> app slug
-- App token 不能读其他 App
-- v0 没有 `items.cross_read`
-- App code/venv 不进数据备份
-- App update/remove 保留 `apps/<slug>/data/`
+- scoped token 映射到 App slug。
+- App token 不能读其他 App。
+- v0 没有跨 App 读取。
+- App code/venv 不进数据备份。
+- App data 在 `apps/<slug>/data/`。
 
 ## 5. 备份
 
-数据型：
+只备份数据：
 
 ```text
 data/core.db
@@ -79,81 +76,46 @@ apps/installed.json
 manifest.json
 ```
 
-排除：token、logs、venv、code、cache。
+不包含 token、日志、venv、code、cache。
+恢复要求目标为空；token 会重新生成。
 
-恢复目标必须为空；token 重新生成。
-
-## 6. Updater
-
-原型链：
-
-```text
-verify signed package
-→ backup
-→ stop Core
-→ atomic payload replace
-→ start
-→ health
-→ rollback on failure
-```
-
-当前 payload 是 marker；完整包替换仍未做。
-
-## 7. 测试
+## 6. 测试
 
 ```bash
 python -m unittest discover -s tests -q
 python -m unittest tests.test_loomsci_core -v
 python -m unittest tests.test_loomsci_core_sdk -v
-python prototype/test_core_m1.py
 ```
 
-平台矩阵：macOS + Windows。Linux 后续。
+目标平台：macOS 与 Windows。
 
-## 8. 发布检查（C1 前）
+## 7. 发布检查
 
 - [ ] 测试全绿
-- [ ] API 文档/OpenAPI 更新
-- [ ] manifest/SDK 示例更新
+- [ ] API 文档与 OpenAPI 更新
+- [ ] example app 可运行
 - [ ] backup/restore 通过
-- [ ] migration dry-run/apply 通过
-- [ ] signed updater 通过
-- [ ] macOS 安装/启动
-- [ ] Windows 安装/启动
-- [ ] 公共树无私有路径/密钥
-- [ ] 版本与 changelog 更新
-- [ ] 回滚 tag
+- [ ] macOS start/stop
+- [ ] Windows start/stop
+- [ ] 公共树无私有路径、token、key
+- [ ] `VERSION`、`pyproject.toml`、`loomsci_core.version` 一致
+- [ ] tag 与 release notes
 
-## 9. 安全
+## 8. 安全
 
-- 只绑定 loopback
-- local token 0600
-- App token scoped
-- 无跨 App 读
-- 解压前验签
-- 日志无密钥
-- 无任意 App-to-App RPC
+- 只绑 loopback
+- local token 权限 `0600`
+- app token 限 scope
+- 无跨 App 读取
+- 日志无 secret
+- 无 App-to-App RPC
 
-## 10. 迁移
+## 9. 不在本版本范围
 
-beta.28 -> v0：
-
-- 源只读
-- 新工作区
-- posts -> items
-- attachments -> blobs
-- facts -> project.fact items
-- projects/tasks -> Project DB
-- summaries/mentions/reads -> legacy archive
-- 切换前校验计数/hash
-
-## 11. 已知缺口
-
-- 完整包 updater
-- 干净安装器
-- OpenAPI 生成 SDK
-- conformance suite
-- App CLI 命令
-- 外部 demo App
-- 30 天无 breaking 窗口
-- C1 评审
+- installer、updater、签名包
+- App update/remove 命令
+- 迁移工具
+- App 市场
+- 外部账号/多用户
+- 云同步
+- 第三方 App conformance

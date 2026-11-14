@@ -21,7 +21,7 @@ App 不拥有：
 Core DB
 Core token
 App Host
-backup/update
+backup
 ```
 
 ## 2. 最小目录
@@ -41,20 +41,10 @@ my-app/
   "name": "My App",
   "slug": "my-app",
   "version": "0.1.0",
-  "app_api": "app/1",
-  "core_api": "core/1",
-  "min_core": "0.1.0",
   "package": "my_app",
   "entry": "server",
-  "port": 0,
   "health": "/health",
-  "data_namespace": "app_my_app",
-  "permissions": ["items.read", "items.write"],
-  "update_channels": ["stable"],
-  "content_channels": [],
-  "preserve": ["data"],
-  "uninstall": "keep_data",
-  "requires_registration": false
+  "permissions": ["items.read", "items.write"]
 }
 ```
 
@@ -153,7 +143,7 @@ curl -sS -H "Authorization: Bearer $TOKEN" \
 <home>/apps/my-app/data/
 ```
 
-- update/remove 默认保留
+- Core 会保留；本版本没有 update/remove 命令
 - 备份包含 App data，不包含 code/venv
 - App 自己负责数据迁移
 

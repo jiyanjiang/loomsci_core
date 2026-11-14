@@ -21,7 +21,7 @@ It does not own:
 Core DB
 Core token
 App Host
-backup/update
+backup
 ```
 
 ## 2. Minimal app layout
@@ -41,20 +41,10 @@ my-app/
   "name": "My App",
   "slug": "my-app",
   "version": "0.1.0",
-  "app_api": "app/1",
-  "core_api": "core/1",
-  "min_core": "0.1.0",
   "package": "my_app",
   "entry": "server",
-  "port": 0,
   "health": "/health",
-  "data_namespace": "app_my_app",
-  "permissions": ["items.read", "items.write"],
-  "update_channels": ["stable"],
-  "content_channels": [],
-  "preserve": ["data"],
-  "uninstall": "keep_data",
-  "requires_registration": false
+  "permissions": ["items.read", "items.write"]
 }
 ```
 
@@ -154,7 +144,7 @@ CLI `loomsci app ...` helpers are not complete in this preview.
 <home>/apps/my-app/data/
 ```
 
-- Core preserves it on update and remove by default.
+- Core preserves it. This version has no update/remove app command.
 - The backup includes app data, not app code/venv.
 - An app must own its migrations.
 

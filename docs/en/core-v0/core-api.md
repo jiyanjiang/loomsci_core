@@ -37,14 +37,6 @@
 {"ok": true, "product": "loomsci_core", "version": "0.1.0", "api": "core/1"}
 ```
 
-### GET `/v1/status`
-
-Requires auth.
-
-```json
-{"ok": true, "items": 4, "tags": 7, "blobs": 2}
-```
-
 ## Items
 
 ### POST `/v1/items`
@@ -166,16 +158,6 @@ Creates a data-only backup under `<home>/backups/` and returns `{name,path}`.
 ### POST `/v1/apps/<slug>/start`
 
 ### POST `/v1/apps/<slug>/stop`
-
-### POST `/v1/apps/<slug>/update`
-
-```json
-{"source": "/path/to/app"}
-```
-
-### DELETE `/v1/apps/<slug>`
-
-App data is preserved by default.
 
 ## Scoped app token
 

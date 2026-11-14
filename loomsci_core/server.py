@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Minimal Core v0 HTTP prototype.
+"""Minimal Core v0 HTTP server.
 
-Run: python3 prototype/core_v0/server.py --home /tmp/loomsci-core
-Not product code. Exposes items, tags, blobs, search behind a local token.
+Exposes items, tags, blobs, search, apps, and backups behind a local token.
 """
 
 from __future__ import annotations
@@ -80,10 +79,6 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
     @app.get("/v1/version")
     def version():
         return jsonify({"ok": True, "product": "loomsci_core", "version": __version__, "api": "core/1"})
-
-    @app.get("/v1/status")
-    def status():
-        return jsonify({"ok": True, **store.stats(db_conn())})
 
     @app.post("/v1/items")
     def items_create():
@@ -250,24 +245,6 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         if getattr(g, "app_slug", None):
             return jsonify({"ok": False, "error": "forbidden"}), 403
         return jsonify({"ok": True, **app.config["HOST"].stop(slug)})
-
-    @app.post("/v1/apps/<slug>/update")
-    def apps_update(slug: str):
-        if getattr(g, "app_slug", None):
-            return jsonify({"ok": False, "error": "forbidden"}), 403
-        body = request.get_json(silent=True)
-        if not isinstance(body, dict) or not body.get("source"):
-            return jsonify({"ok": False, "error": "source_required"}), 400
-        try:
-            return jsonify({"ok": True, **app.config["HOST"].update(slug, Path(str(body["source"])).expanduser())})
-        except (AppHostError, ValueError, OSError) as exc:
-            return jsonify({"ok": False, "error": str(exc)}), 400
-
-    @app.delete("/v1/apps/<slug>")
-    def apps_remove(slug: str):
-        if getattr(g, "app_slug", None):
-            return jsonify({"ok": False, "error": "forbidden"}), 403
-        return jsonify({"ok": True, **app.config["HOST"].remove(slug)})
 
     @app.get("/v1/backups")
     def backups_list():

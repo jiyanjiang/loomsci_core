@@ -1,29 +1,26 @@
 # Core v0 Maintainer Guide
 
 - Audience: maintainers of `loomsci_core`
-- Status: preview; `core/1`
+- Status: minimal `0.1.0`; API `core/1`
 - Tests: `python -m unittest discover -s tests -q`
 
 ## 1. Repository layout
 
 ```text
-loomsci_core/          formal Core package
-├─ store.py            SQLite items/tags/blobs/apps/FTS
-├─ server.py           Flask API and auth
-├─ app_host.py         app processes and scoped tokens
-├─ backup.py           data-only backup/restore
-├─ cli.py              start/stop/status/doctor
-├─ sdk.py              public SDK
-├─ version.py          version/API constants
-└─ __main__.py         python -m loomsci_core
+loomsci_core/
+├─ store.py       SQLite items/tags/blobs/apps/FTS
+├─ server.py      Flask API and auth
+├─ app_host.py    app install/start/stop and scoped tokens
+├─ backup.py      data-only backup/restore
+├─ cli.py         start/stop/status
+├─ sdk.py         public SDK
+├─ version.py     version/API constants
+└─ __main__.py    python -m loomsci_core
 
-examples/hello-app/    SDK reference app
-prototype/             non-product research/prototypes
-tests/                 existing product + formal package tests
-docs/                  contracts and guides
+examples/hello-app/  SDK reference app
+tests/               Core and SDK tests
+docs/                minimal platform, API, app, maintainer guides
 ```
-
-`prototype/` is **not** the product. Do not ship it or point app developers at it.
 
 ## 2. Data
 
@@ -39,7 +36,7 @@ docs/                  contracts and guides
 - Never put app-specific tables into Core.
 - FTS is derived; rebuild from items.
 
-## 3. API changes
+## 3. API rules
 
 `core/1` is additive.
 
@@ -51,21 +48,21 @@ Allowed:
 
 Not allowed without `core/2`:
 
-- removing/renaming fields
+- removing or renaming fields
 - changing item/blob identity
 - changing backup format
 - changing app lifecycle
 - changing token semantics
 
-If a requirement is app-specific, push it to the app.
+App-specific requirements stay in the app.
 
 ## 4. App isolation
 
-- Scoped tokens map token -> app slug.
+- Scoped tokens map token to app slug.
 - App tokens cannot read another app.
-- No `items.cross_read` in v0.
-- App code/venv are not in data backups.
-- App update/remove preserves `apps/<slug>/data/`.
+- No cross-app reads in v0.
+- App code and venv are not in data backups.
+- App data lives under `apps/<slug>/data/`.
 
 ## 5. Backup
 
@@ -80,80 +77,47 @@ manifest.json
 ```
 
 Excluded: token, logs, venv, code, cache.
+Restore requires an empty target; the token is regenerated.
 
-Restore requires an empty target; token is regenerated.
-
-## 6. Updater
-
-Prototype chain:
-
-```text
-verify signed package
-→ backup
-→ stop Core
-→ atomic payload replace
-→ start
-→ health
-→ rollback on failure
-```
-
-Current prototype uses a marker payload; full package replacement remains.
-
-## 7. Tests
+## 6. Tests
 
 ```bash
 python -m unittest discover -s tests -q
 python -m unittest tests.test_loomsci_core -v
 python -m unittest tests.test_loomsci_core_sdk -v
-python prototype/test_core_m1.py
 ```
 
-Platform matrix: macOS + Windows. Linux is deferred.
+Target platforms: macOS and Windows.
 
-## 8. Release checklist (pre-C1)
+## 7. Release checklist
 
 - [ ] tests green
-- [ ] API docs/OpenAPI updated
-- [ ] manifest/SDK examples updated
+- [ ] API docs and OpenAPI updated
+- [ ] example app runs
 - [ ] backup/restore tested
-- [ ] migration dry-run/apply tested
-- [ ] signed updater tested
-- [ ] macOS install/start
-- [ ] Windows install/start
-- [ ] no private paths/keys in public tree
-- [ ] version and changelog updated
-- [ ] rollback tag
+- [ ] macOS start/stop
+- [ ] Windows start/stop
+- [ ] no private paths, tokens, or keys in the public tree
+- [ ] `VERSION`, `pyproject.toml`, and `loomsci_core.version` agree
+- [ ] tag and release notes
 
-## 9. Security
+## 8. Security
 
 - bind loopback only
-- local token 0600
-- app token scoped
+- local token mode `0600`
+- scoped app token
 - no cross-app reads
-- package signatures before extraction
 - no secrets in logs
-- no arbitrary app-to-app RPC
+- no app-to-app RPC
 
-## 10. Migration
+## 9. Out of scope
 
-beta.28 -> v0 plan:
+Not part of this version:
 
-- source read-only
-- new workspace
-- posts -> items
-- attachments -> blobs
-- facts -> project.fact items
-- projects/tasks -> Project DB
-- summaries/mentions/reads -> legacy archive
-- verify counts/hashes before switch
-
-## 11. Known gaps
-
-- full package updater
-- clean installers
-- OpenAPI-generated SDK
-- conformance suite
-- app CLI commands
-- external demo apps
-- 30-day no-breaking window
-- C1 review
+- installer, updater, signed packages
+- app update/remove commands
+- migration tools
+- app marketplace
+- external accounts or multi-user
+- cloud sync
+- conformance suite for third-party apps
