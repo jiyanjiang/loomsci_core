@@ -258,7 +258,7 @@ These belong to apps or to TAA.
 
 A Core release is not distributable unless:
 
-1. a clean machine can install Core without Python knowledge;
+1. a clean machine can install Core without manual Python setup;
 2. `loomsci start` works offline and serves `/v1/health`;
 3. an item with Markdown and a blob survives restart, backup, restore;
 4. search returns the item by body, title, tag, and app;
@@ -267,11 +267,35 @@ A Core release is not distributable unless:
 7. a signed content pack can be applied and rolled back;
 8. a corrupt package is rejected with a clear error;
 9. no registration is required for any local feature;
-10. an app cannot read another app's namespace through Core APIs.
+10. an app cannot read another app's namespace through Core APIs;
+11. a clean machine with no Python can bootstrap Core through the pinned uv
+    runtime and run the hello-world app.
 
-## 13. Open questions
+## 13. Runtime contract: Python 3.12 + uv
 
-- shipped runtime: bundled Python vs native binary;
+v0 accepts Python as a runtime for AI-native technical users. The installer
+provisions it; users do not install Python manually.
+
+```text
+core runtime   ~/.loomsci/runtime/python/       # uv-managed Python 3.12
+core venv      ~/.loomsci/venv/                 # Core dependencies
+app venv       ~/.loomsci/apps/<slug>/venv/     # app dependencies
+```
+
+Rules:
+
+- Installer detects Python 3.12; if absent, uses `uv python install 3.12`.
+- Core runs from its own venv; each app runs from its own venv.
+- App Host launches `<app-venv>/python -m <package>.<entry>`.
+- `requirements_file` is installed into the app venv with `uv pip install`.
+- Offline installer bundles the required Python and wheels.
+- Core updates must not delete or replace app venvs.
+- Native single-file binaries are a later optimization, not an M0 gate.
+- The installer must still work when `uv` is absent, by downloading a pinned
+  `uv` binary with checksum verification.
+
+## 14. Open questions
+
 - exact local token transport for browser and app;
 - app-to-app sharing through Core items vs app-to-app API;
 - how much generic reading UI belongs in Core;

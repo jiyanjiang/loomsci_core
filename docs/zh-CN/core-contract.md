@@ -214,7 +214,7 @@ entitlement       签名授权/积分，App 层处理
 
 ## 12. Core v0 验收
 
-1. 干净机器无需 Python 知识即可安装
+1. 干净机器无需手动安装 Python 即可安装
 2. `loomsci start` 离线可用，`/v1/health` 正常
 3. Markdown + blob 经重启、备份、恢复不丢
 4. 按正文、标题、标签、App 搜索
@@ -224,8 +224,30 @@ entitlement       签名授权/积分，App 层处理
 8. 损坏包拒绝并给出清晰错误
 9. 所有本地功能无需注册
 10. App 不能越权读另一个 App 命名空间
+11. 无 Python 的干净机器可通过固定 uv 引导 Core 并运行 hello-world App
 
-## 13. 待定
+## 13. 运行时契约：Python 3.12 + uv
+
+v0 接受 Python 作为 AI 原生技术用户的运行时。安装器负责准备，用户不需要手动装 Python。
+
+```text
+core runtime   ~/.loomsci/runtime/python/       # uv 管理的 Python 3.12
+core venv      ~/.loomsci/venv/                 # Core 依赖
+app venv       ~/.loomsci/apps/<slug>/venv/     # App 依赖
+```
+
+规则：
+
+- 安装器检测 Python 3.12；没有则 `uv python install 3.12`
+- Core 用自己的 venv；每个 App 用自己的 venv
+- App Host 用 `<app-venv>/python -m <package>.<entry>` 启动
+- `requirements_file` 用 `uv pip install` 装进 App venv
+- 离线安装包携带 Python 和 wheels
+- Core 更新不得删除或替换 App venv
+- 原生单文件二进制是后续优化，不是 M0 门槛
+- 没有 uv 时，安装器下载固定版本 uv 二进制并校验 checksum
+
+## 14. 待定
 
 - 运行时：打包 Python 还是原生二进制
 - 浏览器/App 的 token 传输方式

@@ -82,6 +82,8 @@ screenshots
 capabilities
 default_profile
 compatibility
+requirements_file    # optional pip requirements for this app's venv
+auto_start           # default false
 ```
 
 ## 5. Permissions
@@ -138,6 +140,89 @@ remove
   remove code
   keep data by default
   optional explicit remove_data only with confirmation
+```
+
+## 6.1 Process contract
+
+This is the M0 contract. An app is a child process managed by Core. Core must
+not import app code.
+
+### Launch
+
+Core launches:
+
+```text
+<app-venv>/python -m <package>.<entry>
+```
+
+with:
+
+```text
+cwd          = apps/<slug>/
+env:
+  LOOMSCI_CORE_URL      = http://127.0.0.1:<core-port>
+  LOOMSCI_APP_TOKEN     = <scoped token>
+  LOOMSCI_APP_SLUG      = <slug>
+  LOOMSCI_APP_PORT      = <allocated port>
+  LOOMSCI_APP_DATA_DIR  = <apps/<slug>/data>
+  LOOMSCI_APP_LOG_DIR   = <logs/apps/<slug>>
+```
+
+The app must bind `127.0.0.1` on `LOOMSCI_APP_PORT` and must not fork a daemon.
+If Core exits, it terminates its app children.
+
+### Token
+
+The app sends:
+
+```text
+Authorization: Bearer <LOOMSCI_APP_TOKEN>
+```
+
+to Core APIs. The token is scoped to the app's namespace and declared
+permissions. It is never written to logs.
+
+### Health
+
+Core polls:
+
+```text
+GET http://127.0.0.1:<port><health>
+```
+
+- poll interval: 250 ms
+- startup timeout: 30 s
+- healthy response: HTTP 200 with `{"ok": true}`
+- three consecutive failures after startup: mark `unhealthy`
+
+### Logs
+
+Core redirects the app's stdout/stderr to:
+
+```text
+logs/apps/<slug>/stdout.log
+logs/apps/<slug>/stderr.log
+```
+
+Apps must not write secrets to logs.
+
+### Stop and crash
+
+- stop: send SIGTERM, wait 10 s, then terminate
+- exit code 0: graceful
+- non-zero: crashed
+- crash loop: restart at most 3 times with 1 s, 2 s, 4 s backoff
+- after 3 failures: mark `failed`; do not restart automatically
+- one app failing must not stop Core or other apps
+
+### Readiness example
+
+```python
+# app entry
+port = int(os.environ["LOOMSCI_APP_PORT"])
+token = os.environ["LOOMSCI_APP_TOKEN"]
+core = os.environ["LOOMSCI_CORE_URL"]
+# start a loopback HTTP server with /health
 ```
 
 ## 7. Bootstrap installer

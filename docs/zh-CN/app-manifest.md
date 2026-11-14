@@ -68,7 +68,7 @@ App 管：领域 schema、领域 UI、工作流、内容、可选账号
 ## 4. 可选字段
 
 `description` `homepage` `license` `icon` `min_os` `screenshots`
-`capabilities` `default_profile` `compatibility`
+`capabilities` `default_profile` `compatibility` `requirements_file` `auto_start`
 
 ## 5. 权限
 
@@ -122,6 +122,86 @@ remove
   remove code
   keep data by default
   explicit remove_data only with confirmation
+```
+
+## 6.1 Process contract
+
+这是 M0 契约。App 是 Core 管理的子进程；Core 不 import App 代码。
+
+### 启动
+
+Core 启动：
+
+```text
+<app-venv>/python -m <package>.<entry>
+```
+
+环境：
+
+```text
+cwd          = apps/<slug>/
+LOOMSCI_CORE_URL      = http://127.0.0.1:<core-port>
+LOOMSCI_APP_TOKEN     = <scoped token>
+LOOMSCI_APP_SLUG      = <slug>
+LOOMSCI_APP_PORT      = <allocated port>
+LOOMSCI_APP_DATA_DIR  = <apps/<slug>/data>
+LOOMSCI_APP_LOG_DIR   = <logs/apps/<slug>>
+```
+
+App 必须监听 `127.0.0.1:LOOMSCI_APP_PORT`，不得 fork 常驻 daemon。
+Core 退出时终止 App 子进程。
+
+### Token
+
+App 调 Core API 时带：
+
+```text
+Authorization: Bearer <LOOMSCI_APP_TOKEN>
+```
+
+token 按 App namespace 和权限 scope；不得写入日志。
+
+### Health
+
+Core 轮询：
+
+```text
+GET http://127.0.0.1:<port><health>
+```
+
+- 轮询间隔 250ms
+- 启动超时 30s
+- 健康响应：HTTP 200 + `{"ok": true}`
+- 启动后连续 3 次失败：标记 unhealthy
+
+### 日志
+
+Core 重定向：
+
+```text
+logs/apps/<slug>/stdout.log
+logs/apps/<slug>/stderr.log
+```
+
+App 不得把密钥写日志。
+
+### 停止与崩溃
+
+- 停止：SIGTERM，等 10s，再 terminate
+- exit 0：正常退出
+- 非 0：崩溃
+- 崩溃重启：最多 3 次，退避 1s/2s/4s
+- 3 次后标记 failed，不再自动重启
+- 单 App 失败不得拖垮 Core 或其他 App
+
+### 就绪示例
+
+```python
+# app entry
+port = int(os.environ["LOOMSCI_APP_PORT"])
+token = os.environ["LOOMSCI_APP_TOKEN"]
+core = os.environ["LOOMSCI_CORE_URL"]
+# 启动 loopback HTTP server，提供 /health
 ```
 
 ## 7. Bootstrap 安装器
