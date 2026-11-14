@@ -67,6 +67,70 @@ restored workspace.
 
 ## Data
 
+## Backup and restore
+
+### What a backup contains
+
+```text
+data/core.db
+data/blobs/
+apps/<slug>/data/
+```
+
+It does not contain:
+
+```text
+local.token
+Core code
+venv
+logs
+```
+
+### Create
+
+1. Open Settings in the left rail.
+2. Find the Backups area.
+3. Click Create backup.
+4. A `backup-YYYYMMDDTHHMMSSZ` entry appears.
+
+Backups live under:
+
+```text
+core-home/backups/
+```
+
+### Verify
+
+Click Verify on a backup row. A valid backup shows "Backup verified".
+A missing manifest or hash mismatch is rejected.
+
+### Restore
+
+A restore must target a **new, empty directory**. It never overwrites the
+running workspace.
+
+In Settings:
+
+1. Enter `/tmp/loomsci-restored` as the restore target.
+2. Click Restore on a backup row.
+3. Start the restored workspace:
+
+```bash
+python -m loomsci_core --home /tmp/loomsci-restored --port 8796 start
+```
+
+4. Open `http://127.0.0.1:8796/`.
+
+Windows:
+
+```powershell
+.\.venv\Scripts\python -m loomsci_core --home C:\Users\you\loomsci-restored --port 8796 start
+```
+
+The restored workspace gets a new `local.token`. Do not restore over the running
+`core-home`.
+
+
 ```text
 core-home/data/core.db
 core-home/data/blobs/

@@ -64,6 +64,76 @@ Web UI 使用 HttpOnly SameSite=Strict cookie。CLI 与 SDK 使用
 
 ## 数据
 
+## 备份与恢复
+
+### 备份包含什么
+
+```text
+data/core.db
+data/blobs/
+apps/<slug>/data/
+```
+
+不包含：
+
+```text
+local.token
+Core 代码
+venv
+日志
+```
+
+### 创建备份
+
+1. 打开左侧「设置」
+2. 找到「数据备份」
+3. 点「创建备份」
+4. 列表中出现 `backup-YYYYMMDDTHHMMSSZ`
+
+备份目录：
+
+```text
+core-home/backups/
+```
+
+### 验证备份
+
+在备份列表中点「验证」。
+成功显示「备份验证通过」；失败说明 manifest 或文件哈希不一致。
+
+### 恢复备份
+
+恢复只能写入一个**不存在的新目录**，不会覆盖当前运行工作区。
+
+示例：
+
+```bash
+# 恢复后启动新工作区
+python -m loomsci_core --home /tmp/loomsci-restored --port 8796 start
+```
+
+在设置页：
+
+1. 在「恢复到空目录」填入 `/tmp/loomsci-restored`
+2. 在备份列表中点「恢复」
+3. 启动恢复后的工作区：
+
+```bash
+python -m loomsci_core --home /tmp/loomsci-restored --port 8796 start
+```
+
+4. 打开 `http://127.0.0.1:8796/`
+
+Windows 示例：
+
+```powershell
+.\.venv\Scripts\python -m loomsci_core --home C:\Users\you\loomsci-restored --port 8796 start
+```
+
+恢复后的工作区会生成新的 `local.token`。
+不要直接恢复覆盖正在运行的 `core-home`。
+
+
 ```text
 core-home/data/core.db
 core-home/data/blobs/
