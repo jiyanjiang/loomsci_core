@@ -1,10 +1,12 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.1.1` minimal public beta. macOS and Windows release gates passed
-at commit `90975fe`.**
+**Status: `0.1.1` runtime preview only. It does not yet meet the
+[product definition](PRODUCT.md): the Core Web UI is missing. Do not treat this
+tag as a usable public product.**
 
-A local-first substrate for one-owner apps. Core stores items, tags, blobs, and
-search. Apps run separately and use the Core API through a scoped token.
+A local-first minimal core product for one owner. The authoritative product
+definition is [PRODUCT.md](PRODUCT.md). Apps extend Core; they are not a
+prerequisite for Core being usable.
 
 The beta is for people who already have Python 3.12 and an AI IDE. It is not a
 consumer installer and does not bundle Python.
