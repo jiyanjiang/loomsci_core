@@ -34,6 +34,14 @@ start / duplicate-start / status / stop / stale state
 migrated workspace start: PASS
 ```
 
+M1 end-to-end:
+
+```bash
+MIGRATED_HOME=/path/to/migrated-home python3 prototype/test_core_m1.py
+```
+
+macOS PASS, Windows PASS. See `reports/core_m1/2026-11-14-m1-acceptance.md`.
+
 App Host:
 
 - install / start / stop / update / remove
