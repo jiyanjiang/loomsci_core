@@ -37,7 +37,7 @@ B  Windows x64    第二主个人系统；安装/更新/路径/文件锁测试
 process contract prototype   macOS PASS   Windows PASS
 signing prototype S1–S12     PASS*       PASS*
 backup/restore prototype     PASS        PASS
-uv bootstrap                 PASS        PASS*
+uv bootstrap                 PASS        PASS
 Linux                        M0 不要求；后续
 
 `*` S10 只是前置检查，不是完整安装器。`**` 测试机已有 uv；无 uv 的干净机器下载 uv 尚未验证。

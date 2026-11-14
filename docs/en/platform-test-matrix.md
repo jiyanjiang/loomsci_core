@@ -37,7 +37,7 @@ Both machines run the same signed package and the same contract tests.
 process contract prototype   macOS PASS   Windows PASS
 signing prototype S1–S12     PASS*       PASS*
 backup/restore prototype     PASS        PASS
-uv bootstrap                 PASS        PASS*
+uv bootstrap                 PASS        PASS
 Linux                        not required for M0; later
 
 `*` S10 is a precondition check, not a full installer. `**` uv exists on the test host. Downloading uv on a uv-less clean machine is not yet tested.
