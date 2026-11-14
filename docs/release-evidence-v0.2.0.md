@@ -41,9 +41,12 @@ Host: `taa-win` / `192.168.101.113`
 - `/` returns 200 and contains the UI
 - `/assets/app.js` returns 200
 - headless Chrome screenshot captured at 1280x900
+- CDP mouse clicks at 1280x900: create PASS, open detail PASS, open settings PASS
+- tag cloud renders; tag-filter click still not marked PASS
+- gallery click-through not yet run on B
 - `ROUND1_WINDOWS_020_OK`
 
-Not yet done on B: interactive browser click-through of create/edit/gallery/settings.
+Remaining B gates: tag-filter click and gallery click-through.
 
 ## Remaining public-beta gate
 
