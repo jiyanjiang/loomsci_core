@@ -53,3 +53,15 @@ Remaining B gates: tag-filter click and gallery click-through.
 ```text
 Windows real-browser acceptance
 ```
+
+## P0 hardening verification
+
+Artifact: `loomsci_core-0.2.0-7e83f02.zip`
+SHA256: `6704f0e800ac54e75b55d25bf1dca3cb5c86dd8da7f67b17b9036803ec57d196`
+
+- UI uses HttpOnly SameSite=Strict cookie; no token in HTML
+- schema version `1`; pre-migration backup; future schema rejected
+- backup verify + restore UI
+- 9 tests PASS
+- B machine clean venv + 9 tests + UI HTTP PASS
+- B tag-cloud and gallery click-through still pending
