@@ -98,7 +98,7 @@ updater
 ```text
 v0.2.0 UI：存在
 v0.2.0 macOS 浏览器验收：通过
-v0.2.0 Windows 运行时/UI HTTP：通过
+v0.2.0 Windows 运行时/UI HTTP/截图：通过
 v0.2.0 Windows 浏览器交互：待完成
 v0.2.0 公测版：尚未发布
 ```
