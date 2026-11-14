@@ -40,3 +40,26 @@ Not yet tested:
 - signed uv/installer package
 - Core dependency installation
 - app install after Core bootstrap
+
+
+## Signed Core package installer
+
+```bash
+python3 prototype/installer/install_core.py \
+  --package /path/to/core-package \
+  --home /tmp/loomsci-core \
+  --trust /path/to/trust \
+  --uv /path/to/uv
+```
+
+Validated:
+
+- signed package install
+- payload extraction + venv + dependencies
+- launcher writes `bin/loomsci-v0`
+- macOS start/status/stop
+- Windows start/status/stop
+- tampered payload rejected with no target directory
+
+The installer itself still needs a Python interpreter; clean no-Python
+bootstrap is the next step.
