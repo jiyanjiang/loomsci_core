@@ -68,6 +68,8 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
             return None
         if request.path.startswith("/assets/"):
             return None
+        if request.path.startswith("/apps/") and request.method == "GET":
+            return None
         if secrets.compare_digest(request.cookies.get("loomsci_ui", ""), ui_session):
             g.app_slug = None
             g.ui_session = True
@@ -121,6 +123,9 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
                 if key.lower() not in {"content-length", "connection", "transfer-encoding"}:
                     response.headers[key] = value
             response.headers["Content-Length"] = str(len(payload))
+            response.set_cookie(
+                "loomsci_ui", ui_session, httponly=True, samesite="Strict", path="/"
+            )
             return response
         except OSError as exc:
             return jsonify({"ok": False, "error": f"app_proxy: {exc}"}), 502
