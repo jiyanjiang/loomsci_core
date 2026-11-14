@@ -1,8 +1,9 @@
 # LoomSci Core · Minimal v0
 
 **Status: `0.2.0` minimal product candidate. The Core Web UI is available at
-`http://127.0.0.1:8795/`. macOS browser acceptance passed; Windows acceptance is
-pending before any public-beta tag.**
+`http://127.0.0.1:8795/`. macOS browser acceptance passed; Windows runtime and
+UI HTTP checks passed. Windows browser interaction is the remaining public-beta
+gate.**
 
 A local-first minimal core product for one owner. The authoritative product
 definition is [PRODUCT.md](PRODUCT.md). Apps extend Core; they are not a
@@ -39,6 +40,12 @@ python -m venv .venv
 .\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 start
 .\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 status
 .\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 stop
+```
+
+Open the Core UI:
+
+```text
+http://127.0.0.1:8795/
 ```
 
 The token is created at `core-home/local.token` (`core-home\local.token` on
@@ -119,7 +126,7 @@ legacy LoomSci beta features
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
-- [Release evidence](docs/release-evidence-v0.1.1.md)
+- [Release evidence](docs/release-evidence-v0.2.0.md)
 - [Pre-shrink backup](docs/backup.md)
 - [Changelog](CHANGELOG.md)
 
