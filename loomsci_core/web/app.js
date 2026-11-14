@@ -11,7 +11,7 @@ const I18N = {
     empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
     navContent: "内容", navSite: "站点", navSettings: "设置", backHome: "返回主页",
     siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
-    siteLinks: "链接（每行：名称 | URL）", siteFooter: "页脚", selectItem: "选择一条内容",
+    siteLogoHint: "不填则不显示 Logo。", selectItem: "选择一条内容",
     username: "用户名", apiKey: "API Key", fingerprint: "本机软指纹",
     save: "保存", rotate: "轮换软指纹", noMore: "没有更多了", deleted: "已删除",
     updated: "已更新", created: "已创建", saved: "已保存", tags: "标签", attachments: "附件",
@@ -25,7 +25,7 @@ const I18N = {
     empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
     navContent: "Content", navSite: "Site", navSettings: "Settings", backHome: "Home",
     siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
-    siteLinks: "Links (one per line: label | URL)", siteFooter: "Footer", selectItem: "Select an item",
+    siteLogoHint: "Leave blank to hide the logo.", selectItem: "Select an item",
     username: "Username", apiKey: "API Key", fingerprint: "Local fingerprint",
     save: "Save", rotate: "Rotate fingerprint", noMore: "No more items", deleted: "Deleted",
     updated: "Updated", created: "Created", saved: "Saved", tags: "Tags", attachments: "Attachments",
@@ -463,12 +463,28 @@ function saveSettings(event) {
   $("#settings-message").textContent = t("saved");
 }
 
+function applySite() {
+  let site = {};
+  try { site = JSON.parse(localStorage.getItem("loomsci.site") || "{}"); } catch { site = {}; }
+  const name = String(site.name || "").trim() || "LoomSci Core";
+  $("#brand-name").textContent = name;
+  document.title = name;
+  const logo = String(site.logo || "").trim();
+  const image = $("#brand-logo");
+  if (logo && /^(https?:\/\/|\/)/i.test(logo)) {
+    image.src = logo;
+    image.hidden = false;
+  } else {
+    image.removeAttribute("src");
+    image.hidden = true;
+  }
+}
+
 function showSite() {
-  const site = JSON.parse(localStorage.getItem("loomsci.site") || "{}");
+  let site = {};
+  try { site = JSON.parse(localStorage.getItem("loomsci.site") || "{}"); } catch { site = {}; }
   $("#site-name").value = site.name || "";
   $("#site-logo").value = site.logo || "";
-  $("#site-links").value = site.links || "";
-  $("#site-footer").value = site.footer || "";
   $("#site-message").textContent = "";
 }
 
@@ -477,10 +493,9 @@ function saveSite(event) {
   const site = {
     name: $("#site-name").value.trim(),
     logo: $("#site-logo").value.trim(),
-    links: $("#site-links").value,
-    footer: $("#site-footer").value.trim(),
   };
   localStorage.setItem("loomsci.site", JSON.stringify(site));
+  applySite();
   $("#site-message").textContent = t("saved");
 }
 
@@ -690,6 +705,7 @@ document.addEventListener("keydown", (event) => {
 window.addEventListener("hashchange", () => route().catch((error) => showMessage(error.message, true)));
 
 applyI18n();
+applySite();
 currentFingerprint();
 route().catch((error) => {
   showMessage(error.message, true);

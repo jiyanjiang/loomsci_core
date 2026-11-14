@@ -10,7 +10,10 @@
 <body>
   <div class="app-shell">
     <aside class="rail">
-      <div class="brand">LoomSci <span>Core</span></div>
+      <a class="brand" id="brand" href="#/">
+        <img id="brand-logo" class="brand-logo" alt="" hidden>
+        <span id="brand-name">LoomSci Core</span>
+      </a>
       <nav>
         <button data-view="content" data-i18n="navContent">内容</button>
         <button data-view="site" data-i18n="navSite">站点</button>
@@ -61,9 +64,8 @@
           </div>
           <form id="site-form">
             <label><span data-i18n="siteName">站点名称</span><input id="site-name"></label>
-            <label><span data-i18n="siteLogo">Logo 地址</span><input id="site-logo"></label>
-            <label><span data-i18n="siteLinks">链接（每行：名称 | URL）</span><textarea id="site-links" rows="4"></textarea></label>
-            <label><span data-i18n="siteFooter">页脚</span><input id="site-footer"></label>
+            <label><span data-i18n="siteLogo">Logo 地址（可选）</span><input id="site-logo" placeholder="https://..."></label>
+            <p class="muted" data-i18n="siteLogoHint">不填则不显示 Logo。</p>
             <div class="actions">
               <button type="submit" class="primary" data-i18n="save">保存</button>
             </div>

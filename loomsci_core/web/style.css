@@ -64,8 +64,9 @@ label > span { display: block; color: var(--muted); margin-bottom: 4px; }
   border-right: 1px solid var(--border);
   background: var(--panel);
 }
-.brand { font-size: 19px; font-weight: 700; }
-.brand span { color: var(--muted); font-weight: 400; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 19px; font-weight: 700; color: var(--text); text-decoration: none; }
+.brand-logo { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; }
+.brand span { color: var(--text); }
 .rail nav { display: grid; gap: 6px; }
 .rail nav button { text-align: left; border-color: transparent; }
 .rail nav button.active { background: var(--bg); border-color: var(--border); font-weight: 600; }
