@@ -1,6 +1,6 @@
 # loomsci_core · 公测
 
-[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [Core 契约](docs/zh-CN/core-contract.md) · [App Manifest](docs/zh-CN/app-manifest.md) · [分发模型](docs/zh-CN/distribution.md) · [IDE 矩阵](docs/zh-CN/ide-compatibility.md) · [备份](docs/zh-CN/backup.md) · [迁移](docs/zh-CN/migration.md) · [安全](SECURITY.md)
+[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [Core 契约](docs/zh-CN/core-contract.md) · [App Manifest](docs/zh-CN/app-manifest.md) · [Report 规格](docs/zh-CN/report-app.md) · [分发模型](docs/zh-CN/distribution.md) · [IDE 矩阵](docs/zh-CN/ide-compatibility.md) · [备份](docs/zh-CN/backup.md) · [迁移](docs/zh-CN/migration.md) · [安全](SECURITY.md)
 
 **给使用 AI IDE 的科研人的本地优先工作台。**
 
