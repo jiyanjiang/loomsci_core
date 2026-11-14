@@ -5,6 +5,7 @@
 - Target: Core v0 workspace + Report/Project app databases
 - Mode: safe, read-only source; new workspace first
 - Platforms: macOS and Windows
+- Prototype status: dry-run + apply passed on A (48 posts) and B (278 posts)
 
 ## 1. Principle
 

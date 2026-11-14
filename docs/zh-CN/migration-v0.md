@@ -5,6 +5,7 @@
 - 目标：Core v0 工作区 + Report/Project App 数据库
 - 模式：安全迁移；源只读；先写新工作区
 - 平台：macOS 与 Windows
+- 原型状态：dry-run + apply 已在 A（48 帖）与 B（278 帖）通过
 
 ## 1. 原则
 
