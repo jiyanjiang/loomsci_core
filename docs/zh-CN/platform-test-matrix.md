@@ -36,7 +36,7 @@ B  Windows x64    第二主个人系统；安装/更新/路径/文件锁测试
 ```text
 process contract prototype   macOS PASS   Windows PASS
 signing prototype            pending     pending
-backup/restore prototype     pending     pending
+backup/restore prototype     PASS        PASS
 uv bootstrap                 PASS        PASS*
 Linux                        M0 不要求；后续
 

@@ -36,7 +36,7 @@ Both machines run the same signed package and the same contract tests.
 ```text
 process contract prototype   macOS PASS   Windows PASS
 signing prototype            pending     pending
-backup/restore prototype     pending     pending
+backup/restore prototype     PASS        PASS
 uv bootstrap                 PASS        PASS*
 Linux                        not required for M0; later
 
