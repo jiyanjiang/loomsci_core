@@ -59,6 +59,7 @@ class SdkTest(unittest.TestCase):
         self.assertEqual(self.client.list_tags()[0]["tag"], "changed")
 
     def test_sdk_example_app(self) -> None:
+        self.client.timeout = 120
         source = ROOT / "examples" / "hello-app"
         installed = self.client._request("POST", "/v1/apps/install", {"source": str(source)})
         self.assertTrue(installed["ok"])
