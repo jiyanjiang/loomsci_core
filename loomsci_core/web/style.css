@@ -200,3 +200,7 @@ h2 { margin: 0 0 12px; font-size: 16px; }
 .catalog-card h3 { margin: 0 0 4px; font-size: 15px; }
 .catalog-card .muted { font-size: 13px; }
 .catalog-card .actions { margin-top: 8px; }
+
+.app-nav { display: grid; gap: 4px; border-top: 1px solid var(--border); padding-top: 12px; }
+.app-nav button { text-align: left; border-color: transparent; font-size: 13px; }
+.app-nav button:hover { border-color: var(--border); background: var(--bg); }

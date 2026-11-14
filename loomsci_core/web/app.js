@@ -431,6 +431,7 @@ $$(".rail nav button").forEach((button) => {
   } else if (isTools) {
     $("#detail").replaceChildren();
     $("#tools-message").textContent = "";
+    await loadInstalledApps();
   } else {
     $("#detail").replaceChildren();
     $("#detail-empty").hidden = false;
@@ -722,6 +723,30 @@ $("#backup").addEventListener("click", async () => {
   }
 });
 
+async function loadInstalledApps() {
+  const nav = $("#app-nav");
+  nav.replaceChildren();
+  try {
+    const data = await api("/v1/apps");
+    for (const row of data.apps || []) {
+      let manifest = {};
+      try { manifest = JSON.parse(row.manifest_json || "{}"); } catch { manifest = {}; }
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = manifest.name || row.slug;
+      button.onclick = async () => {
+        try {
+          const started = await api("/v1/apps/" + encodeURIComponent(row.slug) + "/start", { method: "POST", body: "{}" });
+          window.location.href = "http://127.0.0.1:" + started.port + "/";
+        } catch (error) {
+          showMessage(error.message, true);
+        }
+      };
+      nav.appendChild(button);
+    }
+  } catch { /* no installed apps */ }
+}
+
 async function loadCatalog() {
   const source = $("#catalog-source").value.trim();
   if (!source) return;
@@ -750,6 +775,7 @@ async function loadCatalog() {
           const body = app.repo ? { repo: app.repo } : { source: app.source };
           const result = await api("/v1/apps/install", { method: "POST", body: JSON.stringify(body) });
           $("#tools-message").textContent = (result.slug || app.slug) + " installed";
+          await loadInstalledApps();
         } catch (error) {
           $("#tools-message").textContent = error.message;
           install.disabled = false;
@@ -813,6 +839,7 @@ document.addEventListener("keydown", (event) => {
 window.addEventListener("hashchange", () => route().catch((error) => showMessage(error.message, true)));
 
 applyI18n();
+loadInstalledApps();
 applySite();
 currentFingerprint();
 route().catch((error) => {
