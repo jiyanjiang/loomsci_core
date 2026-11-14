@@ -4,7 +4,9 @@ Not product code. The first M1 slice: items, tags, blobs, FTS, and a local-token
 API.
 
 ```bash
-python3 prototype/core_v0/server.py --home /tmp/loomsci-core-v0 --port 8795
+python3 prototype/core_v0/cli.py --home /tmp/loomsci-core-v0 --port 8795 start
+python3 prototype/core_v0/cli.py --home /tmp/loomsci-core-v0 status
+python3 prototype/core_v0/cli.py --home /tmp/loomsci-core-v0 stop
 python3 prototype/test_core_v0.py
 ```
 
@@ -23,6 +25,13 @@ Tested:
 ```text
 macOS:   PASS
 Windows: PASS
+```
+
+CLI lifecycle:
+
+```text
+start / duplicate-start / status / stop / stale state
+migrated workspace start: PASS
 ```
 
 App Host:

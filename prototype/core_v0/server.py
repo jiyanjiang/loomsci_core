@@ -310,7 +310,9 @@ def main() -> int:
     parser.add_argument("--home", default=str(Path.home() / ".loomsci-core-v0"))
     parser.add_argument("--port", type=int, default=8795)
     args = parser.parse_args()
-    create_app(Path(args.home)).run(host="127.0.0.1", port=args.port, threaded=True)
+    create_app(
+        Path(args.home), core_url=f"http://127.0.0.1:{args.port}"
+    ).run(host="127.0.0.1", port=args.port, threaded=True)
     return 0
 
 
