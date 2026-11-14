@@ -1,0 +1,108 @@
+{
+  "code": "techreport-simple-v0.1.0",
+  "family": "techreport",
+  "variant": "simple",
+  "version": "0.1.0",
+  "status": "draft",
+  "source_genre": "Nature Physics Perspective",
+  "source_project": "loomsci_report",
+  "sample_size": 10,
+  "sample_years": [2018, 2026],
+  "sample_dois": [
+    "10.1038/s41567-022-01602-2",
+    "10.1038/s41567-020-0834-8",
+    "10.1038/s41567-020-0856-2",
+    "10.1038/s41567-020-0838-4",
+    "10.1038/s41567-018-0342-2",
+    "10.1038/s41567-018-0050-y",
+    "10.1038/s41567-026-03304-5",
+    "10.1038/s41567-025-03143-w",
+    "10.1038/s41567-022-01770-1",
+    "10.1038/s41567-022-01666-0"
+  ],
+  "audience": "technical peers and informed researchers",
+  "purpose": "argument-driven research perspective, not a literature catalogue",
+  "length": {
+    "words_min": 5000,
+    "words_max": 12000,
+    "pages_target": [6, 20]
+  },
+  "structure": [
+    {"name": "context", "role": "field status and why it matters", "claim_required": false},
+    {"name": "tension", "role": "the unresolved gap or disagreement", "claim_required": true},
+    {"name": "evidence", "role": "what is established and what is contested", "claim_required": true},
+    {"name": "challenges", "role": "competing approaches and constraints", "claim_required": true},
+    {"name": "opportunities", "role": "what becomes possible", "claim_required": true},
+    {"name": "agenda", "role": "research agenda and open questions", "claim_required": true},
+    {"name": "outlook", "role": "bounded conclusion, not a summary-only ending", "claim_required": false}
+  ],
+  "title": {
+    "words": [8, 20],
+    "patterns": [
+      "<Field> and <challenge>",
+      "<Approach> for <goal>",
+      "The quest for <X> with <Y>",
+      "<Theme>: challenges and opportunities"
+    ],
+    "forbidden": ["generic topic label without a claim or tension", "marketing superlatives"]
+  },
+  "abstract": {
+    "words": [120, 200],
+    "moves": ["field", "unresolved problem", "evidence or approach", "perspective or agenda"]
+  },
+  "voice": {
+    "person": "first-person plural",
+    "sentence_words": [10, 18],
+    "tone": "assertive but bounded",
+    "rules": [
+      "one argument per paragraph",
+      "define terms before use",
+      "qualify uncertain claims",
+      "no marketing adjectives without evidence"
+    ]
+  },
+  "figures": {
+    "count": [3, 8],
+    "rule": "each figure carries one argument",
+    "kinds": ["mechanism", "taxonomy", "roadmap", "comparison", "decision surface"],
+    "caption": "self-contained; states the claim"
+  },
+  "citations": {
+    "policy": "every factual claim has a registered source",
+    "primary_sources_first": true,
+    "no_unregistered_sources": true,
+    "no_fabricated_identifiers": true,
+    "reference_range": [50, 100]
+  },
+  "forbidden": [
+    "generic 'in this article' opening",
+    "marketing language",
+    "uncited numbers",
+    "fabricated citations",
+    "bibliography dump without argument",
+    "treating inference as established fact"
+  ],
+  "acceptance": [
+    "title names field + claim/tension in 8-20 words",
+    "abstract contains context, gap, evidence, proposal",
+    "4-7 sections follow the argument sequence",
+    "each section has a claim, not only a topic label",
+    "no generic opening",
+    "no unsourced marketing adjective",
+    "every factual claim is cited",
+    "figures have self-contained captions",
+    "conclusion contains agenda/open questions",
+    "report is readable without the appendix"
+  ],
+  "limitations": [
+    "one genre: Nature Physics Perspective",
+    "10 samples support a first profile, not a universal style",
+    "some source PDFs are author manuscripts or HTML wrappers",
+    "not validated for 95-page manuals or policy audiences"
+  ],
+  "derived_from": {
+    "analysis": "reports/report_seed/2026-11-14-style-analysis.md",
+    "metrics": "reports/report_seed/style_metrics.json",
+    "seed_db": "data/report/report_seed.db (local, gitignored)"
+  }
+}
