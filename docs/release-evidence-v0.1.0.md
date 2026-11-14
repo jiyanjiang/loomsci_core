@@ -1,42 +1,33 @@
 # Release evidence: v0.1.0
 
-Status: **not a valid public beta**.
+Status: **dual-platform gate passed** at commit `90975fe`.
 
-The `v0.1.0` tag was created before the release gates in
-[release-process](release-process.md) were executed. It must not be treated as a
-public beta.
+Workflow: `.github/workflows/release-test.yml`
+Run: `43579862388`
+Result: both jobs completed successfully.
 
 ## macOS
 
-- Machine: this Mac (darwin arm64)
-- Python: 3.12 project venv
-- Clean venv install: `CLEAN_MACOS_OK`
+- Runner: `macos-latest`, Python 3.12
+- CI: **passed**
+- Steps: items/search, backup/restore, CLI lifecycle, SDK items, SDK + App Host
 - Local clean venv: 5 tests OK
-- End-to-end smoke: `MINIMAL_SMOKE_OK`
-- CI (`macos-latest`): **failed** in run 43577546690; test file is being isolated
-- Covered locally: Core start, app install, app start, item write, search, backup,
-  app stop
+- Local end-to-end smoke: `MINIMAL_SMOKE_OK`
 
 ## Windows
 
-- CI (`windows-latest`, Python 3.12): **passed** in run 43577546690
-- Workflow: `.github/workflows/release-test.yml`
-- Evidence: 5 tests OK, including CLI lifecycle, App Host, SDK, backup/restore
+- Runner: `windows-latest`, Python 3.12
+- CI: **passed**
+- Steps: items/search, backup/restore, CLI lifecycle, SDK items, SDK + App Host
 
-## Consequence
+## Fixes found by the gate
 
-The tag is a candidate only. Do not announce it as public beta until both
-macOS and Windows CI are green and the results are recorded here.
+- loopback health and SDK requests now bypass proxy environment variables
+- Core startup allows up to 60 seconds
+- App Host startup allows up to 90 seconds
+- SDK app test allows slow app startup
 
-## Minimum evidence to add
+## Remaining check
 
-```text
-Windows version:
-Python version:
-Core start result:
-App install result:
-App start result:
-Item write/search result:
-Backup result:
-Core stop result:
-```
+Independent documentation walkthrough by a person who did not write the code is
+still recommended, but is not a release blocker for the minimal public beta.

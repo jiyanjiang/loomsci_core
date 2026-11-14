@@ -1,9 +1,9 @@
 # Changelog
 
-## 0.1.0 — release candidate
+## 0.1.0 — minimal public beta
 
-Minimal Core release candidate. Public beta is blocked until the dual-machine
-release gates pass.
+Minimal Core public beta. macOS and Windows release gates passed in CI run
+`43579862388` at commit `90975fe`.
 
 ### Included
 
