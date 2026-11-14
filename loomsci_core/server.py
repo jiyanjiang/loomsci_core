@@ -11,6 +11,7 @@ import atexit
 import base64
 import binascii
 import secrets
+import subprocess
 from pathlib import Path
 
 from flask import Flask, Response, g, jsonify, request, send_from_directory
@@ -18,6 +19,7 @@ from flask import Flask, Response, g, jsonify, request, send_from_directory
 from . import backup as backup_store
 from .version import __version__
 from . import store
+from . import catalog as catalog_store
 from .app_host import AppHost, AppHostError
 
 WEB = Path(__file__).resolve().parent / "web"
@@ -243,16 +245,29 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         response.headers["Content-Disposition"] = f'attachment; filename="{blob["filename"]}"'
         return response
 
+    @app.get("/v1/catalog")
+    def catalog_get():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        source = request.args.get("source", "")
+        try:
+            return jsonify({"ok": True, "catalog": catalog_store.load(source)})
+        except (catalog_store.CatalogError, OSError) as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
     @app.post("/v1/apps/install")
     def apps_install():
         if getattr(g, "app_slug", None):
             return jsonify({"ok": False, "error": "forbidden"}), 403
         body = request.get_json(silent=True)
-        if not isinstance(body, dict) or not body.get("source"):
-            return jsonify({"ok": False, "error": "source_required"}), 400
+        if not isinstance(body, dict) or not (body.get("source") or body.get("repo")):
+            return jsonify({"ok": False, "error": "source_or_repo_required"}), 400
         try:
-            result = app.config["HOST"].install(Path(str(body["source"])).expanduser())
-        except (AppHostError, ValueError, OSError) as exc:
+            if body.get("repo"):
+                result = app.config["HOST"].install_repo(str(body["repo"]), str(body.get("ref") or ""))
+            else:
+                result = app.config["HOST"].install(Path(str(body["source"])).expanduser())
+        except (AppHostError, ValueError, OSError, subprocess.SubprocessError) as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
         return jsonify({"ok": True, **result}), 201
 

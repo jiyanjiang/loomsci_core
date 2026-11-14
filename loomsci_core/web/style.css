@@ -195,3 +195,8 @@ h2 { margin: 0 0 12px; font-size: 16px; }
 .backup-row .name { font-family: ui-monospace, monospace; font-size: 12px; flex: 1; overflow-wrap: anywhere; }
 .backup-row button { padding: 3px 8px; font-size: 12px; }
 .backup-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+.catalog-list { display: grid; gap: 10px; margin-top: 12px; }
+.catalog-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.catalog-card h3 { margin: 0 0 4px; font-size: 15px; }
+.catalog-card .muted { font-size: 13px; }
+.catalog-card .actions { margin-top: 8px; }

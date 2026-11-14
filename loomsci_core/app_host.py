@@ -81,6 +81,26 @@ class AppHost:
             sock.bind(("127.0.0.1", 0))
             return int(sock.getsockname()[1])
 
+    def install_repo(self, repo: str, ref: str = "") -> dict[str, Any]:
+        repo = str(repo or "").strip()
+        if not repo.startswith("https://github.com/"):
+            raise AppHostError("only https://github.com/ repos are supported")
+        downloads = self.home / "downloads"
+        downloads.mkdir(parents=True, exist_ok=True)
+        target = downloads / ("clone-" + secrets.token_hex(6))
+        command = ["git", "clone", "--depth", "1"]
+        if ref:
+            command += ["--branch", str(ref)]
+        command += [repo, str(target)]
+        completed = subprocess.run(command, text=True, capture_output=True, timeout=120)
+        if completed.returncode:
+            shutil.rmtree(target, ignore_errors=True)
+            raise AppHostError("git clone failed: " + (completed.stderr or "")[-500:])
+        try:
+            return self.install(target)
+        finally:
+            shutil.rmtree(target, ignore_errors=True)
+
     def start(self, slug: str) -> dict[str, Any]:
         if slug in self.procs and self.procs[slug].poll() is None:
             return {"slug": slug, "running": True, "port": self.ports[slug]}

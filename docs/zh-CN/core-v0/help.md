@@ -146,6 +146,29 @@ schema 版本为 `PRAGMA user_version = 1`。旧库升级前会先复制备份�
 
 ## 更新
 
+## 工具目录
+
+打开 `#/tools`，输入 catalog JSON 地址或本地路径，点「检测」。
+
+```json
+{
+  "format": "loomsci-catalog/1",
+  "apps": [
+    {
+      "slug": "report",
+      "name": "LoomSci Report",
+      "version": "0.1.0",
+      "repo": "https://github.com/example/loomsci-report",
+      "description": "Research report generator"
+    }
+  ]
+}
+```
+
+开发时可用本地 `source` 路径；正式 `repo` 必须是 `https://github.com/` 地址。
+安装使用现有 App Host，不会自动运行 App。
+
+
 ```bash
 python -m loomsci_core update check <manifest.json>
 python -m loomsci_core update apply <manifest.json> --package <payload.zip>

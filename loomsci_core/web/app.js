@@ -8,8 +8,8 @@ const I18N = {
     tagsPlaceholder: "标签，逗号分隔", pasteImage: "从剪贴板粘贴图片", publish: "发布",
     backup: "创建备份", searchPlaceholder: "搜索", search: "搜索", clear: "清除",
     empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
-    navContent: "内容", navSite: "站点", navSettings: "设置", backHome: "返回主页",
-    siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
+    navContent: "内容", navSite: "站点", navTools: "工具", navSettings: "设置", backHome: "返回主页",
+    toolsTitle: "工具", toolsHint: "输入 catalog JSON 地址或本地路径，检测可安装工具。", catalogSource: "Catalog 地址或路径", detect: "检测", install: "安装", siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
     siteLogoHint: "不填则不显示 Logo。", backupTitle: "数据备份", backupHint: "备份包含 items、附件和 App 数据，不包含 token、代码、venv。恢复必须填入一个不存在的新目录。", refresh: "刷新", createBackup: "创建备份", restoreTarget: "恢复到空目录", verify: "验证", restore: "恢复", backupVerified: "备份验证通过", backupCreated: "备份已创建", backupRestored: "已恢复", selectItem: "选择一条内容",
     username: "用户名", deepseekKey: "DeepSeek API Key", fingerprint: "本机软指纹",
     save: "保存", rotate: "轮换软指纹", noMore: "没有更多了", deleted: "已删除",
@@ -22,8 +22,8 @@ const I18N = {
     tagsPlaceholder: "Tags, comma separated", pasteImage: "Paste image", publish: "Publish",
     backup: "Create backup", searchPlaceholder: "Search", search: "Search", clear: "Clear",
     empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
-    navContent: "Content", navSite: "Site", navSettings: "Settings", backHome: "Home",
-    siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
+    navContent: "Content", navSite: "Site", navTools: "Tools", navSettings: "Settings", backHome: "Home",
+    toolsTitle: "Tools", toolsHint: "Enter a catalog JSON URL or local path to detect installable tools.", catalogSource: "Catalog URL or path", detect: "Detect", install: "Install", siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
     siteLogoHint: "Leave blank to hide the logo.", backupTitle: "Backups", backupHint: "Backups contain items, attachments, and app data. They exclude tokens, code, and venvs. Restore requires a new, non-existing directory.", refresh: "Refresh", createBackup: "Create backup", restoreTarget: "Restore to empty directory", verify: "Verify", restore: "Restore", backupVerified: "Backup verified", backupCreated: "Backup created", backupRestored: "Restored", selectItem: "Select an item",
     username: "Username", deepseekKey: "DeepSeek API Key", fingerprint: "Local fingerprint",
     save: "Save", rotate: "Rotate fingerprint", noMore: "No more items", deleted: "Deleted",
@@ -396,19 +396,22 @@ async function route() {
   const match = hash.match(/^#\/item\/(.+)$/);
   const isSettings = hash === "#/settings";
   const isSite = hash === "#/site";
-  const isContent = !isSettings && !isSite;
+  const isTools = hash === "#/tools";
+  const isContent = !isSettings && !isSite && !isTools;
 
   $("#compose-panel").hidden = !isContent;
   $("#list-view").hidden = !isContent;
   $("#settings-view").hidden = !isSettings;
   $("#site-view").hidden = !isSite;
-  $("#detail-view").hidden = isSettings || isSite;
+  $("#tools-view").hidden = !isTools;
+  $("#detail-view").hidden = isSettings || isSite || isTools;
 
-  $$(".rail nav button").forEach((button) => {
+$$(".rail nav button").forEach((button) => {
     button.classList.toggle("active",
       (button.dataset.view === "content" && isContent) ||
       (button.dataset.view === "settings" && isSettings) ||
-      (button.dataset.view === "site" && isSite));
+      (button.dataset.view === "site" && isSite) ||
+      (button.dataset.view === "tools" && isTools));
   });
 
   if (match) {
@@ -425,6 +428,9 @@ async function route() {
   } else if (isSite) {
     $("#detail").replaceChildren();
     showSite();
+  } else if (isTools) {
+    $("#detail").replaceChildren();
+    $("#tools-message").textContent = "";
   } else {
     $("#detail").replaceChildren();
     $("#detail-empty").hidden = false;
@@ -714,6 +720,54 @@ $("#backup").addEventListener("click", async () => {
   } catch (error) {
     showMessage(error.message, true);
   }
+});
+
+async function loadCatalog() {
+  const source = $("#catalog-source").value.trim();
+  if (!source) return;
+  const list = $("#catalog-list");
+  list.replaceChildren();
+  $("#tools-message").textContent = "";
+  try {
+    const data = await api("/v1/catalog?source=" + encodeURIComponent(source));
+    for (const app of data.catalog.apps || []) {
+      const card = document.createElement("div");
+      card.className = "catalog-card";
+      const title = document.createElement("h3");
+      title.textContent = app.name + " · " + app.version;
+      const desc = document.createElement("p");
+      desc.className = "muted";
+      desc.textContent = app.description || app.repo || app.source;
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const install = document.createElement("button");
+      install.type = "button";
+      install.className = "primary";
+      install.textContent = t("install");
+      install.onclick = async () => {
+        install.disabled = true;
+        try {
+          const body = app.repo ? { repo: app.repo } : { source: app.source };
+          const result = await api("/v1/apps/install", { method: "POST", body: JSON.stringify(body) });
+          $("#tools-message").textContent = (result.slug || app.slug) + " installed";
+        } catch (error) {
+          $("#tools-message").textContent = error.message;
+          install.disabled = false;
+        }
+      };
+      actions.appendChild(install);
+      card.append(title, desc, actions);
+      list.appendChild(card);
+    }
+    if (!list.children.length) $("#tools-message").textContent = "no apps";
+  } catch (error) {
+    $("#tools-message").textContent = error.message;
+  }
+}
+
+$("#catalog-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadCatalog();
 });
 
 $$(".rail nav button").forEach((button) => {

@@ -144,6 +144,30 @@ before an older database is upgraded. A newer schema is rejected.
 
 ## Update
 
+## Tools catalog
+
+Open `#/tools`, enter a catalog JSON URL or local path, then click Detect.
+
+```json
+{
+  "format": "loomsci-catalog/1",
+  "apps": [
+    {
+      "slug": "report",
+      "name": "LoomSci Report",
+      "version": "0.1.0",
+      "repo": "https://github.com/example/loomsci-report",
+      "description": "Research report generator"
+    }
+  ]
+}
+```
+
+A local `source` path is accepted for development. A `repo` must be an
+`https://github.com/` URL. Install uses the existing App Host and does not run
+the app automatically.
+
+
 ```bash
 python -m loomsci_core update check <manifest.json>
 python -m loomsci_core update apply <manifest.json> --package <payload.zip>

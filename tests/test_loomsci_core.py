@@ -122,6 +122,21 @@ class FormalCoreTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             create_app(self.home)
 
+    def test_catalog_detection(self) -> None:
+        catalog = Path(self.tmp.name) / "catalog.json"
+        catalog.write_text(json.dumps({
+            "format": "loomsci-catalog/1",
+            "apps": [{
+                "slug": "sdk-demo", "name": "Hello", "version": "0.1.0",
+                "source": str(ROOT / "examples" / "hello-app"),
+            }],
+        }), encoding="utf-8")
+        response = self.client.get("/v1/catalog?source=" + str(catalog), headers=self.headers)
+        self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+        self.assertEqual(response.json["catalog"]["apps"][0]["slug"], "sdk-demo")
+        bad = self.client.get("/v1/catalog?source=" + str(Path(self.tmp.name) / "missing.json"), headers=self.headers)
+        self.assertEqual(bad.status_code, 400)
+
     def test_signed_update_manifest(self) -> None:
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey

@@ -17,6 +17,7 @@
       <nav>
         <button data-view="content" data-i18n="navContent">内容</button>
         <button data-view="site" data-i18n="navSite">站点</button>
+        <button data-view="tools" data-i18n="navTools">工具</button>
         <button data-view="settings" data-i18n="navSettings">设置</button>
       </nav>
       <div class="rail-footer">
@@ -55,6 +56,20 @@
           <div class="actions">
             <button id="load-more" type="button" data-i18n="loadMore" hidden>加载更多</button>
           </div>
+        </section>
+
+        <section class="panel" id="tools-view" hidden>
+          <div class="page-head">
+            <h2 data-i18n="toolsTitle">工具</h2>
+            <button type="button" data-home data-i18n="backHome">返回主页</button>
+          </div>
+          <p class="muted" data-i18n="toolsHint">输入 catalog JSON 地址或本地路径，检测可安装工具。</p>
+          <form id="catalog-form">
+            <label><span data-i18n="catalogSource">Catalog 地址或路径</span><input id="catalog-source" placeholder="https://.../catalog.json"></label>
+            <div class="actions"><button type="submit" class="primary" data-i18n="detect">检测</button></div>
+          </form>
+          <div id="catalog-list" class="catalog-list"></div>
+          <p id="tools-message" class="message"></p>
         </section>
 
         <section class="panel" id="site-view" hidden>
