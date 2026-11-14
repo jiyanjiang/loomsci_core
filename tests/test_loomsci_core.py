@@ -69,9 +69,11 @@ class FormalCoreTest(unittest.TestCase):
         command = [sys.executable, "-m", "loomsci_core", "--home", str(self.home), "--port", str(port)]
         started = subprocess.run(command + ["start", "--json"], cwd=ROOT, text=True, capture_output=True)
         if started.returncode != 0:
-            log = self.home / "logs" / "core.stderr.log"
-            detail = log.read_text(encoding="utf-8", errors="replace") if log.is_file() else ""
-            self.fail((started.stderr or "") + "\n" + detail)
+            logs = []
+            for name in ("core.stdout.log", "core.stderr.log"):
+                log = self.home / "logs" / name
+                logs.append(name + ":\n" + (log.read_text(encoding="utf-8", errors="replace") if log.is_file() else "<missing>"))
+            self.fail((started.stderr or "") + "\n" + "\n".join(logs))
         try:
             status = subprocess.run(command + ["status", "--json"], cwd=ROOT, text=True, capture_output=True)
             self.assertEqual(status.returncode, 0, status.stderr)
