@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — Windows quickstart
+
+- Added Windows PowerShell install and run commands to README and platform docs.
+- Added a PowerShell first-item example.
+- No Core behavior change.
+
 ## 0.1.0 — minimal public beta
 
 Minimal Core public beta. macOS and Windows release gates passed in CI run

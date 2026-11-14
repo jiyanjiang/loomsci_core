@@ -31,7 +31,9 @@ Those belong to apps.
 
 ## 2. Install and run
 
-From the repository:
+From the repository.
+
+macOS / Linux:
 
 ```bash
 python3.12 -m venv .venv
@@ -39,6 +41,16 @@ python3.12 -m venv .venv
 ./.venv/bin/python -m loomsci_core --home /tmp/loomsci-core --port 8795 start
 ./.venv/bin/python -m loomsci_core --home /tmp/loomsci-core status
 ./.venv/bin/python -m loomsci_core --home /tmp/loomsci-core stop
+```
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements-core.txt
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 start
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 status
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 stop
 ```
 
 The `loomsci-v0` console script is also defined in `pyproject.toml`.

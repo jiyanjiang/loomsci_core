@@ -1,6 +1,6 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.1.0` minimal public beta. macOS and Windows release gates passed
+**Status: `0.1.1` minimal public beta. macOS and Windows release gates passed
 at commit `90975fe`.**
 
 A local-first substrate for one-owner apps. Core stores items, tags, blobs, and
@@ -19,6 +19,8 @@ No installer, updater, Python bundle, or account is required.
 
 ## Run
 
+macOS / Linux:
+
 ```bash
 python3.12 -m venv .venv
 ./.venv/bin/pip install -r requirements-core.txt
@@ -27,7 +29,18 @@ python3.12 -m venv .venv
 ./.venv/bin/python -m loomsci_core --home ./core-home --port 8795 stop
 ```
 
-The token is created at `core-home/local.token`. Treat it as a secret.
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements-core.txt
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 start
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 status
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 stop
+```
+
+The token is created at `core-home/local.token` (`core-home\local.token` on
+Windows). Treat it as a secret.
 
 ## First item
 
@@ -37,6 +50,16 @@ curl -sS -X POST http://127.0.0.1:8795/v1/items \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"app":"hello","type":"hello.note","title":"Hello","body":"World"}'
+```
+
+Windows PowerShell:
+
+```powershell
+$TOKEN = Get-Content .\core-home\local.token
+$body = '{"app":"hello","type":"hello.note","title":"Hello","body":"World"}'
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8795/v1/items `
+  -Headers @{ Authorization = "Bearer $TOKEN" } `
+  -ContentType "application/json" -Body $body
 ```
 
 ## Example app

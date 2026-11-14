@@ -30,7 +30,9 @@ Core 不是：
 
 ## 2. 安装与运行
 
-从仓库：
+从仓库。
+
+macOS / Linux：
 
 ```bash
 python3.12 -m venv .venv
@@ -38,6 +40,16 @@ python3.12 -m venv .venv
 ./.venv/bin/python -m loomsci_core --home /tmp/loomsci-core --port 8795 start
 ./.venv/bin/python -m loomsci_core --home /tmp/loomsci-core status
 ./.venv/bin/python -m loomsci_core --home /tmp/loomsci-core stop
+```
+
+Windows PowerShell：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements-core.txt
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 start
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 status
+.\.venv\Scripts\python -m loomsci_core --home .\core-home --port 8795 stop
 ```
 
 `pyproject.toml` 也定义了 `loomsci-v0` 命令。
