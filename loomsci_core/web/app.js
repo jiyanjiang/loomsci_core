@@ -263,8 +263,11 @@ function normalizeFile(file) {
 }
 
 function addFiles(files) {
-  for (const file of files || []) {
-    if (file && file.size) pendingFiles.push(normalizeFile(file));
+  for (const item of files || []) {
+    if (!item || !item.size) continue;
+    const file = normalizeFile(item);
+    const preview = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
+    pendingFiles.push({ file, preview });
   }
   renderPending();
 }
@@ -272,14 +275,28 @@ function addFiles(files) {
 function renderPending() {
   const target = $("#pending-files");
   target.replaceChildren();
-  pendingFiles.forEach((file, index) => {
+  pendingFiles.forEach((entry, index) => {
     const chip = document.createElement("span");
     chip.className = "chip";
-    chip.textContent = file.name + " ";
+    if (entry.preview) {
+      const image = document.createElement("img");
+      image.className = "pending-preview";
+      image.src = entry.preview;
+      image.alt = entry.file.name;
+      image.onclick = () => window.open(entry.preview, "_blank");
+      chip.appendChild(image);
+    }
+    const name = document.createElement("span");
+    name.textContent = entry.file.name;
+    chip.appendChild(name);
     const remove = document.createElement("button");
     remove.type = "button";
     remove.textContent = "×";
-    remove.onclick = () => { pendingFiles.splice(index, 1); renderPending(); };
+    remove.onclick = () => {
+      if (entry.preview) URL.revokeObjectURL(entry.preview);
+      pendingFiles.splice(index, 1);
+      renderPending();
+    };
     chip.appendChild(remove);
     target.appendChild(chip);
   });
@@ -350,7 +367,8 @@ $("#create-form").addEventListener("submit", async (event) => {
       body: JSON.stringify({ app: "core", type: "core.note", title: "", body, tags }),
     });
     const item = created.item;
-    for (const file of pendingFiles) {
+    for (const entry of pendingFiles) {
+      const file = entry.file;
       await api("/v1/blobs", {
         method: "POST",
         body: JSON.stringify({
@@ -362,6 +380,9 @@ $("#create-form").addEventListener("submit", async (event) => {
       });
     }
     const count = pendingFiles.length;
+    for (const entry of pendingFiles) {
+      if (entry.preview) URL.revokeObjectURL(entry.preview);
+    }
     pendingFiles.length = 0;
     renderPending();
     event.target.reset();
