@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.1.0 — minimal public beta
+## 0.1.0 — release candidate
 
-First minimal public beta of LoomSci Core.
+Minimal Core release candidate. Public beta is blocked until the dual-machine
+release gates pass.
 
 ### Included
 

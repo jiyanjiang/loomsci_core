@@ -1,6 +1,7 @@
 # LoomSci Core · Minimal v0
 
-**Status: minimal public beta, `0.1.0`.**
+**Status: `0.1.0` release candidate. Public beta is blocked until macOS and
+Windows both pass the release gates.**
 
 A local-first substrate for one-owner apps. Core stores items, tags, blobs, and
 search. Apps run separately and use the Core API through a scoped token.
@@ -92,6 +93,8 @@ legacy LoomSci beta features
 - [App developer](docs/en/core-v0/app-developer.md)
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
+- [Release process](docs/release-process.md)
+- [Release evidence](docs/release-evidence-v0.1.0.md)
 - [Pre-shrink backup](docs/backup.md)
 - [Changelog](CHANGELOG.md)
 
