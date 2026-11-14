@@ -16,6 +16,7 @@ from pathlib import Path
 
 from flask import Flask, Response, g, jsonify, request
 
+import backup as backup_store
 import store
 from app_host import AppHost, AppHostError
 
@@ -266,6 +267,35 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         if getattr(g, "app_slug", None):
             return jsonify({"ok": False, "error": "forbidden"}), 403
         return jsonify({"ok": True, **app.config["HOST"].remove(slug)})
+
+    @app.get("/v1/backups")
+    def backups_list():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        return jsonify({"ok": True, "backups": backup_store.list_backups(Path(app.config["HOME"]))})
+
+    @app.post("/v1/backups")
+    def backups_create():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        try:
+            path = backup_store.create(Path(app.config["HOME"]))
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify({"ok": True, "backup": {"name": path.name, "path": str(path)}}), 201
+
+    @app.post("/v1/backups/restore")
+    def backups_restore():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or not body.get("backup") or not body.get("target"):
+            return jsonify({"ok": False, "error": "backup_and_target_required"}), 400
+        try:
+            result = backup_store.restore(Path(str(body["backup"])).expanduser(), Path(str(body["target"])).expanduser())
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify({"ok": True, **result})
 
     @app.get("/v1/apps")
     def apps_list():

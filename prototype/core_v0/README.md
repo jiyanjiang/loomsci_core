@@ -34,9 +34,16 @@ App Host:
 - app update/remove preserves data
 - demo app writes an item through the Core API
 
+Backup/restore:
+
+- data-only backup of core DB, blobs, app data
+- excludes token/logs/venv/code
+- manifest sha256/bytes
+- restore to a new workspace
+- token regenerated
+
 Not integrated yet:
 
-- backup/restore
 - migration import
 - the production CLI/updater
 - full app package signature layout
