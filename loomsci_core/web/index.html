@@ -8,76 +8,99 @@
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-  <header>
-    <strong>LoomSci Core</strong>
-    <span id="status" class="muted">loading</span>
-    <button id="settings-link" type="button" class="header-button" data-i18n="settings">设置</button>
-  </header>
-
-  <main>
-    <section class="panel" id="compose-panel">
-      <h2 data-i18n="newContent">新建内容</h2>
-      <form id="create-form">
-        <textarea id="body" placeholder="Markdown 正文；可直接粘贴图片" rows="8" required data-i18n-ph="bodyPlaceholder"></textarea>
-        <input id="tags" placeholder="标签，逗号分隔" data-i18n-ph="tagsPlaceholder">
-        <input id="file" type="file" multiple>
-        <button type="button" id="paste-image" data-i18n="pasteImage">从剪贴板粘贴图片</button>
-        <div id="pending-files" class="pending"></div>
-        <div class="actions">
-          <button type="submit" class="primary" data-i18n="publish">发布</button>
-          <button type="button" id="backup" data-i18n="backup">创建备份</button>
-        </div>
-      </form>
-      <p id="message" class="message" role="status"></p>
-    </section>
-
-    <section class="panel" id="content-panel">
-      <div id="list-view">
-        <div class="toolbar">
-          <input id="search" placeholder="搜索" data-i18n-ph="searchPlaceholder">
-          <button id="search-button" type="button" data-i18n="search">搜索</button>
-          <button id="clear-search" type="button" data-i18n="clear">清除</button>
-        </div>
-        <div id="tag-cloud" class="tag-cloud" aria-label="标签云"></div>
-        <p id="empty" class="muted" data-i18n="empty">暂无内容。先写一段 Markdown。</p>
-        <div id="items"></div>
-        <div class="actions">
-          <button id="load-more" type="button" data-i18n="loadMore" hidden>加载更多</button>
-        </div>
+  <div class="app-shell">
+    <aside class="rail">
+      <div class="brand">LoomSci <span>Core</span></div>
+      <nav>
+        <button data-view="content" data-i18n="navContent">内容</button>
+        <button data-view="site" data-i18n="navSite">站点</button>
+        <button data-view="settings" data-i18n="navSettings">设置</button>
+      </nav>
+      <div class="rail-footer">
+        <button id="lang-toggle" class="lang-toggle">EN</button>
+        <span id="status" class="muted">loading</span>
       </div>
+    </aside>
 
-      <div id="detail-view" hidden>
-        <div id="detail"></div>
-      </div>
+    <main class="workspace">
+      <section class="center-panel">
+        <section class="panel" id="compose-panel">
+          <h2 data-i18n="newContent">新建内容</h2>
+          <form id="create-form">
+            <textarea id="body" placeholder="Markdown 正文；可直接粘贴图片" rows="8" required data-i18n-ph="bodyPlaceholder"></textarea>
+            <input id="tags" placeholder="标签，逗号分隔" data-i18n-ph="tagsPlaceholder">
+            <input id="file" type="file" multiple>
+            <button type="button" id="paste-image" data-i18n="pasteImage">从剪贴板粘贴图片</button>
+            <div id="pending-files" class="pending"></div>
+            <div class="actions">
+              <button type="submit" class="primary" data-i18n="publish">发布</button>
+              <button type="button" id="backup" data-i18n="backup">创建备份</button>
+            </div>
+          </form>
+          <p id="message" class="message" role="status"></p>
+        </section>
 
-      <div id="settings-view" hidden>
-        <h2 data-i18n="settings">设置</h2>
-        <form id="settings-form">
-          <label><span data-i18n="username">用户名</span><input id="setting-username"></label>
-          <label><span data-i18n="apiKey">API Key</span><input id="setting-api-key" type="password" autocomplete="off"></label>
-          <label><span data-i18n="language">语言</span>
-            <select id="setting-language">
-              <option value="zh">中文</option>
-              <option value="en">English</option>
-            </select>
-          </label>
-          <label><span data-i18n="fingerprint">本机软指纹</span><input id="setting-fingerprint" readonly></label>
-          <div class="actions">
-            <button type="submit" class="primary" data-i18n="save">保存</button>
-            <button type="button" id="rotate-fingerprint" data-i18n="rotate">轮换软指纹</button>
-            <button type="button" id="settings-back" data-i18n="back">返回列表</button>
+        <section class="panel" id="list-view">
+          <div class="toolbar">
+            <input id="search" placeholder="搜索" data-i18n-ph="searchPlaceholder">
+            <button id="search-button" type="button" data-i18n="search">搜索</button>
+            <button id="clear-search" type="button" data-i18n="clear">清除</button>
           </div>
-        </form>
-        <p id="settings-message" class="message"></p>
-      </div>
-    </section>
-  </main>
+          <div id="tag-cloud" class="tag-cloud" aria-label="标签云"></div>
+          <p id="empty" class="muted" data-i18n="empty">暂无内容。先写一段 Markdown。</p>
+          <div id="items"></div>
+          <div class="actions">
+            <button id="load-more" type="button" data-i18n="loadMore" hidden>加载更多</button>
+          </div>
+        </section>
+
+        <section class="panel" id="site-view" hidden>
+          <div class="page-head">
+            <h2 data-i18n="siteTitle">站点</h2>
+            <button type="button" data-home data-i18n="backHome">返回主页</button>
+          </div>
+          <form id="site-form">
+            <label><span data-i18n="siteName">站点名称</span><input id="site-name"></label>
+            <label><span data-i18n="siteLogo">Logo 地址</span><input id="site-logo"></label>
+            <label><span data-i18n="siteLinks">链接（每行：名称 | URL）</span><textarea id="site-links" rows="4"></textarea></label>
+            <label><span data-i18n="siteFooter">页脚</span><input id="site-footer"></label>
+            <div class="actions">
+              <button type="submit" class="primary" data-i18n="save">保存</button>
+            </div>
+          </form>
+          <p id="site-message" class="message"></p>
+        </section>
+
+        <section class="panel" id="settings-view" hidden>
+          <div class="page-head">
+            <h2 data-i18n="settings">设置</h2>
+            <button type="button" data-home data-i18n="backHome">返回主页</button>
+          </div>
+          <form id="settings-form">
+            <label><span data-i18n="username">用户名</span><input id="setting-username"></label>
+            <label><span data-i18n="apiKey">API Key</span><input id="setting-api-key" type="password" autocomplete="off"></label>
+            <label><span data-i18n="fingerprint">本机软指纹</span><input id="setting-fingerprint" readonly></label>
+            <div class="actions">
+              <button type="submit" class="primary" data-i18n="save">保存</button>
+              <button type="button" id="rotate-fingerprint" data-i18n="rotate">轮换软指纹</button>
+            </div>
+          </form>
+          <p id="settings-message" class="message"></p>
+        </section>
+      </section>
+
+      <aside class="detail-panel" id="detail-view">
+        <p id="detail-empty" class="muted" data-i18n="selectItem">选择一条内容</p>
+        <div id="detail"></div>
+      </aside>
+    </main>
+  </div>
 
   <div id="gallery" class="gallery" hidden>
     <button id="gallery-close" class="gallery-close" aria-label="关闭">×</button>
-    <button id="gallery-prev" class="gallery-nav" aria-label="上一张">‹</button>
-    <img id="gallery-image" alt="">
-    <button id="gallery-next" class="gallery-nav" aria-label="下一张">›</button>
+    <button id="gallery-prev" class="gallery-nav gallery-prev" aria-label="上一张">‹</button>
+    <img id="gallery-image" class="gallery-image" alt="">
+    <button id="gallery-next" class="gallery-nav gallery-next" aria-label="下一张">›</button>
     <div id="gallery-count" class="gallery-count"></div>
   </div>
 

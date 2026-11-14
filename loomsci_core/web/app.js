@@ -9,7 +9,10 @@ const I18N = {
     tagsPlaceholder: "标签，逗号分隔", pasteImage: "从剪贴板粘贴图片", publish: "发布",
     backup: "创建备份", searchPlaceholder: "搜索", search: "搜索", clear: "清除",
     empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
-    username: "用户名", apiKey: "API Key", language: "语言", fingerprint: "本机软指纹",
+    navContent: "内容", navSite: "站点", navSettings: "设置", backHome: "返回主页",
+    siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
+    siteLinks: "链接（每行：名称 | URL）", siteFooter: "页脚", selectItem: "选择一条内容",
+    username: "用户名", apiKey: "API Key", fingerprint: "本机软指纹",
     save: "保存", rotate: "轮换软指纹", noMore: "没有更多了", deleted: "已删除",
     updated: "已更新", created: "已创建", saved: "已保存", tags: "标签", attachments: "附件",
     previous: "上一张", next: "下一张", close: "关闭", loading: "加载中",
@@ -20,7 +23,10 @@ const I18N = {
     tagsPlaceholder: "Tags, comma separated", pasteImage: "Paste image", publish: "Publish",
     backup: "Create backup", searchPlaceholder: "Search", search: "Search", clear: "Clear",
     empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
-    username: "Username", apiKey: "API Key", language: "Language", fingerprint: "Local fingerprint",
+    navContent: "Content", navSite: "Site", navSettings: "Settings", backHome: "Home",
+    siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
+    siteLinks: "Links (one per line: label | URL)", siteFooter: "Footer", selectItem: "Select an item",
+    username: "Username", apiKey: "API Key", fingerprint: "Local fingerprint",
     save: "Save", rotate: "Rotate fingerprint", noMore: "No more items", deleted: "Deleted",
     updated: "Updated", created: "Created", saved: "Saved", tags: "Tags", attachments: "Attachments",
     previous: "Previous", next: "Next", close: "Close", loading: "Loading",
@@ -45,7 +51,7 @@ function showMessage(text, error = false) {
 function applyI18n() {
   $$("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
   $$("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
-  if ($("#setting-language")) $("#setting-language").value = lang;
+  $("#lang-toggle").textContent = lang === "zh" ? "EN" : "CN";
 }
 
 async function api(path, options = {}) {
@@ -241,9 +247,10 @@ function itemCard(item) {
   card.onclick = () => { location.hash = "#/item/" + encodeURIComponent(item.id); };
 
   const summary = document.createElement("div");
-  summary.className = "summary";
-  summary.textContent = (item.body || "").slice(0, 420);
+  summary.className = "summary md";
+  summary.innerHTML = markdown((item.body || "").slice(0, 420));
   card.appendChild(summary);
+  renderMath(summary);
   card.appendChild(tagList(item.tags));
 
   const images = (item.blobs || []).filter(isImage);
@@ -385,14 +392,28 @@ async function renderDetail(item) {
 }
 
 async function route() {
+  if (!$("#gallery").hidden) closeGallery();
   const hash = location.hash || "#/";
   const match = hash.match(/^#\/item\/(.+)$/);
   const isSettings = hash === "#/settings";
-  $("#compose-panel").hidden = Boolean(match) || isSettings;
-  $("#list-view").hidden = Boolean(match) || isSettings;
-  $("#detail-view").hidden = !match;
+  const isSite = hash === "#/site";
+  const isContent = !isSettings && !isSite;
+
+  $("#compose-panel").hidden = !isContent;
+  $("#list-view").hidden = !isContent;
   $("#settings-view").hidden = !isSettings;
+  $("#site-view").hidden = !isSite;
+  $("#detail-view").hidden = isSettings || isSite;
+
+  $$(".rail nav button").forEach((button) => {
+    button.classList.toggle("active",
+      (button.dataset.view === "content" && isContent) ||
+      (button.dataset.view === "settings" && isSettings) ||
+      (button.dataset.view === "site" && isSite));
+  });
+
   if (match) {
+    $("#detail-empty").hidden = true;
     try {
       const data = await api("/v1/items/" + encodeURIComponent(decodeURIComponent(match[1])));
       await renderDetail(data.item);
@@ -400,8 +421,14 @@ async function route() {
       $("#detail").textContent = error.message;
     }
   } else if (isSettings) {
+    $("#detail").replaceChildren();
     showSettings();
+  } else if (isSite) {
+    $("#detail").replaceChildren();
+    showSite();
   } else {
+    $("#detail").replaceChildren();
+    $("#detail-empty").hidden = false;
     if (!state.items.length) await loadItems(true);
     await loadTags();
   }
@@ -424,7 +451,6 @@ function currentFingerprint() {
 function showSettings() {
   $("#setting-username").value = localStorage.getItem("loomsci.username") || "";
   $("#setting-api-key").value = localStorage.getItem("loomsci.apiKey") || "";
-  $("#setting-language").value = lang;
   $("#setting-fingerprint").value = currentFingerprint();
   $("#settings-message").textContent = "";
 }
@@ -433,10 +459,29 @@ function saveSettings(event) {
   event.preventDefault();
   localStorage.setItem("loomsci.username", $("#setting-username").value.trim());
   localStorage.setItem("loomsci.apiKey", $("#setting-api-key").value);
-  lang = $("#setting-language").value;
-  localStorage.setItem("loomsci.lang", lang);
   applyI18n();
   $("#settings-message").textContent = t("saved");
+}
+
+function showSite() {
+  const site = JSON.parse(localStorage.getItem("loomsci.site") || "{}");
+  $("#site-name").value = site.name || "";
+  $("#site-logo").value = site.logo || "";
+  $("#site-links").value = site.links || "";
+  $("#site-footer").value = site.footer || "";
+  $("#site-message").textContent = "";
+}
+
+function saveSite(event) {
+  event.preventDefault();
+  const site = {
+    name: $("#site-name").value.trim(),
+    logo: $("#site-logo").value.trim(),
+    links: $("#site-links").value,
+    footer: $("#site-footer").value.trim(),
+  };
+  localStorage.setItem("loomsci.site", JSON.stringify(site));
+  $("#site-message").textContent = t("saved");
 }
 
 function renderPending() {
@@ -604,9 +649,22 @@ $("#backup").addEventListener("click", async () => {
   }
 });
 
-$("#settings-link").addEventListener("click", () => { location.hash = "#/settings"; });
-$("#settings-back").addEventListener("click", () => { location.hash = "#/"; });
+$$(".rail nav button").forEach((button) => {
+  button.addEventListener("click", () => {
+    location.hash = button.dataset.view === "content" ? "#/" : "#/" + button.dataset.view;
+  });
+});
+$("#lang-toggle").addEventListener("click", async () => {
+  lang = lang === "zh" ? "en" : "zh";
+  localStorage.setItem("loomsci.lang", lang);
+  applyI18n();
+  await route();
+});
+$$("[data-home]").forEach((button) => {
+  button.addEventListener("click", () => { location.hash = "#/"; });
+});
 $("#settings-form").addEventListener("submit", saveSettings);
+$("#site-form").addEventListener("submit", saveSite);
 $("#rotate-fingerprint").addEventListener("click", () => {
   $("#setting-fingerprint").value = generateFingerprint();
   $("#settings-message").textContent = t("saved");
