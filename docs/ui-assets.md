@@ -38,3 +38,18 @@ or display it.
 Migrate a behavior only when it is required by the Core product definition.
 Do not copy whole modules from 8790. If a feature needs projects, tasks, or
 memory, it belongs to a future App, not this Core UI.
+
+## Second migration pass
+
+| Asset | Destination | Reason |
+|---|---|---|
+| item detail route | `app.js` | open one item instead of one long column |
+| gallery lightbox | `app.js` | looped next/previous image viewing |
+| tag cloud | `app.js` | Top 1000 tags by count |
+| pagination | `app.js` | 20 items per load |
+| settings page | `app.js` | username, API key, language, local fingerprint |
+| i18n dictionary | `app.js` | Chinese / English |
+| SHA-256 attachment names | `store.py`, `app.js` | stable, non-sequential attachment labels |
+
+The SPA is still Core-only. Projects, tasks, memory, inbox, site settings and
+the old `/v1/posts` API remain out of scope.
