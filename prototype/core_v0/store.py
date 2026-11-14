@@ -258,15 +258,19 @@ def list_tags(conn: sqlite3.Connection, *, limit: int = 100) -> list[dict[str, A
     return [dict(row) for row in rows]
 
 
-def search(conn: sqlite3.Connection, q: str, *, limit: int = 50) -> list[dict[str, Any]]:
+def search(conn: sqlite3.Connection, q: str, *, limit: int = 50, app: str = "") -> list[dict[str, Any]]:
     terms = [term for term in re.split(r"\s+", str(q or "").strip()) if term]
     if not terms:
         return []
     query = " AND ".join('"' + term.replace('"', '""') + '"' for term in terms)
-    rows = conn.execute(
-        "SELECT id FROM items_fts WHERE items_fts MATCH ? ORDER BY rank LIMIT ?",
-        (query, max(1, min(int(limit), 100))),
-    ).fetchall()
+    sql = "SELECT id FROM items_fts WHERE items_fts MATCH ?"
+    params: list[Any] = [query]
+    if app:
+        sql += " AND app=?"
+        params.append(app)
+    sql += " ORDER BY rank LIMIT ?"
+    params.append(max(1, min(int(limit), 100)))
+    rows = conn.execute(sql, params).fetchall()
     return [item for row in rows if (item := get_item(conn, row["id"])) is not None]
 
 
@@ -300,6 +304,30 @@ def add_blob(
 def get_blob(conn: sqlite3.Connection, blob_id: str) -> dict[str, Any] | None:
     row = conn.execute("SELECT * FROM blobs WHERE id=?", (blob_id,)).fetchone()
     return dict(row) if row else None
+
+
+def upsert_app(conn: sqlite3.Connection, *, slug: str, version: str, manifest: dict[str, Any]) -> dict[str, Any]:
+    slug = _slug(slug, "app")
+    stamp = now()
+    conn.execute(
+        "INSERT INTO apps(slug,version,manifest_json,installed_at) VALUES (?,?,?,?) "
+        "ON CONFLICT(slug) DO UPDATE SET version=excluded.version, manifest_json=excluded.manifest_json",
+        (slug, version, json.dumps(manifest, ensure_ascii=False), stamp),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM apps WHERE slug=?", (slug,)).fetchone()
+    return dict(row)
+
+
+def get_app(conn: sqlite3.Connection, slug: str) -> dict[str, Any] | None:
+    row = conn.execute("SELECT * FROM apps WHERE slug=?", (slug,)).fetchone()
+    return dict(row) if row else None
+
+
+def remove_app(conn: sqlite3.Connection, slug: str) -> bool:
+    changed = conn.execute("DELETE FROM apps WHERE slug=?", (slug,)).rowcount
+    conn.commit()
+    return bool(changed)
 
 
 def stats(conn: sqlite3.Connection) -> dict[str, int]:

@@ -8,6 +8,7 @@ Not product code. Exposes items, tags, blobs, search behind a local token.
 from __future__ import annotations
 
 import argparse
+import atexit
 import base64
 import binascii
 import secrets
@@ -16,9 +17,10 @@ from pathlib import Path
 from flask import Flask, Response, g, jsonify, request
 
 import store
+from app_host import AppHost, AppHostError
 
 
-def create_app(home: Path) -> Flask:
+def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
     home = home.expanduser()
     (home / "data" / "blobs").mkdir(parents=True, exist_ok=True)
     db = home / "data" / "core.db"
@@ -36,6 +38,9 @@ def create_app(home: Path) -> Flask:
     app.config["HOME"] = str(home)
     app.config["DB"] = str(db)
     app.config["BLOB_DIR"] = str(home / "data" / "blobs")
+    host = AppHost(home, core_url)
+    app.config["HOST"] = host
+    atexit.register(lambda: [host.stop(slug) for slug in list(host.procs)])
 
     def db_conn():
         if "db" not in g:
@@ -54,9 +59,17 @@ def create_app(home: Path) -> Flask:
             return None
         header = request.headers.get("Authorization", "")
         supplied = header[7:].strip() if header.startswith("Bearer ") else request.headers.get("X-LoomSci-Token", "")
-        if not supplied or not secrets.compare_digest(supplied, token):
-            return jsonify({"ok": False, "error": "unauthorized"}), 401
-        return None
+        if supplied and secrets.compare_digest(supplied, token):
+            g.app_slug = None
+            return None
+        info = host.tokens.get(supplied or "")
+        if info:
+            g.app_slug = info["slug"]
+            return None
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
+
+    def allowed(app_name: str) -> bool:
+        return getattr(g, "app_slug", None) in (None, app_name)
 
     @app.get("/v1/health")
     def health():
@@ -75,10 +88,13 @@ def create_app(home: Path) -> Flask:
         body = request.get_json(silent=True)
         if not isinstance(body, dict):
             return jsonify({"ok": False, "error": "json_required"}), 400
+        requested_app = str(body.get("app") or getattr(g, "app_slug", "") or "")
+        if getattr(g, "app_slug", None) and requested_app != g.app_slug:
+            return jsonify({"ok": False, "error": "forbidden"}), 403
         try:
             item = store.create_item(
                 db_conn(),
-                app=str(body.get("app") or ""),
+                app=requested_app,
                 type=str(body.get("type") or ""),
                 title=str(body.get("title") or ""),
                 body=str(body.get("body") or ""),
@@ -92,9 +108,10 @@ def create_app(home: Path) -> Flask:
 
     @app.get("/v1/items")
     def items_list():
+        app_name = getattr(g, "app_slug", None) or request.args.get("app", "")
         return jsonify({"ok": True, "items": store.list_items(
             db_conn(),
-            app=request.args.get("app", ""),
+            app=app_name,
             type=request.args.get("type", ""),
             tag=request.args.get("tag", ""),
             limit=int(request.args.get("limit", "100")),
@@ -104,7 +121,7 @@ def create_app(home: Path) -> Flask:
     @app.get("/v1/items/<item_id>")
     def items_get(item_id: str):
         item = store.get_item(db_conn(), item_id)
-        if item is None:
+        if item is None or not allowed(item["app"]):
             return jsonify({"ok": False, "error": "not_found"}), 404
         return jsonify({"ok": True, "item": item})
 
@@ -113,6 +130,9 @@ def create_app(home: Path) -> Flask:
         body = request.get_json(silent=True)
         if not isinstance(body, dict):
             return jsonify({"ok": False, "error": "json_required"}), 400
+        current = store.get_item(db_conn(), item_id)
+        if current is None or not allowed(current["app"]):
+            return jsonify({"ok": False, "error": "not_found"}), 404
         item = store.update_item(db_conn(), item_id, **body)
         if item is None:
             return jsonify({"ok": False, "error": "not_found"}), 404
@@ -120,6 +140,9 @@ def create_app(home: Path) -> Flask:
 
     @app.delete("/v1/items/<item_id>")
     def items_delete(item_id: str):
+        current = store.get_item(db_conn(), item_id)
+        if current is None or not allowed(current["app"]):
+            return jsonify({"ok": False, "error": "not_found"}), 404
         if not store.delete_item(db_conn(), item_id):
             return jsonify({"ok": False, "error": "not_found"}), 404
         return jsonify({"ok": True, "deleted": item_id})
@@ -129,7 +152,8 @@ def create_app(home: Path) -> Flask:
         body = request.get_json(silent=True)
         if not isinstance(body, dict) or not isinstance(body.get("tags"), list):
             return jsonify({"ok": False, "error": "tags_required"}), 400
-        if store.get_item(db_conn(), item_id) is None:
+        current = store.get_item(db_conn(), item_id)
+        if current is None or not allowed(current["app"]):
             return jsonify({"ok": False, "error": "not_found"}), 404
         return jsonify({"ok": True, "tags": store.set_tags(
             db_conn(), item_id=item_id,
@@ -139,11 +163,20 @@ def create_app(home: Path) -> Flask:
 
     @app.get("/v1/tags")
     def tags_list():
-        return jsonify({"ok": True, "tags": store.list_tags(db_conn(), limit=int(request.args.get("limit", "100")))})
+        tags = store.list_tags(db_conn(), limit=int(request.args.get("limit", "100")))
+        if getattr(g, "app_slug", None):
+            tags = [tag for tag in tags if any(
+                item["app"] == g.app_slug for item in store.list_items(db_conn(), tag=tag["tag"], limit=200)
+            )]
+        return jsonify({"ok": True, "tags": tags})
 
     @app.get("/v1/search")
     def search():
-        return jsonify({"ok": True, "items": store.search(db_conn(), request.args.get("q", ""), limit=int(request.args.get("limit", "50")))})
+        return jsonify({"ok": True, "items": store.search(
+            db_conn(), request.args.get("q", ""),
+            limit=int(request.args.get("limit", "50")),
+            app=getattr(g, "app_slug", None) or "",
+        )})
 
     @app.post("/v1/blobs")
     def blobs_create():
@@ -152,13 +185,18 @@ def create_app(home: Path) -> Flask:
             return jsonify({"ok": False, "error": "json_required"}), 400
         try:
             data = base64.b64decode(str(body.get("content_base64") or ""), validate=True)
+            item_id = body.get("item_id")
+            if getattr(g, "app_slug", None):
+                item = store.get_item(db_conn(), str(item_id or ""))
+                if item is None or not allowed(item["app"]):
+                    return jsonify({"ok": False, "error": "forbidden"}), 403
             blob = store.add_blob(
                 db_conn(),
                 blob_dir=Path(app.config["BLOB_DIR"]),
                 filename=str(body.get("filename") or "file"),
                 content_type=str(body.get("content_type") or "application/octet-stream"),
                 data=data,
-                item_id=body.get("item_id"),
+                item_id=item_id,
             )
         except (ValueError, binascii.Error) as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
@@ -169,6 +207,10 @@ def create_app(home: Path) -> Flask:
         blob = store.get_blob(db_conn(), blob_id)
         if blob is None:
             return jsonify({"ok": False, "error": "not_found"}), 404
+        if getattr(g, "app_slug", None):
+            item = store.get_item(db_conn(), str(blob.get("item_id") or ""))
+            if item is None or not allowed(item["app"]):
+                return jsonify({"ok": False, "error": "not_found"}), 404
         path = Path(app.config["BLOB_DIR"]) / blob_id
         if not path.is_file():
             return jsonify({"ok": False, "error": "blob_missing"}), 404
@@ -178,6 +220,52 @@ def create_app(home: Path) -> Flask:
         response = Response(path.read_bytes(), mimetype=blob.get("content_type") or "application/octet-stream")
         response.headers["Content-Disposition"] = f'attachment; filename="{blob["filename"]}"'
         return response
+
+    @app.post("/v1/apps/install")
+    def apps_install():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or not body.get("source"):
+            return jsonify({"ok": False, "error": "source_required"}), 400
+        try:
+            result = app.config["HOST"].install(Path(str(body["source"])).expanduser())
+        except (AppHostError, ValueError, OSError) as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify({"ok": True, **result}), 201
+
+    @app.post("/v1/apps/<slug>/start")
+    def apps_start(slug: str):
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        try:
+            return jsonify({"ok": True, **app.config["HOST"].start(slug)})
+        except AppHostError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+    @app.post("/v1/apps/<slug>/stop")
+    def apps_stop(slug: str):
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        return jsonify({"ok": True, **app.config["HOST"].stop(slug)})
+
+    @app.post("/v1/apps/<slug>/update")
+    def apps_update(slug: str):
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or not body.get("source"):
+            return jsonify({"ok": False, "error": "source_required"}), 400
+        try:
+            return jsonify({"ok": True, **app.config["HOST"].update(slug, Path(str(body["source"])).expanduser())})
+        except (AppHostError, ValueError, OSError) as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+    @app.delete("/v1/apps/<slug>")
+    def apps_remove(slug: str):
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        return jsonify({"ok": True, **app.config["HOST"].remove(slug)})
 
     @app.get("/v1/apps")
     def apps_list():

@@ -25,11 +25,18 @@ macOS:   PASS
 Windows: PASS
 ```
 
+App Host:
+
+- install / start / stop / update / remove
+- per-app venv
+- scoped app token
+- app can read/write only its own namespace
+- app update/remove preserves data
+- demo app writes an item through the Core API
+
 Not integrated yet:
 
-- App Host (install/start/stop/update/remove)
 - backup/restore
-- scoped per-app tokens
-- app registry validation
 - migration import
 - the production CLI/updater
+- full app package signature layout
