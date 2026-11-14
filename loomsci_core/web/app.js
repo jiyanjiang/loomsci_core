@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const itemsEl = $("#items");
 const emptyEl = $("#empty");
 const messageEl = $("#message");
+const pendingFiles = [];
 
 function showMessage(text, error = false) {
   messageEl.textContent = text;
@@ -18,6 +19,109 @@ async function api(path, options = {}) {
   return data;
 }
 
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+function safeUrl(url) {
+  return /^(https?:\/\/|mailto:)/i.test(url) ? url : "#";
+}
+
+function inline(text) {
+  return text.replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) =>
+      `<a href="${escapeHTML(safeUrl(url))}" rel="noreferrer noopener">${label}</a>`);
+}
+
+function markdown(source) {
+  const lines = escapeHTML(source).split("\n");
+  const out = [];
+  let code = false;
+  let list = null;
+  let para = [];
+  let i = 0;
+  const flush = () => {
+    if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; }
+  };
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith("```")) {
+      flush(); closeList();
+      out.push(code ? "</code></pre>" : "<pre><code>");
+      code = !code; i++; continue;
+    }
+    if (code) { out.push(line + "\n"); i++; continue; }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      flush(); closeList();
+      const level = heading[1].length + 1;
+      out.push(`<h${level}>${inline(heading[2])}</h${level}>`); i++; continue;
+    }
+    if (/^\s*---+\s*$/.test(line)) { flush(); closeList(); out.push("<hr>"); i++; continue; }
+
+    const tableSep = lines[i + 1] || "";
+    if (line.trim().startsWith("|") && /^\s*\|?[\s:|-]+\|?\s*$/.test(tableSep) && tableSep.includes("-")) {
+      flush(); closeList();
+      const cells = (row) => row.trim().replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim());
+      const head = cells(line); i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) { rows.push(cells(lines[i])); i++; }
+      out.push("<table><thead><tr>" + head.map((c) => `<th>${inline(c)}</th>`).join("") + "</tr></thead><tbody>");
+      for (const row of rows) out.push("<tr>" + row.map((c) => `<td>${inline(c)}</td>`).join("") + "</tr>");
+      out.push("</tbody></table>"); continue;
+    }
+
+    const quote = line.match(/^\s*>\s?(.*)$/);
+    if (quote) { flush(); closeList(); out.push(`<blockquote>${inline(quote[1])}</blockquote>`); i++; continue; }
+
+    const ol = line.match(/^\s*\d+\.\s+(.*)$/);
+    const ul = line.match(/^\s*[-*]\s+(.*)$/);
+    if (ol || ul) {
+      flush();
+      const kind = ol ? "ol" : "ul";
+      if (list !== kind) { closeList(); out.push(`<${kind}>`); list = kind; }
+      out.push(`<li>${inline((ol || ul)[1])}</li>`); i++; continue;
+    }
+
+    if (!line.trim()) {
+      flush();
+      let next = i + 1;
+      while (next < lines.length && !lines[next].trim()) next++;
+      const candidate = lines[next] || "";
+      const sameList = list === "ol"
+        ? /^\s*\d+[.)]\s+/.test(candidate)
+        : list === "ul" ? /^\s*[-*+]\s+/.test(candidate) : false;
+      if (!sameList) closeList();
+      i++;
+      continue;
+    }
+    para.push(line.trim()); i++;
+  }
+  flush(); closeList(); if (code) out.push("</code></pre>");
+  return out.join("");
+}
+
+function renderMath(root) {
+  if (window.renderMathInElement) {
+    try {
+      window.renderMathInElement(root, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+        ],
+        throwOnError: false,
+      });
+    } catch { /* keep source */ }
+  }
+}
+
 function tagList(tags) {
   const wrap = document.createElement("div");
   wrap.className = "meta";
@@ -30,6 +134,37 @@ function tagList(tags) {
   return wrap;
 }
 
+async function showBlob(container, blob) {
+  if (String(blob.content_type || "").startsWith("image/")) {
+    try {
+      const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
+        headers: { Authorization: "Bearer " + TOKEN },
+      });
+      if (!response.ok) throw new Error("附件读取失败");
+      const image = document.createElement("img");
+      image.className = "attachment-image";
+      image.alt = blob.filename;
+      image.src = URL.createObjectURL(await response.blob());
+      container.appendChild(image);
+      return;
+    } catch { /* fall through to filename */ }
+  }
+  const button = document.createElement("button");
+  button.textContent = "📎 " + blob.filename;
+  button.onclick = async () => {
+    try {
+      const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
+        headers: { Authorization: "Bearer " + TOKEN },
+      });
+      if (!response.ok) throw new Error("附件读取失败");
+      window.open(URL.createObjectURL(await response.blob()), "_blank");
+    } catch (error) {
+      showMessage(error.message, true);
+    }
+  };
+  container.appendChild(button);
+}
+
 function render(items) {
   itemsEl.replaceChildren();
   emptyEl.hidden = items.length > 0;
@@ -37,37 +172,18 @@ function render(items) {
     const row = document.createElement("article");
     row.className = "item";
 
-    const title = document.createElement("h3");
-    title.textContent = item.title || "(无标题)";
-    row.appendChild(title);
-
     const body = document.createElement("div");
-    body.className = "body";
-    body.textContent = item.body || "";
+    body.className = "md";
+    body.innerHTML = markdown(item.body || "");
     row.appendChild(body);
+    renderMath(body);
 
     row.appendChild(tagList(item.tags));
 
     if (item.blobs && item.blobs.length) {
       const files = document.createElement("div");
-      files.className = "meta";
-      for (const blob of item.blobs) {
-        const link = document.createElement("button");
-        link.textContent = "📎 " + blob.filename;
-        link.onclick = async () => {
-          try {
-            const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
-              headers: { Authorization: "Bearer " + TOKEN },
-            });
-            if (!response.ok) throw new Error("附件读取失败");
-            const url = URL.createObjectURL(await response.blob());
-            window.open(url, "_blank");
-          } catch (error) {
-            showMessage(error.message, true);
-          }
-        };
-        files.appendChild(link);
-      }
+      files.className = "meta attachments";
+      for (const blob of item.blobs) showBlob(files, blob);
       row.appendChild(files);
     }
 
@@ -79,15 +195,9 @@ function render(items) {
     edit.onclick = () => {
       const editor = document.createElement("div");
       editor.className = "editor";
-
-      const titleInput = document.createElement("input");
-      titleInput.value = item.title || "";
-      titleInput.placeholder = "标题";
       const bodyInput = document.createElement("textarea");
       bodyInput.value = item.body || "";
-      bodyInput.rows = 5;
-      bodyInput.placeholder = "正文";
-
+      bodyInput.rows = 8;
       const editorActions = document.createElement("div");
       editorActions.className = "row-actions";
       const save = document.createElement("button");
@@ -97,14 +207,14 @@ function render(items) {
       cancel.textContent = "取消";
       cancel.onclick = () => load();
       save.onclick = async () => {
-        if (!titleInput.value.trim() || !bodyInput.value) {
-          showMessage("标题和正文不能为空", true);
+        if (!bodyInput.value.trim()) {
+          showMessage("正文不能为空", true);
           return;
         }
         try {
           await api("/v1/items/" + encodeURIComponent(item.id), {
             method: "PATCH",
-            body: JSON.stringify({ title: titleInput.value, body: bodyInput.value }),
+            body: JSON.stringify({ body: bodyInput.value }),
           });
           await load();
           showMessage("已更新");
@@ -113,7 +223,7 @@ function render(items) {
         }
       };
       editorActions.append(save, cancel);
-      editor.append(titleInput, bodyInput, editorActions);
+      editor.append(bodyInput, editorActions);
       row.replaceChildren(editor);
     };
     actions.appendChild(edit);
@@ -146,6 +256,46 @@ async function load(query = "") {
   $("#status").textContent = "Core 已连接";
 }
 
+function normalizeFile(file) {
+  if (file.name) return file;
+  const ext = (file.type.split("/")[1] || "png").replace("+xml", "");
+  return new File([file], `pasted-${Date.now()}.${ext}`, { type: file.type || "image/png" });
+}
+
+function addFiles(files) {
+  for (const file of files || []) {
+    if (file && file.size) pendingFiles.push(normalizeFile(file));
+  }
+  renderPending();
+}
+
+function renderPending() {
+  const target = $("#pending-files");
+  target.replaceChildren();
+  pendingFiles.forEach((file, index) => {
+    const chip = document.createElement("span");
+    chip.className = "chip";
+    chip.textContent = file.name + " ";
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "×";
+    remove.onclick = () => { pendingFiles.splice(index, 1); renderPending(); };
+    chip.appendChild(remove);
+    target.appendChild(chip);
+  });
+}
+
+function clipboardImages(event) {
+  const data = event.clipboardData;
+  if (!data) return [];
+  const files = [...(data.files || [])].filter((file) => file.type.startsWith("image/"));
+  if (files.length) return files;
+  return [...(data.items || [])]
+    .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+    .map((item) => item.getAsFile())
+    .filter(Boolean);
+}
+
 async function fileToBase64(file) {
   const buffer = await file.arrayBuffer();
   let binary = "";
@@ -157,20 +307,50 @@ async function fileToBase64(file) {
   return btoa(binary);
 }
 
+$("#file").addEventListener("change", (event) => addFiles(event.target.files));
+
+$("#paste-image").addEventListener("click", async () => {
+  showMessage("");
+  if (!navigator.clipboard?.read) {
+    showMessage("当前浏览器不支持读取剪贴板，请直接 Ctrl+V", true);
+    return;
+  }
+  try {
+    const items = await navigator.clipboard.read();
+    const files = [];
+    for (const item of items) {
+      const type = item.types.find((value) => value.startsWith("image/"));
+      if (type) {
+        files.push(new File([await item.getType(type)], `clipboard-${Date.now()}.${type.split("/")[1] || "png"}`, { type }));
+      }
+    }
+    if (files.length) addFiles(files);
+    else showMessage("剪贴板里没有图片", true);
+  } catch (error) {
+    showMessage("读取剪贴板失败：" + error.message, true);
+  }
+});
+
+document.addEventListener("paste", (event) => {
+  if (!document.getElementById("create-form")) return;
+  const files = clipboardImages(event);
+  if (!files.length) return;
+  event.preventDefault();
+  addFiles(files);
+});
+
 $("#create-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const title = $("#title").value.trim();
   const body = $("#body").value;
   const tags = $("#tags").value.split(",").map((x) => x.trim()).filter(Boolean);
-  if (!title || !body) return;
+  if (!body.trim()) return;
   try {
     const created = await api("/v1/items", {
       method: "POST",
-      body: JSON.stringify({ app: "core", type: "core.note", title, body, tags }),
+      body: JSON.stringify({ app: "core", type: "core.note", title: "", body, tags }),
     });
     const item = created.item;
-    const files = Array.from($("#file").files || []);
-    for (const file of files) {
+    for (const file of pendingFiles) {
       await api("/v1/blobs", {
         method: "POST",
         body: JSON.stringify({
@@ -181,9 +361,12 @@ $("#create-form").addEventListener("submit", async (event) => {
         }),
       });
     }
+    const count = pendingFiles.length;
+    pendingFiles.length = 0;
+    renderPending();
     event.target.reset();
     await load();
-    showMessage("已创建" + (files.length ? "，附件 " + files.length + " 个" : ""));
+    showMessage("已创建" + (count ? "，附件 " + count + " 个" : ""));
   } catch (error) {
     showMessage(error.message, true);
   }

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LoomSci Core</title>
+  <link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">
   <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
@@ -16,12 +17,13 @@
     <section class="panel">
       <h2>新建内容</h2>
       <form id="create-form">
-        <input id="title" placeholder="标题" required>
-        <textarea id="body" placeholder="正文 / Markdown" rows="6" required></textarea>
+        <textarea id="body" placeholder="Markdown 正文；可直接粘贴图片" rows="8" required></textarea>
         <input id="tags" placeholder="标签，逗号分隔">
         <input id="file" type="file" multiple>
+        <button type="button" id="paste-image">从剪贴板粘贴图片</button>
+        <div id="pending-files" class="pending"></div>
         <div class="actions">
-          <button type="submit">创建</button>
+          <button type="submit">发布</button>
           <button type="button" id="backup">创建备份</button>
         </div>
       </form>
@@ -30,16 +32,18 @@
 
     <section class="panel">
       <div class="toolbar">
-        <input id="search" placeholder="搜索标题或正文">
+        <input id="search" placeholder="搜索">
         <button id="search-button" type="button">搜索</button>
         <button id="clear-search" type="button">清除</button>
       </div>
-      <p id="empty" class="muted">暂无内容。先创建一条。</p>
+      <p id="empty" class="muted">暂无内容。先写一段 Markdown。</p>
       <div id="items"></div>
     </section>
   </main>
 
   <script>window.__LOOMSCI_TOKEN__ = "__TOKEN__";</script>
+  <script src="/assets/vendor/katex/katex.min.js"></script>
+  <script src="/assets/vendor/katex/auto-render.min.js"></script>
   <script src="/assets/app.js"></script>
 </body>
 </html>
