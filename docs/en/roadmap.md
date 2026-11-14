@@ -43,7 +43,7 @@ Acceptance:
 install → start → call Core API → stop → update → remove
 ```
 
-passes on clean macOS, Windows, and Linux machines, with no manual Python setup.
+passes on clean macOS and Windows machines, with no manual Python setup. Linux is deferred.
 
 Exit / kill:
 
@@ -179,6 +179,6 @@ Process contract
 ## Next action
 
 Write the Process Contract and the Python/uv runtime contract, then validate them
-with a hello-world app on macOS, Windows, and Linux.
+with a hello-world app on macOS and Windows. Linux is deferred.
 
 No product code starts before M0 passes.

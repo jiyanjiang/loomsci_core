@@ -36,7 +36,7 @@ TAA          = 先锋实验平台，不是 Core 代码库
 install → start → call Core API → stop → update → remove
 ```
 
-在干净的 macOS、Windows、Linux 上通过，且不要求用户手动装 Python。
+在干净的 macOS、Windows 上通过，且不要求用户手动装 Python。Linux 后续再做。
 
 退出/杀停：
 
@@ -166,6 +166,6 @@ Process contract
 
 ## 下一步
 
-写 Process Contract 与 Python/uv Runtime Contract，然后用 hello-world App 在 macOS、Windows、Linux 验证。
+写 Process Contract 与 Python/uv Runtime Contract，然后用 hello-world App 在 macOS、Windows 验证。Linux 后续再做。
 
 M0 通过前不写产品代码。
