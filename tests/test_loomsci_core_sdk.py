@@ -18,6 +18,8 @@ sys.path.insert(0, str(ROOT))
 from loomsci_core.sdk import CoreClient  # noqa: E402
 from loomsci_core.server import create_app  # noqa: E402
 
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
 
 def free_port() -> int:
     with socket.socket() as sock:
@@ -67,7 +69,7 @@ class SdkTest(unittest.TestCase):
                 f"http://127.0.0.1:{started['port']}/write",
                 data=b"{}", method="POST",
             )
-            with urllib.request.urlopen(request, timeout=10) as response:
+            with _OPENER.open(request, timeout=10) as response:
                 self.assertEqual(response.status, 201)
             items = self.client.list_items(app="sdk-demo")
             self.assertEqual(len(items), 1)
