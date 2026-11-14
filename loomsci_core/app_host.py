@@ -14,6 +14,8 @@ import venv
 from pathlib import Path
 from typing import Any
 
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
 
 class AppHostError(RuntimeError):
     pass
@@ -119,7 +121,7 @@ class AppHost:
             if proc.poll() is not None:
                 raise AppHostError(f"app exited during startup: {proc.returncode}")
             try:
-                with urllib.request.urlopen(url, timeout=0.5) as response:
+                with _OPENER.open(url, timeout=0.5) as response:
                     if response.status == 200:
                         self.procs[slug] = proc
                         self.ports[slug] = port

@@ -9,6 +9,8 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
 
 class CoreError(RuntimeError):
     def __init__(self, error: str, status: int = 0):
@@ -35,7 +37,7 @@ class CoreClient:
             },
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with _OPENER.open(request, timeout=self.timeout) as response:
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             try:
@@ -104,5 +106,5 @@ class CoreClient:
             self.base_url + "/v1/blobs/" + urllib.parse.quote(blob_id),
             headers={"Authorization": "Bearer " + self.token},
         )
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+        with _OPENER.open(request, timeout=self.timeout) as response:
             return response.read()

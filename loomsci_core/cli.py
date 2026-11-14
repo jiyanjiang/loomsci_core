@@ -15,6 +15,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def state_path(home: Path) -> Path:
@@ -23,7 +24,7 @@ def state_path(home: Path) -> Path:
 
 def _health(port: int, timeout: float = 1.0) -> dict | None:
     try:
-        with urllib.request.urlopen(f"http://127.0.0.1:{port}/v1/health", timeout=timeout) as response:
+        with _OPENER.open(f"http://127.0.0.1:{port}/v1/health", timeout=timeout) as response:
             return json.loads(response.read())
     except Exception:
         return None
