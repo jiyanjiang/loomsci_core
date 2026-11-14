@@ -42,11 +42,11 @@ Host: `taa-win` / `192.168.101.113`
 - `/assets/app.js` returns 200
 - headless Chrome screenshot captured at 1280x900 (three-column layout)
 - CDP mouse clicks at 1280x900: create PASS, open detail PASS, open settings PASS
-- tag cloud renders; tag-filter click still not marked PASS
-- gallery click-through not yet run on B
+- final CDP mouse test: gallery open PASS, next/prev PASS, tag-filter click PASS, settings PASS
+- screenshots: list/detail/gallery/tag/settings at 1280x900
 - `ROUND1_WINDOWS_020_OK`
 
-Remaining B gates: tag-filter click and gallery click-through.
+P0 B interaction gate: PASS.
 
 ## Remaining public-beta gate
 
@@ -64,4 +64,4 @@ SHA256: `6704f0e800ac54e75b55d25bf1dca3cb5c86dd8da7f67b17b9036803ec57d196`
 - backup verify + restore UI
 - 9 tests PASS
 - B machine clean venv + 9 tests + UI HTTP PASS
-- B tag-cloud and gallery click-through still pending
+- B tag-cloud and gallery click-through PASS
