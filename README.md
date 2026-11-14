@@ -1,7 +1,12 @@
 # LoomSci Core · Minimal v0
 
+**Status: minimal public beta, `0.1.0`.**
+
 A local-first substrate for one-owner apps. Core stores items, tags, blobs, and
 search. Apps run separately and use the Core API through a scoped token.
+
+The beta is for people who already have Python 3.12 and an AI IDE. It is not a
+consumer installer and does not bundle Python.
 
 ## Requirements
 
@@ -87,6 +92,8 @@ legacy LoomSci beta features
 - [App developer](docs/en/core-v0/app-developer.md)
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
+- [Pre-shrink backup](docs/backup.md)
+- [Changelog](CHANGELOG.md)
 
 ## Test
 
