@@ -14,8 +14,8 @@ env -i HOME=/tmp/loomsci-home PATH=/usr/bin:/bin \
 # Windows
 powershell -NoProfile -ExecutionPolicy Bypass -File install.ps1 `
   -TargetHome C:\Temp\loomsci-installer `
-  -Uv C:\Users\...\uv.exe `
-  -Sha256 C:\Users\...\uv.sha256
+  -Uv C:\Temp\uv-bundle\uv.exe `
+  -Sha256 C:\Temp\uv-bundle\uv.sha256
 ```
 
 Verified:

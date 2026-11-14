@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "report"
 CACHE = DATA / "nature_physics_perspectives.json"
 DB = DATA / "report_seed.db"
-ARXIV_DB = Path("/Users/jiyanjiang/Downloads/loomsci_lexicon/data/fts.duckdb")
+ARXIV_DB = Path(os.environ.get("LOOMSCI_ARXIV_DB", ""))
 USER_AGENT = "loomsci-report-seed/0.1 (+local research)"
 
 
