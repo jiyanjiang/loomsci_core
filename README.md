@@ -127,6 +127,7 @@ legacy LoomSci beta features
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
 - [Release evidence](docs/release-evidence-v0.2.0.md)
+- [UI asset migration](docs/ui-assets.md)
 - [Pre-shrink backup](docs/backup.md)
 - [Changelog](CHANGELOG.md)
 

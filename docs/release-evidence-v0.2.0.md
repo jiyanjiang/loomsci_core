@@ -4,17 +4,21 @@ Status: candidate, not public beta yet.
 
 ## A machine — macOS real browser
 
-Artifact: `loomsci_core-0.2.0-124096b.zip`  
-SHA256: `d9bbca6e24e7e90f9a1d0ff07ad54cc77f48cd32648922c3461277e8c6c21feb`
+Artifact: `loomsci_core-0.2.0-f79d55a.zip`  
+SHA256: `2a8b07cc1c0c1db59882a848c5f7472958c505d08d47240ebc5057d6672c2c7d`
 
 - `/` loads a usable Core UI
-- create item PASS
+- markdown headings, bold, code, tables PASS
+- KaTeX inline math `$...$` and block `$$...$$` PASS
+- clipboard image paste adds a pending attachment PASS
+- pasted image uploads and renders inline PASS
+- create item without title PASS
 - list immediately shows item PASS
 - search PASS
 - inline edit PASS
 - delete PASS
 - tags PASS
-- attachment upload and display PASS
+- file attachment PASS
 - backup button PASS
 - restart Core, items persist PASS
 - API remains protected by local token
@@ -30,16 +34,11 @@ Host: `taa-win` / `192.168.101.113`
 - `/assets/app.js` returns 200
 - `ROUND1_WINDOWS_020_OK`
 
-Not yet done on B: a real browser click-through of create/edit/search/attachment.
-Windows browser interaction is the remaining public-beta gate.
+Not yet done on B: a real browser click-through of markdown, KaTeX, clipboard
+paste, edit, and attachment rendering.
 
-## Product status
-
-The product definition now has a real UI surface:
+## Remaining public-beta gate
 
 ```text
-http://127.0.0.1:8795/
+Windows real-browser acceptance
 ```
-
-Do not publish `v0.2.0` as public beta until the Windows browser acceptance is
-completed.
