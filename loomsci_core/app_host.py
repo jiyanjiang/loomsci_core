@@ -76,6 +76,9 @@ class AppHost:
             conn.close()
         return {"slug": slug, "version": manifest["version"]}
 
+    def port(self, slug: str) -> int | None:
+        return self.ports.get(slug)
+
     def _free_port(self) -> int:
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))

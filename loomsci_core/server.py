@@ -11,7 +11,9 @@ import atexit
 import base64
 import binascii
 import secrets
+import http.client
 import subprocess
+import urllib.parse
 from pathlib import Path
 
 from flask import Flask, Response, g, jsonify, request, send_from_directory
@@ -94,6 +96,36 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
             "loomsci_ui", ui_session, httponly=True, samesite="Strict", path="/"
         )
         return response
+
+    @app.route("/apps/<slug>", defaults={"subpath": ""}, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.route("/apps/<slug>/", defaults={"subpath": ""}, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.route("/apps/<slug>/<path:subpath>", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    def app_proxy(slug: str, subpath: str):
+        port = app.config["HOST"].port(slug)
+        if not port:
+            return jsonify({"ok": False, "error": "app_not_running"}), 404
+        path = "/" + subpath
+        if request.query_string:
+            path += "?" + request.query_string.decode("latin-1")
+        hop = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+               "te", "trailers", "transfer-encoding", "upgrade", "host"}
+        headers = {key: value for key, value in request.headers.items() if key.lower() not in hop}
+        body = request.get_data()
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=60)
+        try:
+            connection.request(request.method, path, body=body or None, headers=headers)
+            upstream = connection.getresponse()
+            payload = upstream.read()
+            response = Response(payload, status=upstream.status)
+            for key, value in upstream.getheaders():
+                if key.lower() not in {"content-length", "connection", "transfer-encoding"}:
+                    response.headers[key] = value
+            response.headers["Content-Length"] = str(len(payload))
+            return response
+        except OSError as exc:
+            return jsonify({"ok": False, "error": f"app_proxy: {exc}"}), 502
+        finally:
+            connection.close()
 
     @app.get("/assets/<path:filename>")
     def ui_static(filename: str):

@@ -736,8 +736,8 @@ async function loadInstalledApps() {
       button.textContent = manifest.name || row.slug;
       button.onclick = async () => {
         try {
-          const started = await api("/v1/apps/" + encodeURIComponent(row.slug) + "/start", { method: "POST", body: "{}" });
-          window.location.href = "http://127.0.0.1:" + started.port + "/";
+          await api("/v1/apps/" + encodeURIComponent(row.slug) + "/start", { method: "POST", body: "{}" });
+          window.location.href = "/apps/" + encodeURIComponent(row.slug) + "/";
         } catch (error) {
           showMessage(error.message, true);
         }

@@ -146,6 +146,18 @@ before an older database is upgraded. A newer schema is rejected.
 
 ## Tools catalog
 
+## App URLs and one-port access
+
+Apps run in isolated processes, but the browser uses the Core origin:
+
+```text
+http://127.0.0.1:8795/apps/<slug>/
+```
+
+Core proxies `/apps/<slug>/` to the app's internal loopback port. The internal
+port is implementation detail and is not shown in the UI.
+
+
 Open `#/tools`, enter a catalog JSON URL or local path, then click Detect.
 
 ```json
