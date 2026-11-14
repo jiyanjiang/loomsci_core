@@ -10,10 +10,13 @@ import hashlib
 import json
 import re
 import secrets
+import shutil
 import sqlite3
 import time
 from pathlib import Path
 from typing import Any
+
+SCHEMA_VERSION = 1
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
@@ -71,7 +74,16 @@ def init_db(path: Path) -> None:
     conn = sqlite3.connect(path)
     try:
         conn.execute("PRAGMA journal_mode = WAL")
+        version = int(conn.execute("PRAGMA user_version").fetchone()[0])
+        if version > SCHEMA_VERSION:
+            raise RuntimeError(
+                f"database schema {version} is newer than supported {SCHEMA_VERSION}"
+            )
+        if version < SCHEMA_VERSION and path.stat().st_size > 0:
+            stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+            shutil.copy2(path, path.with_name(path.name + f".pre-v{SCHEMA_VERSION}-{stamp}"))
         conn.executescript(SCHEMA)
+        conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.commit()
     finally:
         conn.close()

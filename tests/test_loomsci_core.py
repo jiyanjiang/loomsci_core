@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -93,6 +94,25 @@ class FormalCoreTest(unittest.TestCase):
         headers = {"Authorization": "Bearer " + restored_app.config["TOKEN"]}
         found = restored_client.get("/v1/search?q=portable", headers=headers)
         self.assertEqual([row["title"] for row in found.json["items"]], ["backup"])
+
+    def test_schema_version_and_migration_backup(self) -> None:
+        db = self.home / "data" / "core.db"
+        conn = sqlite3.connect(db)
+        conn.execute("PRAGMA user_version = 0")
+        conn.commit(); conn.close()
+        create_app(self.home)
+        conn = sqlite3.connect(db)
+        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 1)
+        conn.close()
+        self.assertTrue(list(db.parent.glob("core.db.pre-v1-*")))
+
+    def test_future_schema_is_rejected(self) -> None:
+        db = self.home / "data" / "core.db"
+        conn = sqlite3.connect(db)
+        conn.execute("PRAGMA user_version = 999")
+        conn.commit(); conn.close()
+        with self.assertRaises(RuntimeError):
+            create_app(self.home)
 
     def test_module_cli_lifecycle(self) -> None:
         port = free_port()
