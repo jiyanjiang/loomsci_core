@@ -24,13 +24,12 @@ python3 prototype/test_signing_matrix.py
 Status:
 
 ```text
-macOS:   S1–S12 PASS (S10 is precondition only)
-Windows: S1–S12 PASS (S10 is precondition only)
+macOS:   S1–S12 PASS
+Windows: S1–S12 PASS
 ```
 
 Known gap:
 
-- `S10` verifies that a failed verification leaves a target marker untouched;
-  it does not yet run a real package installer/copy step.
 - Cert files are a prototype format, not final distribution format.
+- The installer copies only the payload; full Core package layout is next.
 - Root key pinning and Authenticode/notarization are not implemented.

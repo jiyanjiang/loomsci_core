@@ -11,6 +11,10 @@ import argparse
 import base64
 import hashlib
 import json
+import os
+import shutil
+import subprocess
+import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -161,6 +165,34 @@ def cmd_verify(args: argparse.Namespace) -> int:
         return 1
 
 
+def cmd_install(args: argparse.Namespace) -> int:
+    target = Path(args.target)
+    if target.exists():
+        print(json.dumps({"ok": False, "error": "target_exists"}))
+        return 1
+    verify = subprocess.run(
+        [sys.executable, __file__, "verify", "--manifest", args.manifest,
+         "--sig", args.sig, "--payload", args.payload, "--trust", args.trust],
+        text=True, capture_output=True,
+    )
+    if verify.returncode != 0:
+        print(verify.stdout.strip() or json.dumps({"ok": False, "error": "verify_failed"}))
+        return 1
+    tmp = target.with_name(target.name + ".tmp-" + str(os.getpid()))
+    if tmp.exists():
+        shutil.rmtree(tmp)
+    try:
+        tmp.mkdir(parents=True)
+        shutil.copy2(args.payload, tmp / "payload.bin")
+        tmp.rename(target)
+        print(json.dumps({"ok": True, "target": str(target)}))
+        return 0
+    except Exception:
+        if tmp.exists():
+            shutil.rmtree(tmp)
+        raise
+
+
 def cmd_sign(args: argparse.Namespace) -> int:
     manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
     private = Ed25519PrivateKey.from_private_bytes(Path(args.key).read_bytes())
@@ -191,6 +223,13 @@ def main() -> int:
     sign.add_argument("--key", required=True)
     sign.add_argument("--out", required=True)
     sign.set_defaults(func=cmd_sign)
+    install = sub.add_parser("install")
+    install.add_argument("--manifest", required=True)
+    install.add_argument("--sig", required=True)
+    install.add_argument("--payload", required=True)
+    install.add_argument("--trust", required=True)
+    install.add_argument("--target", required=True)
+    install.set_defaults(func=cmd_install)
     verify = sub.add_parser("verify")
     verify.add_argument("--manifest", required=True)
     verify.add_argument("--sig", required=True)

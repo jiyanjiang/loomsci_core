@@ -118,10 +118,20 @@ def main() -> int:
         code, out = verify(m, sig, payload, trust); assert code == 0, out
         print("S9 offline verify: PASS")
         target = root / "target"; target.mkdir(); (target / "marker").write_text("keep")
-        code, out = verify(m, sig, payload, trust); assert code == 0
-        (target / "marker").write_text("keep")
+        original = m.read_text(encoding="utf-8")
+        bad = json.loads(original); bad["version"] = "9.9.9"
+        m.write_text(json.dumps(bad, sort_keys=True, separators=(",", ":")), encoding="utf-8")
+        code, out = run("install", "--manifest", str(m), "--sig", str(sig),
+                        "--payload", str(payload), "--trust", str(trust), "--target", str(target))
+        assert code != 0, out
         assert (target / "marker").read_text() == "keep"
-        print("S10 no partial install precondition: PASS")
+        m.write_text(original, encoding="utf-8")
+        clean = root / "installed"
+        code, out = run("install", "--manifest", str(m), "--sig", str(sig),
+                        "--payload", str(payload), "--trust", str(trust), "--target", str(clean))
+        assert code == 0, out
+        assert (clean / "payload.bin").read_bytes() == payload.read_bytes()
+        print("S10 failed install leaves target unchanged: PASS")
         mr, pr, sr = manifest(root, "app", release2_id)
         assert run("sign", "--manifest", str(mr), "--key", str(release2_key), "--out", str(sr))[0] == 0
         code, out = verify(mr, sr, pr, trust); assert code == 0, out
