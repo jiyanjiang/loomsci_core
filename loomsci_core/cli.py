@@ -96,7 +96,7 @@ def start(home: Path, port: int) -> dict:
         **kwargs,
     )
     stdout.close(); stderr.close()
-    deadline = time.monotonic() + 20
+    deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
         if proc.poll() is not None:
             raise SystemExit(f"core_exited: {proc.returncode}")
@@ -108,7 +108,9 @@ def start(home: Path, port: int) -> dict:
             return {"ok": True, **data}
         time.sleep(0.25)
     proc.terminate()
-    raise SystemExit("health_timeout")
+    log = home / "logs" / "core.stderr.log"
+    detail = log.read_text(encoding="utf-8", errors="replace") if log.is_file() else ""
+    raise SystemExit("health_timeout\n" + detail)
 
 
 def stop(home: Path) -> dict:
