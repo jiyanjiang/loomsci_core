@@ -4,13 +4,13 @@ Status: candidate, not public beta yet.
 
 ## A machine — macOS real browser
 
-Artifact: `loomsci_core-0.2.0-f79d55a.zip`  
-SHA256: `2a8b07cc1c0c1db59882a848c5f7472958c505d08d47240ebc5057d6672c2c7d`
+Artifact: `loomsci_core-0.2.0-b3b478d.zip`  
+SHA256: `2932bdf3cb5b78e6e4f0e4c71abe4577b7e30bae06f4127061647672fc3ff236`
 
 - `/` loads a usable Core UI
 - markdown headings, bold, code, tables PASS
 - KaTeX inline math `$...$` and block `$$...$$` PASS
-- clipboard image paste adds a pending attachment PASS
+- clipboard image paste adds a pending attachment with a visible thumbnail PASS
 - pasted image uploads and renders inline PASS
 - create item without title PASS
 - list immediately shows item PASS
