@@ -1,0 +1,23 @@
+name: release-test
+
+on:
+  push:
+    branches: [minimal-v0]
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -r requirements-core.txt
+      - name: Test
+        run: python -m unittest discover -s tests -q

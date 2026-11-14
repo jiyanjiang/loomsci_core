@@ -10,15 +10,17 @@ public beta.
 
 - Machine: this Mac (darwin arm64)
 - Python: 3.12 project venv
-- Source tests: `Ran 4 tests ... OK`
+- Clean venv install: `CLEAN_MACOS_OK`
+- Tests in clean venv: `Ran 4 tests ... OK`
 - End-to-end smoke: `MINIMAL_SMOKE_OK`
 - Covered: Core start, app install, app start, item write, search, backup,
   app stop
 
 ## Windows
 
-- Status: **not tested on this minimal tree**
-- Required before a public beta tag: clean Windows run of the same smoke path
+- Status: **CI gate added; result not yet observed**
+- Workflow: `.github/workflows/release-test.yml` (`windows-latest`, Python 3.12)
+- Required before a public beta tag: green Windows run plus the smoke path
 
 ## Consequence
 
