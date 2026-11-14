@@ -1,6 +1,6 @@
 # loomsci_core · Public Beta
 
-[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [IDE matrix](docs/en/ide-compatibility.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
+[中文](README.zh-CN.md) · [Docs](docs/en/quickstart.md) · [Core contract](docs/en/core-contract.md) · [App manifest](docs/en/app-manifest.md) · [Distribution](docs/en/distribution.md) · [IDE matrix](docs/en/ide-compatibility.md) · [Backup](docs/en/backup.md) · [Migration](docs/en/migration.md) · [Release notes](release-notes.md) · [Security](SECURITY.md)
 
 **A local-first research workspace for people who work with AI IDEs.**
 
@@ -10,6 +10,12 @@ execution layer; LoomSci is the memory, audit trail, and portable asset layer.
 
 > **Status: `0.1.0-beta.28` public beta.** Local-only, one owner, no login, no
 > required cloud dependency. Not a production or multi-user server.
+>
+> **Product direction (draft):** LoomSci Core is becoming a minimal, stable
+> local app runtime distributed as **Core + Specific APP**. The current beta is
+> the legacy implementation; see the [Core contract](docs/en/core-contract.md),
+> [App manifest](docs/en/app-manifest.md), and
+> [distribution model](docs/en/distribution.md).
 
 ## Requirements
 

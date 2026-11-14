@@ -1,6 +1,6 @@
 # loomsci_core · 公测
 
-[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [IDE 矩阵](docs/zh-CN/ide-compatibility.md) · [备份](docs/zh-CN/backup.md) · [迁移](docs/zh-CN/migration.md) · [安全](SECURITY.md)
+[English](README.md) · [文档](docs/zh-CN/quickstart.md) · [Core 契约](docs/zh-CN/core-contract.md) · [App Manifest](docs/zh-CN/app-manifest.md) · [分发模型](docs/zh-CN/distribution.md) · [IDE 矩阵](docs/zh-CN/ide-compatibility.md) · [备份](docs/zh-CN/backup.md) · [迁移](docs/zh-CN/migration.md) · [安全](SECURITY.md)
 
 **给使用 AI IDE 的科研人的本地优先工作台。**
 
@@ -9,6 +9,11 @@ LoomSci 把长期有价值的内容——笔记、帖子、任务、事实、附
 
 > **状态：`0.1.0-beta.28` 公测。** 本地、单 owner、无登录、无必需云依赖。
 > 不是生产环境，也不是多用户服务器。
+>
+> **产品方向（草案）：** LoomSci Core 将收敛为最小、稳定、可分发的本地 App
+> 运行时，产品形态为 **Core + Specific APP**。当前 beta 是旧实现；见
+> [Core 契约](docs/zh-CN/core-contract.md)、[App Manifest](docs/zh-CN/app-manifest.md)、
+> [分发模型](docs/zh-CN/distribution.md)。
 
 ## 前置条件
 
