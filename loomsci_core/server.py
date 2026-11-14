@@ -36,8 +36,10 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         except OSError:
             pass
     token = token_path.read_text(encoding="utf-8").strip()
+    ui_session = secrets.token_hex(32)
     app = Flask(__name__)
     app.config["TOKEN"] = token
+    app.config["UI_SESSION"] = ui_session
     app.config["HOME"] = str(home)
     app.config["DB"] = str(db)
     app.config["BLOB_DIR"] = str(home / "data" / "blobs")
@@ -62,6 +64,10 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
             return None
         if request.path.startswith("/assets/"):
             return None
+        if secrets.compare_digest(request.cookies.get("loomsci_ui", ""), ui_session):
+            g.app_slug = None
+            g.ui_session = True
+            return None
         header = request.headers.get("Authorization", "")
         supplied = header[7:].strip() if header.startswith("Bearer ") else request.headers.get("X-LoomSci-Token", "")
         if supplied and secrets.compare_digest(supplied, token):
@@ -80,9 +86,11 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
     @app.get("/app")
     def ui_index():
         html = (WEB / "index.html").read_text(encoding="utf-8")
-        html = html.replace("__TOKEN__", token)
         response = Response(html, mimetype="text/html")
         response.headers["Cache-Control"] = "no-store"
+        response.set_cookie(
+            "loomsci_ui", ui_session, httponly=True, samesite="Strict", path="/"
+        )
         return response
 
     @app.get("/assets/<path:filename>")

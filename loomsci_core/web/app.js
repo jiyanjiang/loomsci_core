@@ -1,4 +1,3 @@
-const TOKEN = window.__LOOMSCI_TOKEN__;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const PAGE_SIZE = 20;
@@ -55,9 +54,9 @@ function applyI18n() {
 }
 
 async function api(path, options = {}) {
-  const headers = { Authorization: "Bearer " + TOKEN };
+  const headers = {};
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(path, { ...options, headers, credentials: "same-origin" });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
   return data;
@@ -194,7 +193,7 @@ function isMarkdown(blob) {
 async function blobURL(blob) {
   if (blobCache.has(blob.id)) return blobCache.get(blob.id);
   const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
-    headers: { Authorization: "Bearer " + TOKEN },
+    credentials: "same-origin",
   });
   if (!response.ok) throw new Error("attachment failed");
   const url = URL.createObjectURL(await response.blob());
@@ -363,7 +362,7 @@ async function renderDetail(item) {
         details.appendChild(summary);
         try {
           const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id) + "?inline=1", {
-            headers: { Authorization: "Bearer " + TOKEN },
+            credentials: "same-origin",
           });
           const data = await response.json();
           const md = document.createElement("div");
