@@ -45,6 +45,25 @@ class FormalCoreTest(unittest.TestCase):
         found = self.client.get("/v1/search?q=formal", headers=self.headers)
         self.assertEqual([row["id"] for row in found.json["items"]], [item["id"]])
 
+    def test_backup_and_restore(self) -> None:
+        created = self.client.post("/v1/items", headers=self.headers, json={
+            "app": "report", "type": "report.note", "title": "backup",
+            "body": "portable", "tags": ["backup"],
+        })
+        self.assertEqual(created.status_code, 201, created.get_data(as_text=True))
+        backup = self.client.post("/v1/backups", headers=self.headers)
+        self.assertEqual(backup.status_code, 201, backup.get_data(as_text=True))
+        target = Path(self.tmp.name) / "restored"
+        restored = self.client.post("/v1/backups/restore", headers=self.headers, json={
+            "backup": backup.json["backup"]["path"], "target": str(target),
+        })
+        self.assertEqual(restored.status_code, 200, restored.get_data(as_text=True))
+        restored_app = create_app(target)
+        restored_client = restored_app.test_client()
+        headers = {"Authorization": "Bearer " + restored_app.config["TOKEN"]}
+        found = restored_client.get("/v1/search?q=portable", headers=headers)
+        self.assertEqual([row["title"] for row in found.json["items"]], ["backup"])
+
     def test_module_cli_lifecycle(self) -> None:
         port = free_port()
         command = [sys.executable, "-m", "loomsci_core", "--home", str(self.home), "--port", str(port)]
