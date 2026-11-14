@@ -117,7 +117,7 @@ legacy LoomSci beta features
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
-- [Release evidence](docs/release-evidence-v0.1.0.md)
+- [Release evidence](docs/release-evidence-v0.1.1.md)
 - [Pre-shrink backup](docs/backup.md)
 - [Changelog](CHANGELOG.md)
 
