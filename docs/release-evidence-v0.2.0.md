@@ -79,3 +79,28 @@ SHA256: `12536d539de8cdc0eb423c0c83d65a04db3583d97d8402a7c86a0497eea67438`
 - B machine signed update check: PASS
 
 Not yet run: live apply on a disposable installed copy on both machines.
+
+## rc.2 live update
+
+A machine disposable install:
+
+```text
+before: 0.2.0-rc.2
+apply:  PASS
+after:  0.2.0-rc.3
+data backup: created
+code snapshot: created
+```
+
+B machine disposable install:
+
+```text
+before: 0.2.0-rc.2
+apply:  PASS
+after:  0.2.0-rc.3
+data backup: created
+code snapshot: created
+```
+
+Both machines used the signed package and manifest. This closes the live
+updater gate for the pre-release. It is not a public-beta declaration.
