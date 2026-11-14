@@ -25,7 +25,6 @@ App owns:  domain schema, domain UI, workflows, content, optional account
   "app_api": "app/1",
   "core_api": "core/1",
   "min_core": "0.2.0",
-  "max_core": "0.9.99",
   "package": "loomsci_report",
   "entry": "server",
   "port": 8791,
@@ -57,7 +56,6 @@ App owns:  domain schema, domain UI, workflows, content, optional account
 | `app_api` | string | `app/1` |
 | `core_api` | string | `core/1` |
 | `min_core` | semver | minimum compatible Core |
-| `max_core` | semver | optional upper bound |
 | `package` | string | importable directory name |
 | `entry` | string | module name under package |
 | `port` | int | loopback port; `0` means Core allocates |
@@ -94,7 +92,6 @@ Core enforces a small, explicit permission set:
 |---|---|
 | `items.read` | read items in the app's namespace |
 | `items.write` | create/update/delete items in the app's namespace |
-| `items.cross_read` | read items from other apps (explicit approval) |
 | `blobs.read` | read blobs attached to app items |
 | `blobs.write` | attach blobs to app items |
 | `tags.read` | read tags |
@@ -104,7 +101,7 @@ Core enforces a small, explicit permission set:
 | `content.read` | install signed content packs |
 | `update.self` | update this app |
 
-Default: no permission. Apps declare only what they need.
+Default: no permission. Apps declare only what they need. v0 has no cross-app read permission; sharing is export/import only.
 
 ## 6. Lifecycle
 
@@ -112,7 +109,7 @@ Default: no permission. Apps declare only what they need.
 install
   validate manifest
   validate signature/checksum
-  check core_api + min_core/max_core
+  check core_api + min_core
   create data namespace
   copy code
   register in Core apps table
@@ -289,7 +286,7 @@ Rules:
 ## 9. Compatibility
 
 - `app_api` and `core_api` are independent.
-- `min_core` / `max_core` gate installation.
+- `min_core` gates installation. `core/1` is additive; no upper bound is declared.
 - Core must expose a diagnostic when an app is incompatible.
 - Core API changes are additive within `core/1`.
 - App database migrations are app-owned and additive.
@@ -322,7 +319,7 @@ Project does not execute agents. It records project state; AI IDEs execute.
 4. App removal preserves data by default.
 5. A signed content pack applies offline and rolls back.
 6. An app without permission cannot read another namespace.
-7. A Core version outside `min_core`/`max_core` is refused with a clear error.
+7. A Core version below `min_core` is refused with a clear error.
 8. An invalid signature is refused before code is copied.
 
 ## 12. Non-goals

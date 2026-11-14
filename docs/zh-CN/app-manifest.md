@@ -24,7 +24,6 @@ App 管：领域 schema、领域 UI、工作流、内容、可选账号
   "app_api": "app/1",
   "core_api": "core/1",
   "min_core": "0.2.0",
-  "max_core": "0.9.99",
   "package": "loomsci_report",
   "entry": "server",
   "port": 8791,
@@ -52,7 +51,6 @@ App 管：领域 schema、领域 UI、工作流、内容、可选账号
 | `app_api` | string | `app/1` |
 | `core_api` | string | `core/1` |
 | `min_core` | semver | 最低 Core |
-| `max_core` | semver | 可选上限 |
 | `package` | string | 可导入目录名 |
 | `entry` | string | 包内模块 |
 | `port` | int | loopback 端口；`0` 由 Core 分配 |
@@ -76,7 +74,6 @@ App 管：领域 schema、领域 UI、工作流、内容、可选账号
 |---|---|
 | `items.read` | 读本 App 命名空间的 items |
 | `items.write` | 增删改本 App items |
-| `items.cross_read` | 读其他 App items（需显式批准） |
 | `blobs.read` | 读本 App 附件 |
 | `blobs.write` | 给本 App items 挂附件 |
 | `tags.read` | 读标签 |
@@ -86,7 +83,7 @@ App 管：领域 schema、领域 UI、工作流、内容、可选账号
 | `content.read` | 安装签名内容包 |
 | `update.self` | 自更新 |
 
-默认无权限；只申请需要的。
+默认无权限；只申请需要的。v0 不提供跨 App 读权限；共享只走导出/导入。
 
 ## 6. 生命周期
 
@@ -94,7 +91,7 @@ App 管：领域 schema、领域 UI、工作流、内容、可选账号
 install
   validate manifest
   validate signature/checksum
-  check core_api + min_core/max_core
+  check core_api + min_core
   create data namespace
   copy code
   register in Core apps
@@ -259,7 +256,7 @@ Report installer
 ## 9. 兼容
 
 - `app_api` 与 `core_api` 独立
-- `min_core` / `max_core` 决定能否安装
+- `min_core` 决定能否安装；`core/1` 只做加法，不设上限
 - 不兼容时 Core 给出诊断
 - Core `core/1` 内只做加法
 - App 数据库迁移由 App 自己负责，只做加法
@@ -292,7 +289,7 @@ Project 不执行 agent，只记录项目状态；执行在 AI IDE。
 4. App 卸载默认保留数据
 5. 签名内容包可离线应用、回滚
 6. 无权限 App 不能读其他命名空间
-7. Core 版本不满足 `min_core`/`max_core` 时明确拒绝
+7. Core 版本低于 `min_core` 时明确拒绝
 8. 签名无效时在复制代码前拒绝
 
 ## 12. 非目标

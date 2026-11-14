@@ -71,7 +71,7 @@ and a generic item reader. It must not become a domain application.
 ~/.loomsci/
 ├─ core/                 # Core code or installed runtime
 ├─ data/
-│  ├─ core.db            # generic items, tags, apps, events
+│  ├─ core.db            # generic items, tags, apps
 │  └─ blobs/             # content-addressed blobs
 ├─ apps/
 │  └─ <slug>/
@@ -124,12 +124,6 @@ apps
   manifest_json TEXT NOT NULL
   installed_at  TEXT NOT NULL
 
-events
-  id            TEXT PRIMARY KEY
-  app           TEXT
-  kind          TEXT NOT NULL
-  payload_json  TEXT NOT NULL
-  created_at    TEXT NOT NULL
 ```
 
 App-specific tables live in the app namespace, not in Core tables.
@@ -173,9 +167,9 @@ GET    /v1/updates/status
 POST   /v1/updates/check
 POST   /v1/updates/apply
 
-GET    /v1/backup
-POST   /v1/backup
-POST   /v1/restore
+GET    /v1/backups
+POST   /v1/backups
+POST   /v1/backups/restore
 ```
 
 Exact payloads are frozen in `docs/en/app-manifest.md` and the SDK examples.
@@ -202,7 +196,7 @@ This is a security boundary, not registration.
 ## 8. App host responsibilities
 
 - validate manifest and signature
-- check `core_api`, `min_core`, and `max_core`
+- check `core_api` and `min_core`
 - allocate/verify a loopback port
 - create a data namespace
 - start/stop/health-check the app

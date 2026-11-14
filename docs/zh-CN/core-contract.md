@@ -62,7 +62,7 @@ Core process
 ~/.loomsci/
 ├─ core/                 # Core 代码或安装运行时
 ├─ data/
-│  ├─ core.db            # items, tags, apps, events
+│  ├─ core.db            # items, tags, apps
 │  └─ blobs/             # 内容寻址附件
 ├─ apps/
 │  └─ <slug>/
@@ -94,8 +94,6 @@ blobs
 apps
   slug, version, manifest_json, installed_at
 
-events
-  id, app, kind, payload_json, created_at
 ```
 
 App 领域表放在 App 命名空间，不进 Core 表。
@@ -134,9 +132,9 @@ GET    /v1/updates/status
 POST   /v1/updates/check
 POST   /v1/updates/apply
 
-GET    /v1/backup
-POST   /v1/backup
-POST   /v1/restore
+GET    /v1/backups
+POST   /v1/backups
+POST   /v1/backups/restore
 ```
 
 App 只能走 `/v1`，不得 import Core 内部模块。
@@ -160,7 +158,7 @@ Core 不做用户账号，但需要本机 capability token，防止其他本地�
 ## 8. App Host 职责
 
 - 校验 manifest 和签名
-- 检查 `core_api`、`min_core`、`max_core`
+- 检查 `core_api`、`min_core`
 - 分配/校验 loopback 端口
 - 创建数据命名空间
 - 启动/停止/健康检查
