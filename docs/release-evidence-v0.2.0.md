@@ -4,8 +4,8 @@ Status: candidate, not public beta yet.
 
 ## A machine — macOS real browser
 
-Artifact: `loomsci_core-0.2.0-51d09bd.zip`
-SHA256: `0d98593febd06d39d8b1efefff3cecf21e19479aa45b98a2f4d0b4677948f7ac`
+Artifact: `loomsci_core-0.2.0-a728c36.zip`
+SHA256: `5026702a0af1e8e0745126d905bbcff66aa88840af2bf5b869625b33563ef12b`
 
 - `/` loads a usable Core UI; no horizontal overflow at 390px
 - compose panel no longer stretches to list height
@@ -37,11 +37,13 @@ Host: `taa-win` / `192.168.101.113`
 - archive SHA256 PASS
 - clean venv, 7 tests PASS
 - CLI start/stop PASS
+- Core start survives the SSH session (detached Windows process) PASS
 - `/` returns 200 and contains the UI
 - `/assets/app.js` returns 200
+- headless Chrome screenshot captured at 1280x900
 - `ROUND1_WINDOWS_020_OK`
 
-Not yet done on B: real browser click-through of the SPA interactions.
+Not yet done on B: interactive browser click-through of create/edit/gallery/settings.
 
 ## Remaining public-beta gate
 
