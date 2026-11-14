@@ -143,18 +143,28 @@ def stop(home: Path, slug: str) -> dict[str, Any]:
     stopped = False
     if pid:
         try:
-            os.kill(pid, signal.SIGTERM)
-            deadline = time.monotonic() + 10
-            while time.monotonic() < deadline:
-                try:
-                    os.kill(pid, 0)
-                except OSError:
-                    stopped = True
-                    break
-                time.sleep(0.1)
-            if not stopped:
-                os.kill(pid, signal.SIGKILL)
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/PID", str(pid), "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+                time.sleep(0.5)
                 stopped = True
+            else:
+                os.kill(pid, signal.SIGTERM)
+                deadline = time.monotonic() + 10
+                while time.monotonic() < deadline:
+                    try:
+                        os.kill(pid, 0)
+                    except OSError:
+                        stopped = True
+                        break
+                    time.sleep(0.1)
+                if not stopped:
+                    os.kill(pid, signal.SIGKILL)
+                    stopped = True
         except OSError:
             stopped = True
     state_path.unlink(missing_ok=True)
@@ -184,10 +194,17 @@ def remove(home: Path, slug: str) -> dict[str, Any]:
     for child in app_dir.iterdir():
         if child.name == "data":
             continue
-        if child.is_dir():
-            shutil.rmtree(child)
-        else:
-            child.unlink()
+        for attempt in range(5):
+            try:
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.5)
     return {"slug": slug, "removed": True, "data": str(keep)}
 
 

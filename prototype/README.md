@@ -24,7 +24,7 @@ python3 prototype/test_process_contract.py
 Platform status:
 
 - macOS: tested
-- Windows: not yet tested
+- Windows: tested
 - Linux: not yet tested
 
 This is a prototype, not the final Core App Host.
