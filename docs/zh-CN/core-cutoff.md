@@ -212,7 +212,7 @@ loomsci app install ./my-app
 
 ```text
 [ ] prototype 移入正式 core
-[ ] SDK + App template
+[x] SDK + App template
 [ ] OpenAPI/API reference
 [ ] 签名 Core/App 包集成
 [ ] updater + rollback

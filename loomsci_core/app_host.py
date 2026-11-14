@@ -94,6 +94,7 @@ class AppHost:
         logs.mkdir(parents=True, exist_ok=True)
         env = dict(os.environ)
         env.update({
+            "PYTHONPATH": str(Path(__file__).resolve().parent.parent) + os.pathsep + env.get("PYTHONPATH", ""),
             "LOOMSCI_CORE_URL": self.core_url,
             "LOOMSCI_APP_TOKEN": token,
             "LOOMSCI_APP_SLUG": slug,

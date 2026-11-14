@@ -1,0 +1,19 @@
+{
+  "name": "SDK Hello App",
+  "slug": "sdk-demo",
+  "version": "0.1.0",
+  "app_api": "app/1",
+  "core_api": "core/1",
+  "min_core": "0.1.0",
+  "package": "hello_app",
+  "entry": "server",
+  "port": 0,
+  "health": "/health",
+  "data_namespace": "app_sdk_demo",
+  "permissions": ["items.read", "items.write"],
+  "update_channels": ["stable"],
+  "content_channels": [],
+  "preserve": ["data"],
+  "uninstall": "keep_data",
+  "requires_registration": false
+}
