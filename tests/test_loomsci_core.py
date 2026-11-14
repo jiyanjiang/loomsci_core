@@ -70,6 +70,7 @@ class FormalCoreTest(unittest.TestCase):
         self.assertEqual(blob.status_code, 201, blob.get_data(as_text=True))
         fetched = self.client.get("/v1/items/" + item["id"], headers=self.headers)
         self.assertEqual(fetched.json["item"]["blobs"][0]["filename"], "note.txt")
+        self.assertTrue(fetched.json["item"]["blobs"][0]["hash_name"].endswith(".txt"))
 
     def test_backup_and_restore(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={

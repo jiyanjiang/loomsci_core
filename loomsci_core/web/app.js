@@ -1,13 +1,51 @@
 const TOKEN = window.__LOOMSCI_TOKEN__;
 const $ = (selector) => document.querySelector(selector);
-const itemsEl = $("#items");
-const emptyEl = $("#empty");
-const messageEl = $("#message");
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+const PAGE_SIZE = 20;
+
+const I18N = {
+  zh: {
+    settings: "设置", newContent: "新建内容", bodyPlaceholder: "Markdown 正文；可直接粘贴图片",
+    tagsPlaceholder: "标签，逗号分隔", pasteImage: "从剪贴板粘贴图片", publish: "发布",
+    backup: "创建备份", searchPlaceholder: "搜索", search: "搜索", clear: "清除",
+    empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
+    username: "用户名", apiKey: "API Key", language: "语言", fingerprint: "本机软指纹",
+    save: "保存", rotate: "轮换软指纹", noMore: "没有更多了", deleted: "已删除",
+    updated: "已更新", created: "已创建", saved: "已保存", tags: "标签", attachments: "附件",
+    previous: "上一张", next: "下一张", close: "关闭", loading: "加载中",
+    notFound: "内容不存在", error: "操作失败",
+  },
+  en: {
+    settings: "Settings", newContent: "New content", bodyPlaceholder: "Markdown body; paste images directly",
+    tagsPlaceholder: "Tags, comma separated", pasteImage: "Paste image", publish: "Publish",
+    backup: "Create backup", searchPlaceholder: "Search", search: "Search", clear: "Clear",
+    empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
+    username: "Username", apiKey: "API Key", language: "Language", fingerprint: "Local fingerprint",
+    save: "Save", rotate: "Rotate fingerprint", noMore: "No more items", deleted: "Deleted",
+    updated: "Updated", created: "Created", saved: "Saved", tags: "Tags", attachments: "Attachments",
+    previous: "Previous", next: "Next", close: "Close", loading: "Loading",
+    notFound: "Item not found", error: "Operation failed",
+  },
+};
+let lang = localStorage.getItem("loomsci.lang") || "zh";
+const t = (key) => (I18N[lang] || I18N.zh)[key] || key;
+
+const state = { items: [], offset: 0, tag: "", query: "", hasMore: false };
 const pendingFiles = [];
+const blobCache = new Map();
+let galleryImages = [];
+let galleryIndex = 0;
 
 function showMessage(text, error = false) {
-  messageEl.textContent = text;
-  messageEl.classList.toggle("error", error);
+  const el = $("#message");
+  el.textContent = text;
+  el.classList.toggle("error", error);
+}
+
+function applyI18n() {
+  $$("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  $$("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  if ($("#setting-language")) $("#setting-language").value = lang;
 }
 
 async function api(path, options = {}) {
@@ -40,13 +78,8 @@ function inline(text) {
 function markdown(source) {
   const lines = escapeHTML(source).split("\n");
   const out = [];
-  let code = false;
-  let list = null;
-  let para = [];
-  let i = 0;
-  const flush = () => {
-    if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; }
-  };
+  let code = false, list = null, para = [], i = 0;
+  const flush = () => { if (para.length) { out.push(`<p>${inline(para.join(" "))}</p>`); para = []; } };
   const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
 
   while (i < lines.length) {
@@ -99,8 +132,7 @@ function markdown(source) {
         ? /^\s*\d+[.)]\s+/.test(candidate)
         : list === "ul" ? /^\s*[-*+]\s+/.test(candidate) : false;
       if (!sameList) closeList();
-      i++;
-      continue;
+      i++; continue;
     }
     para.push(line.trim()); i++;
   }
@@ -122,154 +154,289 @@ function renderMath(root) {
   }
 }
 
-function tagList(tags) {
+function tagList(tags, clickable = true) {
   const wrap = document.createElement("div");
   wrap.className = "meta";
   for (const tag of tags || []) {
-    const span = document.createElement("span");
-    span.className = "tag";
-    span.textContent = tag.tag;
-    wrap.appendChild(span);
+    const button = document.createElement("button");
+    button.className = "tag";
+    button.textContent = tag.tag;
+    if (clickable) {
+      button.onclick = (event) => {
+        event.stopPropagation();
+        setTag(tag.tag);
+      };
+    }
+    wrap.appendChild(button);
   }
   return wrap;
 }
 
-async function showBlob(container, blob) {
-  if (String(blob.content_type || "").startsWith("image/")) {
-    try {
-      const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
-        headers: { Authorization: "Bearer " + TOKEN },
-      });
-      if (!response.ok) throw new Error("附件读取失败");
-      const image = document.createElement("img");
-      image.className = "attachment-image";
-      image.alt = blob.filename;
-      image.src = URL.createObjectURL(await response.blob());
-      container.appendChild(image);
-      return;
-    } catch { /* fall through to filename */ }
-  }
-  const button = document.createElement("button");
-  button.textContent = "📎 " + blob.filename;
-  button.onclick = async () => {
-    try {
-      const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
-        headers: { Authorization: "Bearer " + TOKEN },
-      });
-      if (!response.ok) throw new Error("附件读取失败");
-      window.open(URL.createObjectURL(await response.blob()), "_blank");
-    } catch (error) {
-      showMessage(error.message, true);
-    }
-  };
-  container.appendChild(button);
+function hashName(blob) {
+  return blob.hash_name || blob.filename || blob.id;
 }
 
-function render(items) {
-  itemsEl.replaceChildren();
-  emptyEl.hidden = items.length > 0;
-  for (const item of items) {
-    const row = document.createElement("article");
-    row.className = "item";
+function isImage(blob) {
+  return String(blob.content_type || "").startsWith("image/");
+}
 
-    const body = document.createElement("div");
-    body.className = "md";
-    body.innerHTML = markdown(item.body || "");
-    row.appendChild(body);
-    renderMath(body);
+function isMarkdown(blob) {
+  const name = String(blob.filename || "").toLowerCase();
+  return name.endsWith(".md") || name.endsWith(".markdown") || /markdown/.test(String(blob.content_type || ""));
+}
 
-    row.appendChild(tagList(item.tags));
+async function blobURL(blob) {
+  if (blobCache.has(blob.id)) return blobCache.get(blob.id);
+  const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id), {
+    headers: { Authorization: "Bearer " + TOKEN },
+  });
+  if (!response.ok) throw new Error("attachment failed");
+  const url = URL.createObjectURL(await response.blob());
+  blobCache.set(blob.id, url);
+  return url;
+}
 
-    if (item.blobs && item.blobs.length) {
-      const files = document.createElement("div");
-      files.className = "meta attachments";
-      for (const blob of item.blobs) showBlob(files, blob);
-      row.appendChild(files);
+async function thumb(blob, onClick) {
+  const image = document.createElement("img");
+  image.className = "thumb";
+  image.alt = hashName(blob);
+  image.onclick = onClick;
+  try { image.src = await blobURL(blob); } catch { /* keep placeholder */ }
+  return image;
+}
+
+function setTag(tag) {
+  state.tag = state.tag === tag ? "" : tag;
+  state.query = "";
+  $("#search").value = "";
+  loadItems(true);
+  loadTags();
+}
+
+async function loadTags() {
+  try {
+    const data = await api("/v1/tags?limit=1000");
+    const cloud = $("#tag-cloud");
+    cloud.replaceChildren();
+    for (const row of data.tags || []) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = row.tag === state.tag ? "active" : "";
+      button.textContent = row.tag;
+      const count = document.createElement("span");
+      count.className = "tag-count";
+      count.textContent = row.count;
+      button.appendChild(count);
+      button.onclick = () => setTag(row.tag);
+      cloud.appendChild(button);
     }
-
-    const actions = document.createElement("div");
-    actions.className = "row-actions";
-
-    const edit = document.createElement("button");
-    edit.textContent = "编辑";
-    edit.onclick = () => {
-      const editor = document.createElement("div");
-      editor.className = "editor";
-      const bodyInput = document.createElement("textarea");
-      bodyInput.value = item.body || "";
-      bodyInput.rows = 8;
-      const editorActions = document.createElement("div");
-      editorActions.className = "row-actions";
-      const save = document.createElement("button");
-      save.textContent = "保存";
-      save.className = "primary";
-      const cancel = document.createElement("button");
-      cancel.textContent = "取消";
-      cancel.onclick = () => load();
-      save.onclick = async () => {
-        if (!bodyInput.value.trim()) {
-          showMessage("正文不能为空", true);
-          return;
-        }
-        try {
-          await api("/v1/items/" + encodeURIComponent(item.id), {
-            method: "PATCH",
-            body: JSON.stringify({ body: bodyInput.value }),
-          });
-          await load();
-          showMessage("已更新");
-        } catch (error) {
-          showMessage(error.message, true);
-        }
-      };
-      editorActions.append(save, cancel);
-      editor.append(bodyInput, editorActions);
-      row.replaceChildren(editor);
-    };
-    actions.appendChild(edit);
-
-    const remove = document.createElement("button");
-    remove.textContent = "删除";
-    remove.onclick = async () => {
-      if (!confirm("删除这条内容？")) return;
-      try {
-        await api("/v1/items/" + encodeURIComponent(item.id), { method: "DELETE" });
-        await load();
-        showMessage("已删除");
-      } catch (error) {
-        showMessage(error.message, true);
-      }
-    };
-    actions.appendChild(remove);
-
-    row.appendChild(actions);
-    itemsEl.appendChild(row);
+  } catch (error) {
+    showMessage(error.message, true);
   }
 }
 
-async function load(query = "") {
-  const path = query
-    ? "/v1/search?q=" + encodeURIComponent(query)
-    : "/v1/items?limit=100";
+function itemCard(item) {
+  const card = document.createElement("article");
+  card.className = "item";
+  card.onclick = () => { location.hash = "#/item/" + encodeURIComponent(item.id); };
+
+  const summary = document.createElement("div");
+  summary.className = "summary";
+  summary.textContent = (item.body || "").slice(0, 420);
+  card.appendChild(summary);
+  card.appendChild(tagList(item.tags));
+
+  const images = (item.blobs || []).filter(isImage);
+  if (images.length) {
+    const row = document.createElement("div");
+    row.className = "thumb-row";
+    images.forEach((blob, index) => {
+      thumb(blob, async (event) => {
+        event.stopPropagation();
+        await openGallery(images, index);
+      }).then((img) => row.appendChild(img));
+    });
+    card.appendChild(row);
+  }
+  return card;
+}
+
+function renderItems() {
+  const list = $("#items");
+  list.replaceChildren();
+  $("#empty").hidden = state.items.length > 0;
+  for (const item of state.items) list.appendChild(itemCard(item));
+  $("#load-more").hidden = !state.hasMore;
+}
+
+async function loadItems(reset = true) {
+  if (reset) { state.items = []; state.offset = 0; }
+  let path;
+  if (state.query) {
+    path = "/v1/search?q=" + encodeURIComponent(state.query) + "&limit=" + PAGE_SIZE;
+  } else {
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(state.offset) });
+    if (state.tag) params.set("tag", state.tag);
+    path = "/v1/items?" + params.toString();
+  }
   const data = await api(path);
-  render(data.items || []);
+  const rows = data.items || [];
+  state.items = reset ? rows : state.items.concat(rows);
+  state.offset += rows.length;
+  state.hasMore = !state.query && rows.length === PAGE_SIZE;
+  renderItems();
   $("#status").textContent = "Core 已连接";
 }
 
-function normalizeFile(file) {
-  if (file.name) return file;
-  const ext = (file.type.split("/")[1] || "png").replace("+xml", "");
-  return new File([file], `pasted-${Date.now()}.${ext}`, { type: file.type || "image/png" });
+async function openGallery(blobs, index) {
+  galleryImages = blobs;
+  galleryIndex = index;
+  await showGalleryImage();
+  $("#gallery").hidden = false;
 }
 
-function addFiles(files) {
-  for (const item of files || []) {
-    if (!item || !item.size) continue;
-    const file = normalizeFile(item);
-    const preview = file.type.startsWith("image/") ? URL.createObjectURL(file) : "";
-    pendingFiles.push({ file, preview });
+async function showGalleryImage() {
+  const blob = galleryImages[galleryIndex];
+  if (!blob) return;
+  const image = $("#gallery-image");
+  try { image.src = await blobURL(blob); } catch { image.src = ""; }
+  image.alt = hashName(blob);
+  $("#gallery-count").textContent = (galleryIndex + 1) + " / " + galleryImages.length;
+}
+
+function closeGallery() {
+  $("#gallery").hidden = true;
+  $("#gallery-image").src = "";
+}
+
+async function renderDetail(item) {
+  const detail = $("#detail");
+  detail.replaceChildren();
+  const head = document.createElement("div");
+  head.className = "detail-head";
+  const back = document.createElement("button");
+  back.textContent = t("back");
+  back.onclick = () => { location.hash = "#/"; };
+  head.appendChild(back);
+  detail.appendChild(head);
+
+  const body = document.createElement("div");
+  body.className = "md detail-body";
+  body.innerHTML = markdown(item.body || "");
+  detail.appendChild(body);
+  renderMath(body);
+  detail.appendChild(tagList(item.tags));
+
+  const attachments = item.blobs || [];
+  if (attachments.length) {
+    const section = document.createElement("section");
+    section.className = "attachment-block";
+    const heading = document.createElement("h2");
+    heading.textContent = t("attachments");
+    section.appendChild(heading);
+
+    const images = attachments.filter(isImage);
+    if (images.length) {
+      const row = document.createElement("div");
+      row.className = "thumb-row";
+      for (let i = 0; i < images.length; i += 1) {
+        const img = await thumb(images[i], () => openGallery(images, i));
+        row.appendChild(img);
+      }
+      section.appendChild(row);
+    }
+
+    for (const blob of attachments.filter((x) => !isImage(x))) {
+      if (isMarkdown(blob)) {
+        const details = document.createElement("details");
+        details.className = "md-attachment";
+        details.open = true;
+        const summary = document.createElement("summary");
+        summary.textContent = hashName(blob);
+        details.appendChild(summary);
+        try {
+          const response = await fetch("/v1/blobs/" + encodeURIComponent(blob.id) + "?inline=1", {
+            headers: { Authorization: "Bearer " + TOKEN },
+          });
+          const data = await response.json();
+          const md = document.createElement("div");
+          md.className = "md";
+          md.innerHTML = markdown(data.text || "");
+          details.appendChild(md);
+          renderMath(md);
+        } catch {
+          const fail = document.createElement("p");
+          fail.className = "muted";
+          fail.textContent = t("error");
+          details.appendChild(fail);
+        }
+        section.appendChild(details);
+      } else {
+        const button = document.createElement("button");
+        button.textContent = "📎 " + hashName(blob);
+        button.onclick = async () => {
+          try { window.open(await blobURL(blob), "_blank"); } catch { showMessage(t("error"), true); }
+        };
+        section.appendChild(button);
+      }
+    }
+    detail.appendChild(section);
   }
-  renderPending();
+}
+
+async function route() {
+  const hash = location.hash || "#/";
+  const match = hash.match(/^#\/item\/(.+)$/);
+  const isSettings = hash === "#/settings";
+  $("#compose-panel").hidden = Boolean(match) || isSettings;
+  $("#list-view").hidden = Boolean(match) || isSettings;
+  $("#detail-view").hidden = !match;
+  $("#settings-view").hidden = !isSettings;
+  if (match) {
+    try {
+      const data = await api("/v1/items/" + encodeURIComponent(decodeURIComponent(match[1])));
+      await renderDetail(data.item);
+    } catch (error) {
+      $("#detail").textContent = error.message;
+    }
+  } else if (isSettings) {
+    showSettings();
+  } else {
+    if (!state.items.length) await loadItems(true);
+    await loadTags();
+  }
+}
+
+function generateFingerprint() {
+  const id = crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2));
+  localStorage.setItem("loomsci.fingerprint", id);
+  localStorage.setItem("loomsci.fingerprintAt", new Date().toISOString());
+  return id;
+}
+
+function currentFingerprint() {
+  const updated = Date.parse(localStorage.getItem("loomsci.fingerprintAt") || "");
+  const stale = !updated || Date.now() - updated > 30 * 24 * 3600 * 1000;
+  if (stale || !localStorage.getItem("loomsci.fingerprint")) return generateFingerprint();
+  return localStorage.getItem("loomsci.fingerprint");
+}
+
+function showSettings() {
+  $("#setting-username").value = localStorage.getItem("loomsci.username") || "";
+  $("#setting-api-key").value = localStorage.getItem("loomsci.apiKey") || "";
+  $("#setting-language").value = lang;
+  $("#setting-fingerprint").value = currentFingerprint();
+  $("#settings-message").textContent = "";
+}
+
+function saveSettings(event) {
+  event.preventDefault();
+  localStorage.setItem("loomsci.username", $("#setting-username").value.trim());
+  localStorage.setItem("loomsci.apiKey", $("#setting-api-key").value);
+  lang = $("#setting-language").value;
+  localStorage.setItem("loomsci.lang", lang);
+  applyI18n();
+  $("#settings-message").textContent = t("saved");
 }
 
 function renderPending() {
@@ -286,9 +453,6 @@ function renderPending() {
       image.onclick = () => window.open(entry.preview, "_blank");
       chip.appendChild(image);
     }
-    const name = document.createElement("span");
-    name.textContent = entry.file.name;
-    chip.appendChild(name);
     const remove = document.createElement("button");
     remove.type = "button";
     remove.textContent = "×";
@@ -300,6 +464,24 @@ function renderPending() {
     chip.appendChild(remove);
     target.appendChild(chip);
   });
+}
+
+function normalizeFile(file) {
+  if (file.name) return file;
+  const ext = (file.type.split("/")[1] || "png").replace("+xml", "");
+  return new File([file], `pasted-${Date.now()}.${ext}`, { type: file.type || "image/png" });
+}
+
+function addFiles(files) {
+  for (const item of files || []) {
+    if (!item || !item.size) continue;
+    const file = normalizeFile(item);
+    pendingFiles.push({
+      file,
+      preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+    });
+  }
+  renderPending();
 }
 
 function clipboardImages(event) {
@@ -329,7 +511,7 @@ $("#file").addEventListener("change", (event) => addFiles(event.target.files));
 $("#paste-image").addEventListener("click", async () => {
   showMessage("");
   if (!navigator.clipboard?.read) {
-    showMessage("当前浏览器不支持读取剪贴板，请直接 Ctrl+V", true);
+    showMessage(t("pasteImage") + ": unsupported", true);
     return;
   }
   try {
@@ -342,9 +524,9 @@ $("#paste-image").addEventListener("click", async () => {
       }
     }
     if (files.length) addFiles(files);
-    else showMessage("剪贴板里没有图片", true);
+    else showMessage(t("empty"), true);
   } catch (error) {
-    showMessage("读取剪贴板失败：" + error.message, true);
+    showMessage(error.message, true);
   }
 });
 
@@ -368,37 +550,34 @@ $("#create-form").addEventListener("submit", async (event) => {
     });
     const item = created.item;
     for (const entry of pendingFiles) {
-      const file = entry.file;
       await api("/v1/blobs", {
         method: "POST",
         body: JSON.stringify({
-          filename: file.name,
-          content_type: file.type || "application/octet-stream",
-          content_base64: await fileToBase64(file),
+          filename: entry.file.name,
+          content_type: entry.file.type || "application/octet-stream",
+          content_base64: await fileToBase64(entry.file),
           item_id: item.id,
         }),
       });
     }
     const count = pendingFiles.length;
-    for (const entry of pendingFiles) {
-      if (entry.preview) URL.revokeObjectURL(entry.preview);
-    }
+    for (const entry of pendingFiles) if (entry.preview) URL.revokeObjectURL(entry.preview);
     pendingFiles.length = 0;
     renderPending();
     event.target.reset();
-    await load();
-    showMessage("已创建" + (count ? "，附件 " + count + " 个" : ""));
+    state.items = [];
+    await loadItems(true);
+    await loadTags();
+    showMessage(t("created") + (count ? " · " + count : ""));
   } catch (error) {
     showMessage(error.message, true);
   }
 });
 
 $("#search-button").addEventListener("click", async () => {
-  try {
-    await load($("#search").value.trim());
-  } catch (error) {
-    showMessage(error.message, true);
-  }
+  state.query = $("#search").value.trim();
+  state.tag = "";
+  try { await loadItems(true); await loadTags(); } catch (error) { showMessage(error.message, true); }
 });
 
 $("#search").addEventListener("keydown", (event) => {
@@ -406,24 +585,55 @@ $("#search").addEventListener("keydown", (event) => {
 });
 
 $("#clear-search").addEventListener("click", async () => {
+  state.query = "";
+  state.tag = "";
   $("#search").value = "";
-  try {
-    await load();
-  } catch (error) {
-    showMessage(error.message, true);
-  }
+  try { await loadItems(true); await loadTags(); } catch (error) { showMessage(error.message, true); }
+});
+
+$("#load-more").addEventListener("click", async () => {
+  try { await loadItems(false); } catch (error) { showMessage(error.message, true); }
 });
 
 $("#backup").addEventListener("click", async () => {
   try {
     const data = await api("/v1/backups", { method: "POST" });
-    showMessage("备份已创建：" + data.backup.name);
+    showMessage(t("backup") + ": " + data.backup.name);
   } catch (error) {
     showMessage(error.message, true);
   }
 });
 
-load().catch((error) => {
+$("#settings-link").addEventListener("click", () => { location.hash = "#/settings"; });
+$("#settings-back").addEventListener("click", () => { location.hash = "#/"; });
+$("#settings-form").addEventListener("submit", saveSettings);
+$("#rotate-fingerprint").addEventListener("click", () => {
+  $("#setting-fingerprint").value = generateFingerprint();
+  $("#settings-message").textContent = t("saved");
+});
+
+$("#gallery-close").addEventListener("click", closeGallery);
+$("#gallery-prev").addEventListener("click", async () => {
+  galleryIndex = (galleryIndex - 1 + galleryImages.length) % galleryImages.length;
+  await showGalleryImage();
+});
+$("#gallery-next").addEventListener("click", async () => {
+  galleryIndex = (galleryIndex + 1) % galleryImages.length;
+  await showGalleryImage();
+});
+$("#gallery").addEventListener("click", (event) => { if (event.target.id === "gallery") closeGallery(); });
+document.addEventListener("keydown", (event) => {
+  if ($("#gallery").hidden) return;
+  if (event.key === "Escape") closeGallery();
+  if (event.key === "ArrowLeft") $("#gallery-prev").click();
+  if (event.key === "ArrowRight") $("#gallery-next").click();
+});
+
+window.addEventListener("hashchange", () => route().catch((error) => showMessage(error.message, true)));
+
+applyI18n();
+currentFingerprint();
+route().catch((error) => {
   showMessage(error.message, true);
   $("#status").textContent = "Core 未连接";
 });

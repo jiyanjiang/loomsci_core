@@ -130,11 +130,19 @@ def _tags(conn: sqlite3.Connection, item_id: str) -> list[dict]:
     ).fetchall()]
 
 
+def _hash_name(sha256: str, filename: str) -> str:
+    suffix = Path(filename or "").suffix.lower()
+    return (sha256 or "")[:16] + suffix
+
+
 def _blobs(conn: sqlite3.Connection, item_id: str) -> list[dict]:
-    return [dict(row) for row in conn.execute(
-        "SELECT id, filename, content_type, bytes, created_at FROM blobs WHERE item_id=? ORDER BY created_at",
+    rows = [dict(row) for row in conn.execute(
+        "SELECT id, filename, content_type, bytes, sha256, created_at FROM blobs WHERE item_id=? ORDER BY created_at",
         (item_id,),
     ).fetchall()]
+    for row in rows:
+        row["hash_name"] = _hash_name(str(row.get("sha256") or ""), str(row.get("filename") or ""))
+    return rows
 
 
 def create_item(
@@ -267,7 +275,7 @@ def delete_item(conn: sqlite3.Connection, item_id: str) -> bool:
 def list_tags(conn: sqlite3.Connection, *, limit: int = 100) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT tag, COUNT(*) AS count FROM item_tags GROUP BY tag ORDER BY count DESC, tag LIMIT ?",
-        (max(1, min(int(limit), 500)),),
+        (max(1, min(int(limit), 1000)),),
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -301,8 +309,17 @@ def add_blob(
         raise ValueError("empty blob")
     if item_id and conn.execute("SELECT 1 FROM items WHERE id=?", (item_id,)).fetchone() is None:
         raise ValueError("item not found")
-    blob_id = _id("b-")
     digest = hashlib.sha256(data).hexdigest()
+    if item_id:
+        existing = conn.execute(
+            "SELECT * FROM blobs WHERE item_id=? AND sha256=? ORDER BY created_at LIMIT 1",
+            (item_id, digest),
+        ).fetchone()
+        if existing is not None:
+            result = dict(existing)
+            result["hash_name"] = _hash_name(digest, str(result.get("filename") or ""))
+            return result
+    blob_id = _id("b-")
     blob_dir.mkdir(parents=True, exist_ok=True)
     (blob_dir / blob_id).write_bytes(data)
     stamp = now()
@@ -317,7 +334,11 @@ def add_blob(
 
 def get_blob(conn: sqlite3.Connection, blob_id: str) -> dict[str, Any] | None:
     row = conn.execute("SELECT * FROM blobs WHERE id=?", (blob_id,)).fetchone()
-    return dict(row) if row else None
+    if row is None:
+        return None
+    result = dict(row)
+    result["hash_name"] = _hash_name(str(result.get("sha256") or ""), str(result.get("filename") or ""))
+    return result
 
 
 def upsert_app(conn: sqlite3.Connection, *, slug: str, version: str, manifest: dict[str, Any]) -> dict[str, Any]:

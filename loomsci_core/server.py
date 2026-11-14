@@ -81,7 +81,9 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
     def ui_index():
         html = (WEB / "index.html").read_text(encoding="utf-8")
         html = html.replace("__TOKEN__", token)
-        return Response(html, mimetype="text/html")
+        response = Response(html, mimetype="text/html")
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.get("/assets/<path:filename>")
     def ui_static(filename: str):
