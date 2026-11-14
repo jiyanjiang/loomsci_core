@@ -10,7 +10,7 @@ const I18N = {
     empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
     navContent: "内容", navSite: "站点", navSettings: "设置", backHome: "返回主页",
     siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
-    siteLogoHint: "不填则不显示 Logo。", selectItem: "选择一条内容",
+    siteLogoHint: "不填则不显示 Logo。", backupTitle: "数据备份", refresh: "刷新", createBackup: "创建备份", restoreTarget: "恢复到空目录", verify: "验证", restore: "恢复", backupVerified: "备份验证通过", backupCreated: "备份已创建", backupRestored: "已恢复", selectItem: "选择一条内容",
     username: "用户名", deepseekKey: "DeepSeek API Key", fingerprint: "本机软指纹",
     save: "保存", rotate: "轮换软指纹", noMore: "没有更多了", deleted: "已删除",
     updated: "已更新", created: "已创建", saved: "已保存", tags: "标签", attachments: "附件",
@@ -24,7 +24,7 @@ const I18N = {
     empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
     navContent: "Content", navSite: "Site", navSettings: "Settings", backHome: "Home",
     siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
-    siteLogoHint: "Leave blank to hide the logo.", selectItem: "Select an item",
+    siteLogoHint: "Leave blank to hide the logo.", backupTitle: "Backups", refresh: "Refresh", createBackup: "Create backup", restoreTarget: "Restore to empty directory", verify: "Verify", restore: "Restore", backupVerified: "Backup verified", backupCreated: "Backup created", backupRestored: "Restored", selectItem: "Select an item",
     username: "Username", deepseekKey: "DeepSeek API Key", fingerprint: "Local fingerprint",
     save: "Save", rotate: "Rotate fingerprint", noMore: "No more items", deleted: "Deleted",
     updated: "Updated", created: "Created", saved: "Saved", tags: "Tags", attachments: "Attachments",
@@ -452,6 +452,59 @@ function showSettings() {
   $("#setting-api-key").value = localStorage.getItem("loomsci.apiKey") || "";
   $("#setting-fingerprint").value = currentFingerprint();
   $("#settings-message").textContent = "";
+  loadBackups();
+}
+
+async function loadBackups() {
+  const list = $("#backup-list");
+  list.replaceChildren();
+  try {
+    const data = await api("/v1/backups");
+    for (const backup of data.backups || []) {
+      const row = document.createElement("div");
+      row.className = "backup-row";
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = backup.name;
+      const verify = document.createElement("button");
+      verify.type = "button";
+      verify.textContent = t("verify");
+      verify.onclick = async () => {
+        try {
+          await api("/v1/backups/verify", { method: "POST", body: JSON.stringify({ backup: backup.path }) });
+          $("#backup-message").textContent = t("backupVerified");
+        } catch (error) { $("#backup-message").textContent = error.message; }
+      };
+      const restore = document.createElement("button");
+      restore.type = "button";
+      restore.textContent = t("restore");
+      restore.onclick = async () => {
+        const target = $("#backup-target").value.trim();
+        if (!target) { $("#backup-message").textContent = t("restoreTarget"); return; }
+        try {
+          await api("/v1/backups/restore", {
+            method: "POST",
+            body: JSON.stringify({ backup: backup.path, target }),
+          });
+          $("#backup-message").textContent = t("backupRestored") + ": " + target;
+        } catch (error) { $("#backup-message").textContent = error.message; }
+      };
+      row.append(name, verify, restore);
+      list.appendChild(row);
+    }
+  } catch (error) {
+    $("#backup-message").textContent = error.message;
+  }
+}
+
+async function createBackupFromSettings() {
+  try {
+    const data = await api("/v1/backups", { method: "POST" });
+    $("#backup-message").textContent = t("backupCreated") + ": " + data.backup.name;
+    await loadBackups();
+  } catch (error) {
+    $("#backup-message").textContent = error.message;
+  }
 }
 
 function saveSettings(event) {
@@ -679,6 +732,8 @@ $$("[data-home]").forEach((button) => {
 });
 $("#settings-form").addEventListener("submit", saveSettings);
 $("#site-form").addEventListener("submit", saveSite);
+$("#backup-refresh").addEventListener("click", loadBackups);
+$("#backup-create-settings").addEventListener("click", createBackupFromSettings);
 $("#rotate-fingerprint").addEventListener("click", () => {
   $("#setting-fingerprint").value = generateFingerprint();
   $("#settings-message").textContent = t("saved");

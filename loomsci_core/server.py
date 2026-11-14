@@ -287,6 +287,19 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
             return jsonify({"ok": False, "error": str(exc)}), 400
         return jsonify({"ok": True, "backup": {"name": path.name, "path": str(path)}}), 201
 
+    @app.post("/v1/backups/verify")
+    def backups_verify():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict) or not body.get("backup"):
+            return jsonify({"ok": False, "error": "backup_required"}), 400
+        try:
+            manifest = backup_store.verify(Path(str(body["backup"])).expanduser())
+        except (ValueError, OSError) as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        return jsonify({"ok": True, "manifest": manifest})
+
     @app.post("/v1/backups/restore")
     def backups_restore():
         if getattr(g, "app_slug", None):

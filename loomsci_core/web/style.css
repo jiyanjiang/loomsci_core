@@ -188,3 +188,10 @@ h2 { margin: 0 0 12px; font-size: 16px; }
   .workspace { padding: 12px; }
   .panel { padding: 14px; }
 }
+.data-block { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 14px; }
+.data-block h3 { margin: 0 0 10px; font-size: 15px; }
+.backup-list { display: grid; gap: 8px; margin-bottom: 10px; }
+.backup-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+.backup-row .name { font-family: ui-monospace, monospace; font-size: 12px; flex: 1; overflow-wrap: anywhere; }
+.backup-row button { padding: 3px 8px; font-size: 12px; }
+.backup-actions { display: flex; gap: 8px; margin-bottom: 8px; }

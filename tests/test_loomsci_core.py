@@ -84,6 +84,10 @@ class FormalCoreTest(unittest.TestCase):
         self.assertEqual(created.status_code, 201, created.get_data(as_text=True))
         backup = self.client.post("/v1/backups", headers=self.headers)
         self.assertEqual(backup.status_code, 201, backup.get_data(as_text=True))
+        verified = self.client.post("/v1/backups/verify", headers=self.headers, json={
+            "backup": backup.json["backup"]["path"],
+        })
+        self.assertEqual(verified.status_code, 200, verified.get_data(as_text=True))
         target = Path(self.tmp.name) / "restored"
         restored = self.client.post("/v1/backups/restore", headers=self.headers, json={
             "backup": backup.json["backup"]["path"], "target": str(target),
