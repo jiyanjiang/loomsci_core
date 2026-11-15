@@ -256,8 +256,6 @@ def _state_name(state: dict[str, Any], phase: str) -> str:
         return "failed"
     if phase in {"STOPPING", "BACKUP", "STAGING", "SWAPPING", "STARTING"}:
         return "applying"
-    if state.get("last_result") == "unconfigured":
-        return "unconfigured"
     if state.get("last_result") == "applying":
         return "applying"
     if downloaded_v and is_newer(downloaded_v, current):
