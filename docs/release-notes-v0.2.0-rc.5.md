@@ -29,9 +29,11 @@ Status: pre-release candidate. Not a public-beta declaration.
 
 ## Gates
 
-- [ ] source checks and full unit tests
-- [ ] macOS update end-to-end with a signed test release
-- [ ] Windows update end-to-end with a signed test release
-- [ ] browser version/update card acceptance on both machines
-- [ ] release package SHA256
+- [x] source checks and full unit tests
+- [x] macOS update end-to-end with a signed test release
+- [x] Windows update end-to-end with a signed test release
+- [x] browser version/update card acceptance on both machines
+- [x] release package SHA256
 - [ ] tag and push (only if requested)
+
+Evidence: [release evidence](release-evidence-v0.2.0-rc.5.md).
