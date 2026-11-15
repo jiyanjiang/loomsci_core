@@ -37,9 +37,9 @@ from .version import __version__
 
 PRODUCT = "loomsci_core"
 PUBLIC_KEY_PATH = Path(__file__).resolve().parent / "update_public_key.pem"
-DEFAULT_MANIFEST_URL = os.environ.get(
-    "LOOMSCI_UPDATE_URL",
-    "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/releases/latest.json",
+DEFAULT_MANIFEST_URL = os.environ.get("LOOMSCI_UPDATE_URL", "")
+LEGACY_DEFAULT_MANIFEST_URL = (
+    "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/releases/latest.json"
 )
 STATE_VERSION = 1
 
@@ -201,6 +201,8 @@ def _load_state(home: Path) -> dict[str, Any]:
         pass
     if not isinstance(data.get("failed_versions"), dict):
         data["failed_versions"] = {}
+    if data.get("manifest_url") == LEGACY_DEFAULT_MANIFEST_URL:
+        data["manifest_url"] = ""
     return data
 
 
@@ -243,10 +245,14 @@ def _state_name(state: dict[str, Any], phase: str) -> str:
     downloaded = state.get("downloaded") or {}
     latest_v = str(latest.get("version") or "")
     downloaded_v = str(downloaded.get("version") or "")
+    if not state.get("manifest_url") and not latest_v:
+        return "unconfigured"
     if phase in {"ROLLED_BACK", "FAILED", "ROLLBACK"}:
         return "failed"
     if phase in {"STOPPING", "BACKUP", "STAGING", "SWAPPING", "STARTING"}:
         return "applying"
+    if state.get("last_result") == "unconfigured":
+        return "unconfigured"
     if state.get("last_result") == "applying":
         return "applying"
     if downloaded_v and is_newer(downloaded_v, current):
@@ -269,9 +275,11 @@ def status(home: Path) -> dict[str, Any]:
     latest_v = str(latest.get("version") or "")
     downloaded_v = str(downloaded.get("version") or "")
     state_name = _state_name(state, phase)
-    last_error = str(state.get("last_error") or "")
+    configured = bool(state.get("manifest_url"))
+    last_error = str(state.get("last_error") or "") if configured else ""
     if state_name == "failed" and not last_error:
         last_error = str(journal.get("error") or "")
+    last_check_at = str(state.get("last_check_at") or "") if configured else ""
     return {
         "ok": True,
         "product": PRODUCT,
@@ -283,7 +291,7 @@ def status(home: Path) -> dict[str, Any]:
         "mode": state.get("mode", "download"),
         "channel": state.get("channel", "stable"),
         "manifest_url": state.get("manifest_url", ""),
-        "last_check_at": state.get("last_check_at", ""),
+        "last_check_at": last_check_at,
         "last_result": state.get("last_result", ""),
         "last_error": last_error,
         "downloaded": str(downloaded.get("path") or ""),
@@ -310,8 +318,15 @@ def settings(home: Path, **changes: Any) -> dict[str, Any]:
 def check(home: Path, source: str | None = None, *, force: bool = False) -> dict[str, Any]:
     state = _load_state(home)
     if not state.get("enabled", True) and not force:
-        return {"ok": False, "error": "updates disabled", **status(home)}
+        return {**status(home), "ok": False, "error": "updates disabled"}
     source = source or str(state.get("manifest_url") or "") or DEFAULT_MANIFEST_URL
+    if not source:
+        state["last_check_at"] = _now()
+        state["last_check_result"] = "unconfigured"
+        state["last_error"] = ""
+        state["last_result"] = "unconfigured"
+        _save_state(home, state)
+        return {**status(home), "ok": False, "error": "no_manifest_url"}
     try:
         manifest = load_manifest(source)
         validate_manifest(manifest)
@@ -330,21 +345,21 @@ def check(home: Path, source: str | None = None, *, force: bool = False) -> dict
         state["last_check_result"] = "error"
         state["last_error"] = str(exc)
         _save_state(home, state)
-        return {"ok": False, "error": str(exc), **status(home)}
+        return {**status(home), "ok": False, "error": str(exc)}
 
 
 def download(home: Path, manifest: dict[str, Any] | None = None, *, force: bool = False) -> dict[str, Any]:
     state = _load_state(home)
     manifest = manifest or state.get("latest")
     if not isinstance(manifest, dict):
-        return {"ok": False, "error": "no_update_manifest", **status(home)}
+        return {**status(home), "ok": False, "error": "no_update_manifest"}
     try:
         validate_manifest(manifest)
         version = str(manifest.get("version") or "")
         if not is_newer(version, __version__):
-            return {"ok": False, "error": "not_newer", **status(home)}
+            return {**status(home), "ok": False, "error": "not_newer"}
         if _blocked(state, version) and not force:
-            return {"ok": False, "error": "version_blocked", "blocked": True, **status(home)}
+            return {**status(home), "ok": False, "error": "version_blocked", "blocked": True}
         if not manifest.get("url"):
             raise UpdateError("manifest url missing")
         target = home.expanduser() / "updates" / f"loomsci_core-{version}.zip"
@@ -365,7 +380,7 @@ def download(home: Path, manifest: dict[str, Any] | None = None, *, force: bool 
         state["last_error"] = str(exc)
         state["last_result"] = "download_failed"
         _save_state(home, state)
-        return {"ok": False, "error": str(exc), **status(home)}
+        return {**status(home), "ok": False, "error": str(exc)}
 
 
 def _stop(home: Path) -> None:
@@ -482,9 +497,9 @@ def apply_pending(home: Path, port: int) -> dict[str, Any]:
     package = Path(str(downloaded.get("path") or ""))
     manifest = state.get("latest") or {}
     if not version or not package.is_file():
-        return {"ok": False, "error": "no_downloaded_package", **status(home)}
+        return {**status(home), "ok": False, "error": "no_downloaded_package"}
     if str(manifest.get("version") or "") != version:
-        return {"ok": False, "error": "manifest_package_mismatch", **status(home)}
+        return {**status(home), "ok": False, "error": "manifest_package_mismatch"}
     state["pending_version"] = version
     state["last_result"] = "applying"
     state["last_error"] = ""
@@ -493,7 +508,7 @@ def apply_pending(home: Path, port: int) -> dict[str, Any]:
         result = apply_package(package, manifest, home=home, port=port)
     except Exception as exc:  # noqa: BLE001 - update boundary
         _record_failure(home, _load_state(home), version, str(exc))
-        return {"ok": False, "error": str(exc), **status(home)}
+        return {**status(home), "ok": False, "error": str(exc)}
     state = _load_state(home)
     state["downloaded"] = None
     state["pending_version"] = ""
@@ -507,7 +522,7 @@ def apply_async(home: Path, port: int) -> dict[str, Any]:
     state = _load_state(home)
     downloaded = state.get("downloaded") or {}
     if not downloaded.get("path") or not Path(str(downloaded["path"])).is_file():
-        return {"ok": False, "error": "no_downloaded_package", **status(home)}
+        return {**status(home), "ok": False, "error": "no_downloaded_package"}
     version = str(downloaded.get("version") or "")
     log = journal_path(home).parent / "updater.log"
     log.parent.mkdir(parents=True, exist_ok=True)
@@ -542,7 +557,7 @@ _scheduler_lock = threading.Lock()
 
 def tick(home: Path, port: int) -> dict[str, Any]:
     state = _load_state(home)
-    if not state.get("enabled", True):
+    if not state.get("enabled", True) or not state.get("manifest_url"):
         return status(home)
     result = check(home)
     if result.get("available") and not result.get("blocked"):

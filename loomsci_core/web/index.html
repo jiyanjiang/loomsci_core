@@ -20,6 +20,7 @@
         <button data-view="trash" data-i18n="navTrash">回收站</button>
         <button data-view="site" data-i18n="navSite">站点</button>
         <button data-view="tools" data-i18n="navTools">工具</button>
+        <button data-view="version" data-i18n="navVersion">版本</button>
         <button data-view="settings" data-i18n="navSettings">设置</button>
       </nav>
       <div id="app-nav" class="app-nav"></div>
@@ -145,24 +146,46 @@
             <p id="backup-message" class="message"></p>
           </section>
 
-          <section class="data-block" id="update-block">
-            <h3 data-i18n="updateTitle">Core 更新</h3>
-            <p id="update-current" class="muted">版本：—</p>
-            <p id="update-state" class="muted"></p>
-            <label><span data-i18n="updateMode">更新模式</span>
-              <select id="update-mode">
-                <option value="notify">notify · 只提示</option>
-                <option value="download">download · 自动下载，手动安装</option>
-              </select>
-            </label>
-            <label><span data-i18n="updateManifest">更新清单地址</span><input id="update-manifest" placeholder="https://.../latest.json"></label>
-            <div class="actions">
-              <button type="button" id="update-check" data-i18n="checkUpdate">检查更新</button>
-              <button type="button" id="update-download" data-i18n="downloadUpdate">下载</button>
-              <button type="button" id="update-install" class="primary" data-i18n="installUpdate">安装并重启</button>
-              <button type="button" id="update-save" data-i18n="saveUpdate">保存设置</button>
+        </section>
+
+        <section class="panel" id="version-view" hidden>
+          <div class="page-head">
+            <h2 data-i18n="versionTitle">版本</h2>
+            <button type="button" data-home data-i18n="backHome">返回主页</button>
+          </div>
+          <div class="version-hero">
+            <div>
+              <span class="muted" data-i18n="currentVersion">当前版本</span>
+              <strong id="update-current">—</strong>
             </div>
-            <p id="update-message" class="message"></p>
+            <div>
+              <span class="muted" data-i18n="latestVersion">最新版本</span>
+              <strong id="update-latest">—</strong>
+            </div>
+            <div>
+              <span class="muted" data-i18n="updateStateLabel">状态</span>
+              <strong id="update-state">—</strong>
+            </div>
+          </div>
+          <p class="muted" data-i18n="versionHint">更新源未配置时只显示本机版本；配置签名清单地址后才能检查最新版本。</p>
+          <label><span data-i18n="updateMode">更新模式</span>
+            <select id="update-mode">
+              <option value="notify">notify · 只提示</option>
+              <option value="download">download · 自动下载，手动安装</option>
+            </select>
+          </label>
+          <label><span data-i18n="updateManifest">更新清单地址</span><input id="update-manifest" placeholder="https://.../latest.json"></label>
+          <div class="actions">
+            <button type="button" id="update-check" data-i18n="checkUpdate">检查更新</button>
+            <button type="button" id="update-download" data-i18n="downloadUpdate">下载</button>
+            <button type="button" id="update-install" class="primary" data-i18n="installUpdate">安装并重启</button>
+            <button type="button" id="update-save" data-i18n="saveUpdate">保存设置</button>
+          </div>
+          <p id="update-message" class="message"></p>
+          <section class="version-details">
+            <p><span data-i18n="lastChecked">最近检查</span>: <span id="update-checked">—</span></p>
+            <p><span data-i18n="updateJournal">安装阶段</span>: <span id="update-journal">—</span></p>
+            <p><span data-i18n="updateSource">更新源</span>: <span id="update-source">—</span></p>
           </section>
         </section>
       </section>

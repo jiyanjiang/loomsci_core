@@ -4,7 +4,8 @@
 `http://127.0.0.1:8795/`. Item interaction follows the TAA two-stage model:
 click opens a right-rail preview without moving the list; **Open full** expands
 the item into the center, and **Back** restores the prior list position.
-Core now exposes its version and an update card: signed manifest check,
+Core now has a dedicated Version page: current version, latest version, signed
+manifest check,
 automatic check/download (manual install), persistent journal, failed-version
 blocking, and code+data rollback. P0 content lifecycle remains complete. Schema
 `v2` migrates existing databases with a pre-migration backup. This is a

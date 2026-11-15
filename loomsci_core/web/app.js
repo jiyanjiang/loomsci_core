@@ -8,7 +8,8 @@ const I18N = {
     tagsPlaceholder: "标签，逗号分隔", pasteImage: "从剪贴板粘贴图片", publish: "发布",
     backup: "创建备份", searchPlaceholder: "搜索", search: "搜索", clear: "清除",
     empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表", backToList: "回到列表", openFull: "打开全文 →", backToItem: "← 返回",
-    navContent: "内容", navTags: "标签", navTrash: "回收站", navSite: "站点", navTools: "工具", navSettings: "设置", backHome: "返回主页",
+    navContent: "内容", navTags: "标签", navTrash: "回收站", navSite: "站点", navTools: "工具", navVersion: "版本", navSettings: "设置", backHome: "返回主页",
+    versionTitle: "版本", currentVersion: "当前版本", latestVersion: "最新版本", updateStateLabel: "状态", versionHint: "更新源未配置时只显示本机版本；配置签名清单地址后才能检查最新版本。", lastChecked: "最近检查", updateJournal: "安装阶段", updateSource: "更新源", updateUnconfigured: "未配置更新源", updateUnchecked: "尚未检查",
     tagsTitle: "标签", tagSearch: "筛选标签", trashTitle: "回收站", trashHint: "删除的内容会保留 30 天，可恢复。", allTags: "全部标签", restore: "恢复", hardDelete: "彻底删除", delete: "删除", confirmDelete: "确定删除这条内容？", attachment: "附件",
     toolsTitle: "工具", toolsHint: "输入 catalog JSON 地址或本地路径，检测可安装工具。", catalogSource: "Catalog 地址或路径", detect: "检测", install: "安装", siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
     siteLogoHint: "不填则不显示 Logo。", backupTitle: "数据备份", backupHint: "备份包含 items、附件和 App 数据，不包含 token、代码、venv。恢复必须填入一个不存在的新目录。", refresh: "刷新", createBackup: "创建备份", restoreTarget: "恢复到空目录", verify: "验证", restore: "恢复", backupVerified: "备份验证通过", backupCreated: "备份已创建", backupRestored: "已恢复", selectItem: "选择一条内容",
@@ -24,7 +25,8 @@ const I18N = {
     tagsPlaceholder: "Tags, comma separated", pasteImage: "Paste image", publish: "Publish",
     backup: "Create backup", searchPlaceholder: "Search", search: "Search", clear: "Clear",
     empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list", backToList: "Back to list", openFull: "Open full →", backToItem: "← Back",
-    navContent: "Content", navTags: "Tags", navTrash: "Trash", navSite: "Site", navTools: "Tools", navSettings: "Settings", backHome: "Home",
+    navContent: "Content", navTags: "Tags", navTrash: "Trash", navSite: "Site", navTools: "Tools", navVersion: "Version", navSettings: "Settings", backHome: "Home",
+    versionTitle: "Version", currentVersion: "Current version", latestVersion: "Latest version", updateStateLabel: "Status", versionHint: "With no update source configured, only the local version is shown. Set a signed manifest URL to check for newer versions.", lastChecked: "Last checked", updateJournal: "Install phase", updateSource: "Update source", updateUnconfigured: "Update source not configured", updateUnchecked: "Not checked yet",
     tagsTitle: "Tags", tagSearch: "Filter tags", trashTitle: "Trash", trashHint: "Deleted items are kept for 30 days and can be restored.", allTags: "All tags", restore: "Restore", hardDelete: "Delete forever", delete: "Delete", confirmDelete: "Delete this item?", attachment: "Attachment",
     toolsTitle: "Tools", toolsHint: "Enter a catalog JSON URL or local path to detect installable tools.", catalogSource: "Catalog URL or path", detect: "Detect", install: "Install", siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
     siteLogoHint: "Leave blank to hide the logo.", backupTitle: "Backups", backupHint: "Backups contain items, attachments, and app data. They exclude tokens, code, and venvs. Restore requires a new, non-existing directory.", refresh: "Refresh", createBackup: "Create backup", restoreTarget: "Restore to empty directory", verify: "Verify", restore: "Restore", backupVerified: "Backup verified", backupCreated: "Backup created", backupRestored: "Restored", selectItem: "Select an item",
@@ -622,12 +624,13 @@ async function route() {
   const isSettings = hash === "#/settings";
   const isSite = hash === "#/site";
   const isTools = hash === "#/tools";
+  const isVersion = hash === "#/version";
   const isTags = hash === "#/tags";
   const isTrash = hash === "#/trash";
   const isPreview = Boolean(previewMatch);
   const isFull = Boolean(fullMatch);
   const isItem = isPreview || isFull;
-  const isContent = !isSettings && !isSite && !isTools && !isTags && !isTrash && !isFull;
+  const isContent = !isSettings && !isSite && !isTools && !isVersion && !isTags && !isTrash && !isFull;
   const itemId = isItem ? decodeURIComponent((previewMatch || fullMatch)[1]) : "";
 
   if (isPreview && /\/full$/.test(state.lastHash || "")) state.restoreOnRoute = true;
@@ -638,10 +641,11 @@ async function route() {
   $("#settings-view").hidden = !isSettings;
   $("#site-view").hidden = !isSite;
   $("#tools-view").hidden = !isTools;
+  $("#version-view").hidden = !isVersion;
   $("#item-view").hidden = !isFull;
   $("#tags-view").hidden = !isTags;
   $("#trash-view").hidden = !isTrash;
-  $("#detail-view").hidden = isSettings || isSite || isTools || isFull || isTags || isTrash;
+  $("#detail-view").hidden = isSettings || isSite || isTools || isVersion || isFull || isTags || isTrash;
   document.body.classList.toggle("item-full", isFull);
   document.body.classList.toggle("item-preview", isPreview);
 
@@ -652,7 +656,8 @@ async function route() {
       (button.dataset.view === "tags" && isTags) ||
       (button.dataset.view === "trash" && isTrash) ||
       (button.dataset.view === "site" && isSite) ||
-      (button.dataset.view === "tools" && isTools));
+      (button.dataset.view === "tools" && isTools) ||
+      (button.dataset.view === "version" && isVersion));
   });
 
   if (isItem) {
@@ -687,6 +692,10 @@ async function route() {
     $("#detail").replaceChildren();
     $("#tools-message").textContent = "";
     await loadInstalledApps();
+  } else if (isVersion) {
+    $("#detail").replaceChildren();
+    $("#update-message").textContent = "";
+    await loadUpdateStatus();
   } else {
     $("#detail").replaceChildren();
     $("#detail-empty").hidden = false;
@@ -718,29 +727,39 @@ function currentFingerprint() {
 
 function updateStateText(data) {
   if (!data.enabled) return "更新已关闭";
+  if (data.state === "unconfigured") return t("updateUnconfigured");
+  if (data.state === "unchecked") return t("updateUnchecked");
   if (data.state === "current") return t("updateCurrent");
   if (data.state === "available") return t("updateAvailable") + (data.latest ? " · " + data.latest : "");
   if (data.state === "downloaded") return t("updateDownloaded") + (data.downloaded_version ? " · " + data.downloaded_version : "");
   if (data.state === "applying") return t("updateApplying");
   if (data.state === "failed") return t("updateFailed") + (data.last_error ? " · " + data.last_error : "");
-  if (data.state === "unchecked") return "尚未检查";
   return data.state || "";
 }
 
 async function loadUpdateStatus() {
   try {
     const data = await api("/v1/update/status");
-    $("#update-current").textContent = "当前版本：" + data.current + (data.latest ? " · 最新：" + data.latest : "");
-    $("#update-state").textContent = updateStateText(data) + (data.last_check_at ? " · 检查于 " + data.last_check_at : "");
+    $("#update-current").textContent = data.current || "—";
+    $("#update-latest").textContent = data.latest || "—";
+    $("#update-state").textContent = updateStateText(data);
+    $("#update-checked").textContent = data.last_check_at || "—";
+    $("#update-journal").textContent = (data.journal && data.journal.phase) || "—";
+    $("#update-source").textContent = data.manifest_url || "—";
     $("#update-mode").value = data.mode || "download";
     $("#update-manifest").value = data.manifest_url || "";
     $("#update-install").disabled = !data.downloaded;
-    if (data.last_error) $("#update-message").textContent = data.last_error;
     return data;
   } catch (error) {
     $("#update-state").textContent = t("error") + ": " + error.message;
     return null;
   }
+}
+
+function updateErrorMessage(error) {
+  if (error === "no_manifest_url") return t("updateUnconfigured");
+  if (error === "version_blocked") return t("updateFailed") + " · version blocked";
+  return error || t("updateFailed");
 }
 
 async function checkUpdate() {
@@ -749,10 +768,10 @@ async function checkUpdate() {
     const data = await api("/v1/update/check", { method: "POST", body: "{}" });
     $("#update-message").textContent = data.ok
       ? (data.available ? t("updateAvailable") + " · " + data.latest : t("updateCurrent"))
-      : (data.error || t("updateFailed"));
+      : updateErrorMessage(data.error);
     await loadUpdateStatus();
   } catch (error) {
-    $("#update-message").textContent = error.message;
+    $("#update-message").textContent = updateErrorMessage(error.message);
   }
 }
 
@@ -760,7 +779,7 @@ async function downloadUpdate() {
   $("#update-message").textContent = t("updateChecking");
   try {
     const data = await api("/v1/update/download", { method: "POST", body: JSON.stringify({ force: true }) });
-    $("#update-message").textContent = data.ok ? t("updateDownloaded") : (data.error || t("updateFailed"));
+    $("#update-message").textContent = data.ok ? t("updateDownloaded") : updateErrorMessage(data.error);
     await loadUpdateStatus();
   } catch (error) {
     $("#update-message").textContent = error.message;
@@ -803,7 +822,6 @@ function showSettings() {
   $("#setting-fingerprint").value = currentFingerprint();
   $("#settings-message").textContent = "";
   loadBackups();
-  loadUpdateStatus();
 }
 
 async function loadBackups() {

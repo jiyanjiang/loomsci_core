@@ -4,7 +4,10 @@ Status: pre-release candidate. Not a public-beta declaration.
 
 ## Changes
 
-- Added `/v1/version` display in the left rail and a Settings update card.
+- Added `/v1/version` display in the left rail and a dedicated Version page.
+- No update source is configured by default. The Version page shows the local
+  version and **Update source not configured** instead of a stale manifest
+  error. A signed manifest URL can be configured explicitly.
 - Added signed update check/download with persistent state at
   `<home>/updates/update.json`.
 - Added background check/download; checks run after startup and at most every

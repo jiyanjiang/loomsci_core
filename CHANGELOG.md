@@ -2,7 +2,7 @@
 
 ## 0.2.0-rc.5 — version and safe update
 
-- Added `/v1/version`, a rail version label, and a Settings update card.
+- Added `/v1/version`, a rail version label, and a dedicated Version page.
 - Added signed update check/download with persistent `updates/update.json`.
 - Added automatic background check/download; manual install is the default.
 - Added update journal phases (`PREFLIGHT` through `COMMITTED`/`ROLLED_BACK`).

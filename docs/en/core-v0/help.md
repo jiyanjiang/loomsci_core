@@ -190,7 +190,8 @@ A local `source` path is accepted for development. A `repo` must be an
 the app automatically.
 
 
-The rail shows the running version. Settings shows the update card:
+The rail shows the running version. The **Version** page shows current version,
+latest version, update source, and install state:
 
 ```text
 notify   check only
