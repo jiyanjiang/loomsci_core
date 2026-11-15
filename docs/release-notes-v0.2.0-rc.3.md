@@ -35,6 +35,6 @@ as an explicit exception to release Gate 0. No new product domain was added.
 - [x] macOS real-browser UI acceptance
 - [x] Windows fresh-venv acceptance
 - [x] release package SHA256
-- [ ] tag and push after both machines pass
+- [x] tag and push after both machines pass: `v0.2.0-rc.3`
 
 Evidence: [release evidence](release-evidence-v0.2.0-rc.3.md).
