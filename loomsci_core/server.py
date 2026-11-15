@@ -139,7 +139,7 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
 
     @app.get("/v1/health")
     def health():
-        return jsonify({"ok": True, "api": "core/1", "schema": 1, "service": "core_v0"})
+        return jsonify({"ok": True, "api": "core/1", "schema": store.SCHEMA_VERSION, "service": "core_v0"})
 
     @app.get("/v1/version")
     def version():

@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS items (
 );
 CREATE INDEX IF NOT EXISTS items_app_type ON items(app, type);
 CREATE INDEX IF NOT EXISTS items_updated ON items(updated_at);
-CREATE INDEX IF NOT EXISTS items_deleted ON items(deleted_at);
 
 CREATE TABLE IF NOT EXISTS item_tags (
   item_id TEXT NOT NULL,
