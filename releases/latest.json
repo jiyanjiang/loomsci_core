@@ -4,9 +4,9 @@
   "channel": "stable",
   "min_core": "0.2.0",
   "url": "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.5.zip",
-  "sha256": "837cdc017433599307aca28516b48941bbceafd2b75ff86b63f3eec18ba5aea5",
-  "bytes": 389626,
+  "sha256": "67f0f6b52ba1b4c1d9b2d2fa96d7ebf4d39e0b45ab0de23241cef3b59ce7ebfb",
+  "bytes": 389618,
   "notes_url": "https://github.com/jiyanjiang/loomsci_core/blob/minimal-v0/docs/release-notes-v0.2.0-rc.5.md",
   "published_at": "2026-11-15T00:00:00Z",
-  "signature": "A40R3zGE/rYCXOwMJ6dwQi1jHQBU5Q2rcuYIzVv39HMSF25XBr7lLHR0em7cq9J7M9iDoo/tKmYDZOMUOrYZCg=="
+  "signature": "Mz5xmg0alE3yy7ZrsXKwtNekLbxDTw3LObk+ygcdEXBj7RHmMNhfPkUEXhJVpG1y9fpIP0+l4LgEpIO7NQayCg=="
 }
