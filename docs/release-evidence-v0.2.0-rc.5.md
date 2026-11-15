@@ -11,7 +11,7 @@ Release channel commit: `b554606`.
 
 ```text
 manifest: https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/latest.json
-package:  https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.5.zip
+package:  https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.5-final.zip
 version:  0.2.0-rc.5
 SHA256:   67f0f6b52ba1b4c1d9b2d2fa96d7ebf4d39e0b45ab0de23241cef3b59ce7ebfb
 bytes:    389618
