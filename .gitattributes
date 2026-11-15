@@ -15,3 +15,6 @@
 *.zip binary
 *.tar.gz binary
 *.tgz binary
+
+releases/ export-ignore
+dist/ export-ignore

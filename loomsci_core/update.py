@@ -37,7 +37,10 @@ from .version import __version__
 
 PRODUCT = "loomsci_core"
 PUBLIC_KEY_PATH = Path(__file__).resolve().parent / "update_public_key.pem"
-DEFAULT_MANIFEST_URL = os.environ.get("LOOMSCI_UPDATE_URL", "")
+DEFAULT_MANIFEST_URL = os.environ.get(
+    "LOOMSCI_UPDATE_URL",
+    "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/latest.json",
+)
 LEGACY_DEFAULT_MANIFEST_URL = (
     "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/releases/latest.json"
 )
@@ -202,7 +205,9 @@ def _load_state(home: Path) -> dict[str, Any]:
     if not isinstance(data.get("failed_versions"), dict):
         data["failed_versions"] = {}
     if data.get("manifest_url") == LEGACY_DEFAULT_MANIFEST_URL:
-        data["manifest_url"] = ""
+        data["manifest_url"] = DEFAULT_MANIFEST_URL
+    if not data.get("manifest_url"):
+        data["manifest_url"] = DEFAULT_MANIFEST_URL
     return data
 
 

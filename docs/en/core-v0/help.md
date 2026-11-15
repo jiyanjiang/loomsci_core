@@ -191,7 +191,8 @@ the app automatically.
 
 
 The rail shows the running version. The **Version** page shows current version,
-latest version, update source, and install state:
+latest version, the built-in signed update source, and install state. Users do
+not configure a manifest URL.
 
 ```text
 notify   check only

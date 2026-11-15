@@ -243,10 +243,6 @@ class FormalCoreTest(unittest.TestCase):
         old = os.environ.get("LOOMSCI_UPDATE_PUBLIC_KEY")
         os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = str(public)
         try:
-            unconfigured = update.check(self.home)
-            self.assertFalse(unconfigured["ok"], unconfigured)
-            self.assertEqual(unconfigured["error"], "no_manifest_url")
-            self.assertEqual(unconfigured["state"], "unconfigured")
             update.settings(self.home, manifest_url=str(manifest_path), mode="download")
             checked = update.check(self.home)
             self.assertTrue(checked["ok"], checked)
