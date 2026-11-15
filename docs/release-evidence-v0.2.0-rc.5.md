@@ -11,10 +11,10 @@ Release channel commit: `b554606`.
 
 ```text
 manifest: https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/latest.json
-package:  https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.5-final.zip
+package:  https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.5-final2.zip
 version:  0.2.0-rc.5
-SHA256:   67f0f6b52ba1b4c1d9b2d2fa96d7ebf4d39e0b45ab0de23241cef3b59ce7ebfb
-bytes:    389618
+SHA256:   5e36944df25057e44dc925358e7fdb46ebd97c8b39d3e2b0e7f5b77998c7f276
+bytes:    389588
 ```
 
 The manifest is signed with the Core Ed25519 key whose public half is
