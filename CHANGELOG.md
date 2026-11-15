@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0-rc.4 — TAA-style item preview
+
+- Item click now opens a compact preview in the right rail; the center list
+  stays in place and keeps its scroll position.
+- Added **Open full** in the preview toolbar. Full mode expands the item into
+  the center and hides the list and right rail.
+- Added **← Back** from full mode; it returns to the preview and restores the
+  prior list scroll position. **Back to list** clears the preview.
+- Selected list items are highlighted.
+- Narrow layouts skip the preview and open the item full width.
+
 ## 0.2.0-rc.3 — P0 content lifecycle and main-area UI
 
 - Added soft delete, trash, restore, and hard delete with blob cleanup.

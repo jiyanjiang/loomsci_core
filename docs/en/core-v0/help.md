@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.3 — Help
+# LoomSci Core 0.2.0-rc.4 — Help
 
 ## Start
 
@@ -25,8 +25,8 @@ token in `core-home/local.token`.
 
 ```text
 left rail: content / tags / trash / site / tools / settings / CN-EN
-center:    composer, search, tag cloud, item list, item detail
-right:     optional item rail; hidden when an item opens in the center
+center:    composer, search, tag cloud, item list, full item
+right:     selected item preview; hidden in full item mode
 ```
 
 ## Content
@@ -38,8 +38,11 @@ right:     optional item rail; hidden when an item opens in the center
   before publishing.
 - Attachments use file cards with type icon, MIME, size, open, and download.
   PDFs preview inline; Markdown attachments render nested in the detail view.
-- Click an item to open it in the main center area. The right rail is hidden
-  and the workspace becomes one column.
+- Click an item to preview it in the right rail. The center list does not move
+  and keeps its scroll position.
+- **Open full** expands the item into the center; the list and right rail are
+  hidden. **← Back** returns to the preview and restores the list position.
+- **Back to list** clears the preview without changing the list position.
 - Click an image thumbnail to open the gallery. Previous/next wraps around;
   Escape closes.
 - Delete moves an item to Trash. Restore returns it; permanent delete removes

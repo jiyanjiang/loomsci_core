@@ -7,7 +7,7 @@ const I18N = {
     settings: "设置", newContent: "新建内容", bodyPlaceholder: "Markdown 正文；可直接粘贴图片",
     tagsPlaceholder: "标签，逗号分隔", pasteImage: "从剪贴板粘贴图片", publish: "发布",
     backup: "创建备份", searchPlaceholder: "搜索", search: "搜索", clear: "清除",
-    empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
+    empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表", backToList: "回到列表", openFull: "打开全文 →", backToItem: "← 返回",
     navContent: "内容", navTags: "标签", navTrash: "回收站", navSite: "站点", navTools: "工具", navSettings: "设置", backHome: "返回主页",
     tagsTitle: "标签", tagSearch: "筛选标签", trashTitle: "回收站", trashHint: "删除的内容会保留 30 天，可恢复。", allTags: "全部标签", restore: "恢复", hardDelete: "彻底删除", delete: "删除", confirmDelete: "确定删除这条内容？", attachment: "附件",
     toolsTitle: "工具", toolsHint: "输入 catalog JSON 地址或本地路径，检测可安装工具。", catalogSource: "Catalog 地址或路径", detect: "检测", install: "安装", siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
@@ -22,7 +22,7 @@ const I18N = {
     settings: "Settings", newContent: "New content", bodyPlaceholder: "Markdown body; paste images directly",
     tagsPlaceholder: "Tags, comma separated", pasteImage: "Paste image", publish: "Publish",
     backup: "Create backup", searchPlaceholder: "Search", search: "Search", clear: "Clear",
-    empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
+    empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list", backToList: "Back to list", openFull: "Open full →", backToItem: "← Back",
     navContent: "Content", navTags: "Tags", navTrash: "Trash", navSite: "Site", navTools: "Tools", navSettings: "Settings", backHome: "Home",
     tagsTitle: "Tags", tagSearch: "Filter tags", trashTitle: "Trash", trashHint: "Deleted items are kept for 30 days and can be restored.", allTags: "All tags", restore: "Restore", hardDelete: "Delete forever", delete: "Delete", confirmDelete: "Delete this item?", attachment: "Attachment",
     toolsTitle: "Tools", toolsHint: "Enter a catalog JSON URL or local path to detect installable tools.", catalogSource: "Catalog URL or path", detect: "Detect", install: "Install", siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
@@ -37,9 +37,40 @@ const I18N = {
 let lang = localStorage.getItem("loomsci.lang") || "zh";
 const t = (key) => (I18N[lang] || I18N.zh)[key] || key;
 
-const state = { items: [], offset: 0, tag: "", query: "", hasMore: false };
+const state = {
+  items: [], offset: 0, tag: "", query: "", hasMore: false,
+  listScroll: 0, restoreOnRoute: false, lastHash: location.hash || "#/",
+};
 const pendingFiles = [];
 const blobCache = new Map();
+
+function narrowLayout() {
+  return window.matchMedia("(max-width: 980px)").matches;
+}
+
+function itemHash(itemId, full = false) {
+  return "#/item/" + encodeURIComponent(itemId) + (full ? "/full" : "");
+}
+
+function markSelected(itemId) {
+  $$("#items .item").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.id === itemId);
+  });
+}
+
+function openFullItem(itemId) {
+  location.hash = itemHash(itemId, true);
+}
+
+function backToPreview(itemId) {
+  state.restoreOnRoute = true;
+  location.hash = itemHash(itemId);
+}
+
+function backToList() {
+  state.restoreOnRoute = true;
+  location.hash = "#/";
+}
 let galleryImages = [];
 let galleryIndex = 0;
 
@@ -316,7 +347,11 @@ async function loadTags() {
 function itemCard(item) {
   const card = document.createElement("article");
   card.className = "item";
-  card.onclick = () => { location.hash = "#/item/" + encodeURIComponent(item.id); };
+  card.dataset.id = item.id;
+  card.onclick = () => {
+    state.listScroll = window.scrollY;
+    location.hash = itemHash(item.id, narrowLayout());
+  };
 
   const summary = document.createElement("div");
   summary.className = "summary md";
@@ -395,15 +430,30 @@ function closeGallery() {
   $("#gallery-image").src = "";
 }
 
-async function renderDetail(item, target = $("#detail")) {
+async function renderDetail(item, target = $("#detail"), { mode = "preview" } = {}) {
   const detail = target;
   detail.replaceChildren();
   const head = document.createElement("div");
-  head.className = "detail-head";
-  const back = document.createElement("button");
-  back.textContent = t("back");
-  back.onclick = () => { location.hash = "#/"; };
-  head.appendChild(back);
+  head.className = "detail-toolbar";
+  if (mode === "full") {
+    const back = document.createElement("button");
+    back.textContent = t("backToItem");
+    back.onclick = () => { if (narrowLayout()) backToList(); else backToPreview(item.id); };
+    head.appendChild(back);
+  } else {
+    const full = document.createElement("button");
+    full.className = "primary";
+    full.textContent = t("openFull");
+    full.onclick = () => openFullItem(item.id);
+    head.appendChild(full);
+    const back = document.createElement("button");
+    back.textContent = t("backToList");
+    back.onclick = backToList;
+    head.appendChild(back);
+  }
+  const spacer = document.createElement("span");
+  spacer.className = "toolbar-spacer";
+  head.appendChild(spacer);
   const del = document.createElement("button");
   del.className = "danger";
   del.textContent = t("delete");
@@ -411,8 +461,9 @@ async function renderDetail(item, target = $("#detail")) {
     if (!window.confirm(t("confirmDelete"))) return;
     try {
       await api("/v1/items/" + encodeURIComponent(item.id), { method: "DELETE" });
-      location.hash = "#/";
       state.items = [];
+      state.restoreOnRoute = false;
+      location.hash = "#/";
       await loadItems(true);
       await loadTags();
       showMessage(t("deleted"));
@@ -564,27 +615,35 @@ async function loadTrash() {
 async function route() {
   if (!$("#gallery").hidden) closeGallery();
   const hash = location.hash || "#/";
-  const match = hash.match(/^#\/item\/(.+)$/);
+  const previewMatch = hash.match(/^#\/item\/([^/]+)$/);
+  const fullMatch = hash.match(/^#\/item\/([^/]+)\/full$/);
   const isSettings = hash === "#/settings";
   const isSite = hash === "#/site";
   const isTools = hash === "#/tools";
   const isTags = hash === "#/tags";
   const isTrash = hash === "#/trash";
-  const isItem = Boolean(match);
-  const isContent = !isSettings && !isSite && !isTools && !isTags && !isTrash && !isItem;
+  const isPreview = Boolean(previewMatch);
+  const isFull = Boolean(fullMatch);
+  const isItem = isPreview || isFull;
+  const isContent = !isSettings && !isSite && !isTools && !isTags && !isTrash && !isFull;
+  const itemId = isItem ? decodeURIComponent((previewMatch || fullMatch)[1]) : "";
+
+  if (isPreview && /\/full$/.test(state.lastHash || "")) state.restoreOnRoute = true;
+  state.lastHash = hash;
 
   $("#compose-panel").hidden = !isContent;
   $("#list-view").hidden = !isContent;
   $("#settings-view").hidden = !isSettings;
   $("#site-view").hidden = !isSite;
   $("#tools-view").hidden = !isTools;
-  $("#item-view").hidden = !isItem;
+  $("#item-view").hidden = !isFull;
   $("#tags-view").hidden = !isTags;
   $("#trash-view").hidden = !isTrash;
-  $("#detail-view").hidden = isSettings || isSite || isTools || isItem || isTags || isTrash;
-  document.body.classList.toggle("item-open", isItem);
+  $("#detail-view").hidden = isSettings || isSite || isTools || isFull || isTags || isTrash;
+  document.body.classList.toggle("item-full", isFull);
+  document.body.classList.toggle("item-preview", isPreview);
 
-$$(".rail nav button").forEach((button) => {
+  $$(".rail nav button").forEach((button) => {
     button.classList.toggle("active",
       (button.dataset.view === "content" && isContent) ||
       (button.dataset.view === "settings" && isSettings) ||
@@ -594,13 +653,23 @@ $$(".rail nav button").forEach((button) => {
       (button.dataset.view === "tools" && isTools));
   });
 
-  if (match) {
+  if (isItem) {
+    if (!state.items.length) {
+      await loadItems(true);
+      await loadTags();
+    }
+    markSelected(itemId);
     $("#detail-empty").hidden = true;
     try {
-      const data = await api("/v1/items/" + encodeURIComponent(decodeURIComponent(match[1])));
-      await renderDetail(data.item, $("#item-view"));
+      const data = await api("/v1/items/" + encodeURIComponent(itemId));
+      if (isFull) {
+        await renderDetail(data.item, $("#item-view"), { mode: "full" });
+        window.scrollTo(0, 0);
+      } else {
+        await renderDetail(data.item, $("#detail"), { mode: "preview" });
+      }
     } catch (error) {
-      $("#item-view").textContent = error.message;
+      (isFull ? $("#item-view") : $("#detail")).textContent = error.message;
     }
   } else if (isTags) {
     await loadTagsPage();
@@ -619,8 +688,15 @@ $$(".rail nav button").forEach((button) => {
   } else {
     $("#detail").replaceChildren();
     $("#detail-empty").hidden = false;
+    markSelected("");
     if (!state.items.length) await loadItems(true);
     await loadTags();
+  }
+
+  if (state.restoreOnRoute && isContent) {
+    const scroll = state.listScroll;
+    state.restoreOnRoute = false;
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, scroll)));
   }
 }
 
