@@ -16,7 +16,7 @@ import subprocess
 import urllib.parse
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, request, send_from_directory
+from flask import Flask, Response, g, jsonify, request, send_file, send_from_directory
 
 from . import backup as backup_store
 from .version import __version__
@@ -47,6 +47,7 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
     app.config["HOME"] = str(home)
     app.config["DB"] = str(db)
     app.config["BLOB_DIR"] = str(home / "data" / "blobs")
+    app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
     host = AppHost(home, core_url)
     app.config["HOST"] = host
     atexit.register(lambda: [host.stop(slug) for slug in list(host.procs)])
@@ -201,12 +202,39 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
 
     @app.delete("/v1/items/<item_id>")
     def items_delete(item_id: str):
-        current = store.get_item(db_conn(), item_id)
+        current = store.get_item(db_conn(), item_id, include_deleted=True)
         if current is None or not allowed(current["app"]):
             return jsonify({"ok": False, "error": "not_found"}), 404
-        if not store.delete_item(db_conn(), item_id):
+        hard = request.args.get("hard") in {"1", "true", "yes"}
+        if not store.delete_item(db_conn(), item_id, hard=hard,
+                                blob_dir=Path(app.config["BLOB_DIR"])):
             return jsonify({"ok": False, "error": "not_found"}), 404
-        return jsonify({"ok": True, "deleted": item_id})
+        return jsonify({"ok": True, "deleted": item_id, "hard": hard})
+
+    @app.get("/v1/trash")
+    def trash_list():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        return jsonify({"ok": True, "items": store.list_deleted(
+            db_conn(), limit=int(request.args.get("limit", "100")),
+            offset=int(request.args.get("offset", "0")),
+        )})
+
+    @app.post("/v1/items/<item_id>/restore")
+    def items_restore(item_id: str):
+        current = store.get_item(db_conn(), item_id, include_deleted=True)
+        if current is None or not allowed(current["app"]):
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        if not store.restore_item(db_conn(), item_id):
+            return jsonify({"ok": False, "error": "not_deleted"}), 400
+        return jsonify({"ok": True, "item": store.get_item(db_conn(), item_id)})
+
+    @app.post("/v1/trash/purge")
+    def trash_purge():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        count = store.purge_deleted(db_conn(), blob_dir=Path(app.config["BLOB_DIR"]))
+        return jsonify({"ok": True, "purged": count})
 
     @app.post("/v1/items/<item_id>/tags")
     def tags_set(item_id: str):
@@ -224,11 +252,10 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
 
     @app.get("/v1/tags")
     def tags_list():
-        tags = store.list_tags(db_conn(), limit=int(request.args.get("limit", "100")))
-        if getattr(g, "app_slug", None):
-            tags = [tag for tag in tags if any(
-                item["app"] == g.app_slug for item in store.list_items(db_conn(), tag=tag["tag"], limit=200)
-            )]
+        tags = store.list_tags(
+            db_conn(), limit=int(request.args.get("limit", "100")),
+            app=getattr(g, "app_slug", None) or "",
+        )
         return jsonify({"ok": True, "tags": tags})
 
     @app.get("/v1/search")
@@ -278,9 +305,10 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         if request.args.get("inline") in {"1", "true", "yes"}:
             text = path.read_bytes()[:200_000].decode("utf-8", errors="replace")
             return jsonify({"ok": True, "blob": blob, "text": text, "truncated": path.stat().st_size > 200_000})
-        response = Response(path.read_bytes(), mimetype=blob.get("content_type") or "application/octet-stream")
-        response.headers["Content-Disposition"] = f'attachment; filename="{blob["filename"]}"'
-        return response
+        return send_file(
+            path, mimetype=blob.get("content_type") or "application/octet-stream",
+            as_attachment=True, download_name=blob["filename"],
+        )
 
     @app.get("/v1/catalog")
     def catalog_get():

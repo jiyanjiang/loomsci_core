@@ -8,7 +8,8 @@ const I18N = {
     tagsPlaceholder: "标签，逗号分隔", pasteImage: "从剪贴板粘贴图片", publish: "发布",
     backup: "创建备份", searchPlaceholder: "搜索", search: "搜索", clear: "清除",
     empty: "暂无内容。先写一段 Markdown。", loadMore: "加载更多", back: "返回列表",
-    navContent: "内容", navSite: "站点", navTools: "工具", navSettings: "设置", backHome: "返回主页",
+    navContent: "内容", navTags: "标签", navTrash: "回收站", navSite: "站点", navTools: "工具", navSettings: "设置", backHome: "返回主页",
+    tagsTitle: "标签", tagSearch: "筛选标签", trashTitle: "回收站", trashHint: "删除的内容会保留 30 天，可恢复。", allTags: "全部标签", restore: "恢复", hardDelete: "彻底删除", delete: "删除", confirmDelete: "确定删除这条内容？", attachment: "附件",
     toolsTitle: "工具", toolsHint: "输入 catalog JSON 地址或本地路径，检测可安装工具。", catalogSource: "Catalog 地址或路径", detect: "检测", install: "安装", siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
     siteLogoHint: "不填则不显示 Logo。", backupTitle: "数据备份", backupHint: "备份包含 items、附件和 App 数据，不包含 token、代码、venv。恢复必须填入一个不存在的新目录。", refresh: "刷新", createBackup: "创建备份", restoreTarget: "恢复到空目录", verify: "验证", restore: "恢复", backupVerified: "备份验证通过", backupCreated: "备份已创建", backupRestored: "已恢复", selectItem: "选择一条内容",
     username: "用户名", deepseekKey: "DeepSeek API Key", fingerprint: "本机软指纹",
@@ -22,7 +23,8 @@ const I18N = {
     tagsPlaceholder: "Tags, comma separated", pasteImage: "Paste image", publish: "Publish",
     backup: "Create backup", searchPlaceholder: "Search", search: "Search", clear: "Clear",
     empty: "No content yet. Write some Markdown.", loadMore: "Load more", back: "Back to list",
-    navContent: "Content", navSite: "Site", navTools: "Tools", navSettings: "Settings", backHome: "Home",
+    navContent: "Content", navTags: "Tags", navTrash: "Trash", navSite: "Site", navTools: "Tools", navSettings: "Settings", backHome: "Home",
+    tagsTitle: "Tags", tagSearch: "Filter tags", trashTitle: "Trash", trashHint: "Deleted items are kept for 30 days and can be restored.", allTags: "All tags", restore: "Restore", hardDelete: "Delete forever", delete: "Delete", confirmDelete: "Delete this item?", attachment: "Attachment",
     toolsTitle: "Tools", toolsHint: "Enter a catalog JSON URL or local path to detect installable tools.", catalogSource: "Catalog URL or path", detect: "Detect", install: "Install", siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
     siteLogoHint: "Leave blank to hide the logo.", backupTitle: "Backups", backupHint: "Backups contain items, attachments, and app data. They exclude tokens, code, and venvs. Restore requires a new, non-existing directory.", refresh: "Refresh", createBackup: "Create backup", restoreTarget: "Restore to empty directory", verify: "Verify", restore: "Restore", backupVerified: "Backup verified", backupCreated: "Backup created", backupRestored: "Restored", selectItem: "Select an item",
     username: "Username", deepseekKey: "DeepSeek API Key", fingerprint: "Local fingerprint",
@@ -159,10 +161,12 @@ function renderMath(root) {
   }
 }
 
-function tagList(tags, clickable = true) {
+function tagList(tags, clickable = true, max = 0) {
   const wrap = document.createElement("div");
   wrap.className = "meta";
-  for (const tag of tags || []) {
+  const all = tags || [];
+  const shown = max > 0 ? all.slice(0, max) : all;
+  for (const tag of shown) {
     const button = document.createElement("button");
     button.className = "tag";
     button.textContent = tag.tag;
@@ -173,6 +177,13 @@ function tagList(tags, clickable = true) {
       };
     }
     wrap.appendChild(button);
+  }
+  if (max > 0 && all.length > shown.length) {
+    const more = document.createElement("button");
+    more.className = "tag";
+    more.textContent = "+" + (all.length - shown.length);
+    more.onclick = (event) => { event.stopPropagation(); };
+    wrap.appendChild(more);
   }
   return wrap;
 }
@@ -188,6 +199,59 @@ function isImage(blob) {
 function isMarkdown(blob) {
   const name = String(blob.filename || "").toLowerCase();
   return name.endsWith(".md") || name.endsWith(".markdown") || /markdown/.test(String(blob.content_type || ""));
+}
+
+function sizeLabel(bytes) {
+  const n = Number(bytes || 0);
+  if (n >= 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + " MB";
+  if (n >= 1024) return (n / 1024).toFixed(0) + " KB";
+  return n + " B";
+}
+
+function fileIcon(blob) {
+  const name = String(blob.filename || "").toLowerCase();
+  const type = String(blob.content_type || "");
+  if (type.startsWith("image/")) return "🖼";
+  if (type === "application/pdf" || name.endsWith(".pdf")) return "📕";
+  if (name.endsWith(".epub")) return "📚";
+  if (name.endsWith(".zip")) return "🗜";
+  if (name.endsWith(".md") || name.endsWith(".markdown")) return "📝";
+  return "📎";
+}
+
+async function attachmentCard(blob, { preview = false } = {}) {
+  const card = document.createElement("div");
+  card.className = "attachment-card";
+  const icon = document.createElement("span");
+  icon.className = "attachment-icon";
+  icon.textContent = fileIcon(blob);
+  const meta = document.createElement("div");
+  meta.className = "attachment-meta";
+  const name = document.createElement("strong");
+  name.textContent = hashName(blob);
+  const sub = document.createElement("span");
+  sub.className = "muted";
+  sub.textContent = (blob.content_type || "file") + " · " + sizeLabel(blob.bytes);
+  meta.append(name, sub);
+  const actions = document.createElement("div");
+  actions.className = "attachment-actions";
+  if (preview) {
+    const open = document.createElement("button");
+    open.type = "button";
+    open.textContent = "打开";
+    open.onclick = async () => {
+      try { window.open(await blobURL(blob), "_blank"); } catch { showMessage(t("error"), true); }
+    };
+    actions.appendChild(open);
+  }
+  const download = document.createElement("a");
+  download.className = "button-link";
+  download.textContent = "下载";
+  download.href = "/v1/blobs/" + encodeURIComponent(blob.id);
+  download.setAttribute("download", hashName(blob));
+  actions.appendChild(download);
+  card.append(icon, meta, actions);
+  return card;
 }
 
 async function blobURL(blob) {
@@ -223,7 +287,8 @@ async function loadTags() {
     const data = await api("/v1/tags?limit=1000");
     const cloud = $("#tag-cloud");
     cloud.replaceChildren();
-    for (const row of data.tags || []) {
+    const rows = data.tags || [];
+    for (const row of rows.slice(0, 20)) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = row.tag === state.tag ? "active" : "";
@@ -234,6 +299,14 @@ async function loadTags() {
       button.appendChild(count);
       button.onclick = () => setTag(row.tag);
       cloud.appendChild(button);
+    }
+    if (rows.length > 20) {
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "tag-all";
+      all.textContent = t("allTags") + " (" + rows.length + ")";
+      all.onclick = () => { location.hash = "#/tags"; };
+      cloud.appendChild(all);
     }
   } catch (error) {
     showMessage(error.message, true);
@@ -250,7 +323,14 @@ function itemCard(item) {
   summary.innerHTML = markdown((item.body || "").slice(0, 420));
   card.appendChild(summary);
   renderMath(summary);
-  card.appendChild(tagList(item.tags));
+  card.appendChild(tagList(item.tags, true, 3));
+  const extra = (item.blobs || []).filter((blob) => !isImage(blob));
+  if (extra.length) {
+    const badge = document.createElement("span");
+    badge.className = "attachment-badge";
+    badge.textContent = "📎 " + extra.length;
+    card.appendChild(badge);
+  }
 
   const images = (item.blobs || []).filter(isImage);
   if (images.length) {
@@ -315,8 +395,8 @@ function closeGallery() {
   $("#gallery-image").src = "";
 }
 
-async function renderDetail(item) {
-  const detail = $("#detail");
+async function renderDetail(item, target = $("#detail")) {
+  const detail = target;
   detail.replaceChildren();
   const head = document.createElement("div");
   head.className = "detail-head";
@@ -324,6 +404,21 @@ async function renderDetail(item) {
   back.textContent = t("back");
   back.onclick = () => { location.hash = "#/"; };
   head.appendChild(back);
+  const del = document.createElement("button");
+  del.className = "danger";
+  del.textContent = t("delete");
+  del.onclick = async () => {
+    if (!window.confirm(t("confirmDelete"))) return;
+    try {
+      await api("/v1/items/" + encodeURIComponent(item.id), { method: "DELETE" });
+      location.hash = "#/";
+      state.items = [];
+      await loadItems(true);
+      await loadTags();
+      showMessage(t("deleted"));
+    } catch (error) { showMessage(error.message, true); }
+  };
+  head.appendChild(del);
   detail.appendChild(head);
 
   const body = document.createElement("div");
@@ -331,7 +426,7 @@ async function renderDetail(item) {
   body.innerHTML = markdown(item.body || "");
   detail.appendChild(body);
   renderMath(body);
-  detail.appendChild(tagList(item.tags));
+  detail.appendChild(tagList(item.tags, true, 0));
 
   const attachments = item.blobs || [];
   if (attachments.length) {
@@ -378,16 +473,92 @@ async function renderDetail(item) {
         }
         section.appendChild(details);
       } else {
-        const button = document.createElement("button");
-        button.textContent = "📎 " + hashName(blob);
-        button.onclick = async () => {
-          try { window.open(await blobURL(blob), "_blank"); } catch { showMessage(t("error"), true); }
-        };
-        section.appendChild(button);
+        section.appendChild(await attachmentCard(blob, { preview: true }));
+        if (String(blob.content_type || "").startsWith("application/pdf")) {
+          const frame = document.createElement("iframe");
+          frame.className = "pdf-preview";
+          frame.title = hashName(blob);
+          try { frame.src = await blobURL(blob); } catch { /* keep blank */ }
+          section.appendChild(frame);
+        }
       }
     }
     detail.appendChild(section);
   }
+}
+
+function tagRow(row) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "tag-row";
+  const name = document.createElement("span");
+  name.textContent = row.tag;
+  const count = document.createElement("span");
+  count.className = "muted";
+  count.textContent = row.count;
+  button.append(name, count);
+  button.onclick = () => { location.hash = "#/"; setTag(row.tag); };
+  return button;
+}
+
+async function loadTagsPage() {
+  const list = $("#tag-list");
+  list.replaceChildren();
+  const query = $("#tag-search").value.trim().toLowerCase();
+  try {
+    const data = await api("/v1/tags?limit=1000");
+    for (const row of data.tags || []) {
+      if (!query || row.tag.toLowerCase().includes(query)) list.appendChild(tagRow(row));
+    }
+    $("#tag-message").textContent = list.children.length ? "" : t("empty");
+  } catch (error) { $("#tag-message").textContent = error.message; }
+}
+
+async function loadTrash() {
+  const list = $("#trash-list");
+  list.replaceChildren();
+  try {
+    const data = await api("/v1/trash?limit=200");
+    for (const item of data.items || []) {
+      const row = document.createElement("div");
+      row.className = "trash-row";
+      const title = document.createElement("div");
+      title.className = "trash-title";
+      title.textContent = item.title || item.id;
+      const meta = document.createElement("div");
+      meta.className = "muted";
+      meta.textContent = (item.deleted_at || "") + " · " + item.id;
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const restore = document.createElement("button");
+      restore.type = "button";
+      restore.textContent = t("restore");
+      restore.onclick = async () => {
+        try {
+          await api("/v1/items/" + encodeURIComponent(item.id) + "/restore", { method: "POST", body: "{}" });
+          await loadTrash();
+          state.items = [];
+          await loadItems(true);
+          await loadTags();
+        } catch (error) { $("#trash-message").textContent = error.message; }
+      };
+      const hard = document.createElement("button");
+      hard.type = "button";
+      hard.className = "danger";
+      hard.textContent = t("hardDelete");
+      hard.onclick = async () => {
+        if (!window.confirm(t("hardDelete") + "?")) return;
+        try {
+          await api("/v1/items/" + encodeURIComponent(item.id) + "?hard=1", { method: "DELETE" });
+          await loadTrash();
+        } catch (error) { $("#trash-message").textContent = error.message; }
+      };
+      actions.append(restore, hard);
+      row.append(title, meta, actions);
+      list.appendChild(row);
+    }
+    $("#trash-message").textContent = list.children.length ? "" : t("empty");
+  } catch (error) { $("#trash-message").textContent = error.message; }
 }
 
 async function route() {
@@ -397,19 +568,28 @@ async function route() {
   const isSettings = hash === "#/settings";
   const isSite = hash === "#/site";
   const isTools = hash === "#/tools";
-  const isContent = !isSettings && !isSite && !isTools;
+  const isTags = hash === "#/tags";
+  const isTrash = hash === "#/trash";
+  const isItem = Boolean(match);
+  const isContent = !isSettings && !isSite && !isTools && !isTags && !isTrash && !isItem;
 
   $("#compose-panel").hidden = !isContent;
   $("#list-view").hidden = !isContent;
   $("#settings-view").hidden = !isSettings;
   $("#site-view").hidden = !isSite;
   $("#tools-view").hidden = !isTools;
-  $("#detail-view").hidden = isSettings || isSite || isTools;
+  $("#item-view").hidden = !isItem;
+  $("#tags-view").hidden = !isTags;
+  $("#trash-view").hidden = !isTrash;
+  $("#detail-view").hidden = isSettings || isSite || isTools || isItem || isTags || isTrash;
+  document.body.classList.toggle("item-open", isItem);
 
 $$(".rail nav button").forEach((button) => {
     button.classList.toggle("active",
       (button.dataset.view === "content" && isContent) ||
       (button.dataset.view === "settings" && isSettings) ||
+      (button.dataset.view === "tags" && isTags) ||
+      (button.dataset.view === "trash" && isTrash) ||
       (button.dataset.view === "site" && isSite) ||
       (button.dataset.view === "tools" && isTools));
   });
@@ -418,10 +598,14 @@ $$(".rail nav button").forEach((button) => {
     $("#detail-empty").hidden = true;
     try {
       const data = await api("/v1/items/" + encodeURIComponent(decodeURIComponent(match[1])));
-      await renderDetail(data.item);
+      await renderDetail(data.item, $("#item-view"));
     } catch (error) {
-      $("#detail").textContent = error.message;
+      $("#item-view").textContent = error.message;
     }
+  } else if (isTags) {
+    await loadTagsPage();
+  } else if (isTrash) {
+    await loadTrash();
   } else if (isSettings) {
     $("#detail").replaceChildren();
     showSettings();
@@ -709,6 +893,9 @@ $("#clear-search").addEventListener("click", async () => {
   $("#search").value = "";
   try { await loadItems(true); await loadTags(); } catch (error) { showMessage(error.message, true); }
 });
+
+$("#tag-search").addEventListener("input", loadTagsPage);
+$("#tag-clear").addEventListener("click", () => { $("#tag-search").value = ""; loadTagsPage(); });
 
 $("#load-more").addEventListener("click", async () => {
   try { await loadItems(false); } catch (error) { showMessage(error.message, true); }

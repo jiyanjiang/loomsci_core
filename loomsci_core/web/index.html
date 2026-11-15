@@ -16,6 +16,8 @@
       </a>
       <nav>
         <button data-view="content" data-i18n="navContent">内容</button>
+        <button data-view="tags" data-i18n="navTags">标签</button>
+        <button data-view="trash" data-i18n="navTrash">回收站</button>
         <button data-view="site" data-i18n="navSite">站点</button>
         <button data-view="tools" data-i18n="navTools">工具</button>
         <button data-view="settings" data-i18n="navSettings">设置</button>
@@ -57,6 +59,31 @@
           <div class="actions">
             <button id="load-more" type="button" data-i18n="loadMore" hidden>加载更多</button>
           </div>
+        </section>
+
+        <section class="panel item-view" id="item-view" hidden></section>
+
+        <section class="panel" id="tags-view" hidden>
+          <div class="page-head">
+            <h2 data-i18n="tagsTitle">标签</h2>
+            <button type="button" data-home data-i18n="backHome">返回主页</button>
+          </div>
+          <div class="toolbar">
+            <input id="tag-search" placeholder="筛选标签" data-i18n-ph="tagSearch">
+            <button type="button" id="tag-clear" data-i18n="clear">清除</button>
+          </div>
+          <div id="tag-list" class="tag-list"></div>
+          <p id="tag-message" class="message"></p>
+        </section>
+
+        <section class="panel" id="trash-view" hidden>
+          <div class="page-head">
+            <h2 data-i18n="trashTitle">回收站</h2>
+            <button type="button" data-home data-i18n="backHome">返回主页</button>
+          </div>
+          <p class="muted" data-i18n="trashHint">删除的内容会保留 30 天，可恢复。</p>
+          <div id="trash-list" class="trash-list"></div>
+          <p id="trash-message" class="message"></p>
         </section>
 
         <section class="panel" id="tools-view" hidden>

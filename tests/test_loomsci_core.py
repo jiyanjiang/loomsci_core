@@ -80,6 +80,36 @@ class FormalCoreTest(unittest.TestCase):
         self.assertEqual(fetched.json["item"]["blobs"][0]["filename"], "note.txt")
         self.assertTrue(fetched.json["item"]["blobs"][0]["hash_name"].endswith(".txt"))
 
+    def test_soft_delete_trash_restore_and_blob_cleanup(self) -> None:
+        created = self.client.post("/v1/items", headers=self.headers, json={
+            "app": "report", "type": "report.note", "title": "trash me",
+            "body": "delete safety", "tags": ["trash"],
+        })
+        item = created.json["item"]
+        blob = self.client.post("/v1/blobs", headers=self.headers, json={
+            "filename": "a.md", "content_type": "text/markdown",
+            "content_base64": base64.b64encode(b"# a").decode("ascii"),
+            "item_id": item["id"],
+        }).json["blob"]
+        blob_path = Path(self.app.config["BLOB_DIR"]) / blob["id"]
+        self.assertTrue(blob_path.is_file())
+        deleted = self.client.delete("/v1/items/" + item["id"], headers=self.headers)
+        self.assertEqual(deleted.status_code, 200, deleted.get_data(as_text=True))
+        self.assertFalse(deleted.json["hard"])
+        listed = self.client.get("/v1/items", headers=self.headers).json["items"]
+        self.assertNotIn(item["id"], [row["id"] for row in listed])
+        trash = self.client.get("/v1/trash", headers=self.headers).json["items"]
+        self.assertEqual([row["id"] for row in trash], [item["id"]])
+        self.assertTrue(blob_path.is_file())
+        restored = self.client.post("/v1/items/" + item["id"] + "/restore", headers=self.headers)
+        self.assertEqual(restored.status_code, 200, restored.get_data(as_text=True))
+        self.assertIn(item["id"], [row["id"] for row in self.client.get("/v1/items", headers=self.headers).json["items"]])
+        hard = self.client.delete("/v1/items/" + item["id"] + "?hard=1", headers=self.headers)
+        self.assertEqual(hard.status_code, 200, hard.get_data(as_text=True))
+        self.assertTrue(hard.json["hard"])
+        self.assertFalse(blob_path.exists())
+        self.assertEqual(self.client.get("/v1/trash", headers=self.headers).json["items"], [])
+
     def test_backup_and_restore(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={
             "app": "report", "type": "report.note", "title": "backup",
@@ -110,9 +140,9 @@ class FormalCoreTest(unittest.TestCase):
         conn.commit(); conn.close()
         create_app(self.home)
         conn = sqlite3.connect(db)
-        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 1)
+        self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 2)
         conn.close()
-        self.assertTrue(list(db.parent.glob("core.db.pre-v1-*")))
+        self.assertTrue(list(db.parent.glob("core.db.pre-v2-*")))
 
     def test_future_schema_is_rejected(self) -> None:
         db = self.home / "data" / "core.db"

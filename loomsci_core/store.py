@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
@@ -27,10 +27,12 @@ CREATE TABLE IF NOT EXISTS items (
   body TEXT,
   metadata_json TEXT NOT NULL DEFAULT '{}',
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT
 );
 CREATE INDEX IF NOT EXISTS items_app_type ON items(app, type);
 CREATE INDEX IF NOT EXISTS items_updated ON items(updated_at);
+CREATE INDEX IF NOT EXISTS items_deleted ON items(deleted_at);
 
 CREATE TABLE IF NOT EXISTS item_tags (
   item_id TEXT NOT NULL,
@@ -83,6 +85,10 @@ def init_db(path: Path) -> None:
             stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
             shutil.copy2(path, path.with_name(path.name + f".pre-v{SCHEMA_VERSION}-{stamp}"))
         conn.executescript(SCHEMA)
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(items)").fetchall()}
+        if "deleted_at" not in cols:
+            conn.execute("ALTER TABLE items ADD COLUMN deleted_at TEXT")
+        conn.execute("CREATE INDEX IF NOT EXISTS items_deleted ON items(deleted_at)")
         conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         conn.commit()
     finally:
@@ -115,7 +121,7 @@ def _tag(value: str) -> str:
 def _refresh_fts(conn: sqlite3.Connection, item_id: str) -> None:
     conn.execute("DELETE FROM items_fts WHERE id=?", (item_id,))
     row = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
-    if row is None:
+    if row is None or row["deleted_at"]:
         return
     tags = conn.execute(
         "SELECT group_concat(tag, ' ') FROM item_tags WHERE item_id=?", (item_id,)
@@ -203,9 +209,11 @@ def set_tags(
     return _tags(conn, item_id)
 
 
-def get_item(conn: sqlite3.Connection, item_id: str) -> dict[str, Any] | None:
+def get_item(conn: sqlite3.Connection, item_id: str, *, include_deleted: bool = False) -> dict[str, Any] | None:
     row = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
     if row is None:
+        return None
+    if row["deleted_at"] and not include_deleted:
         return None
     item = _item(row, _tags(conn, item_id))
     item["blobs"] = _blobs(conn, item_id)
@@ -221,7 +229,7 @@ def list_items(
     limit: int = 100,
     offset: int = 0,
 ) -> list[dict[str, Any]]:
-    sql = "SELECT * FROM items WHERE 1=1"
+    sql = "SELECT * FROM items WHERE deleted_at IS NULL"
     params: list[Any] = []
     if app:
         sql += " AND app=?"
@@ -254,7 +262,7 @@ def list_items(
 
 def update_item(conn: sqlite3.Connection, item_id: str, **fields: Any) -> dict[str, Any] | None:
     row = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
-    if row is None:
+    if row is None or row["deleted_at"]:
         return None
     allowed = {"title", "body", "metadata"}
     updates = []
@@ -276,7 +284,26 @@ def update_item(conn: sqlite3.Connection, item_id: str, **fields: Any) -> dict[s
     return get_item(conn, item_id)
 
 
-def delete_item(conn: sqlite3.Connection, item_id: str) -> bool:
+def delete_item(conn: sqlite3.Connection, item_id: str, *,
+                hard: bool = False, blob_dir: Path | None = None) -> bool:
+    """Soft-delete by default; hard delete removes item, tags, FTS and blobs."""
+    row = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
+    if row is None:
+        return False
+    if not hard:
+        conn.execute("UPDATE items SET deleted_at=?, updated_at=? WHERE id=?",
+                     (now(), now(), item_id))
+        conn.execute("DELETE FROM items_fts WHERE id=?", (item_id,))
+        conn.commit()
+        return True
+    blobs = conn.execute("SELECT id FROM blobs WHERE item_id=?", (item_id,)).fetchall()
+    if blob_dir is not None:
+        for blob in blobs:
+            try:
+                (blob_dir / blob["id"]).unlink(missing_ok=True)
+            except OSError:
+                pass
+    conn.execute("DELETE FROM blobs WHERE item_id=?", (item_id,))
     conn.execute("DELETE FROM item_tags WHERE item_id=?", (item_id,))
     conn.execute("DELETE FROM items_fts WHERE id=?", (item_id,))
     changed = conn.execute("DELETE FROM items WHERE id=?", (item_id,)).rowcount
@@ -284,12 +311,43 @@ def delete_item(conn: sqlite3.Connection, item_id: str) -> bool:
     return bool(changed)
 
 
-def list_tags(conn: sqlite3.Connection, *, limit: int = 100) -> list[dict[str, Any]]:
+def restore_item(conn: sqlite3.Connection, item_id: str) -> bool:
+    row = conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
+    if row is None or not row["deleted_at"]:
+        return False
+    conn.execute("UPDATE items SET deleted_at=NULL, updated_at=? WHERE id=?", (now(), item_id))
+    _refresh_fts(conn, item_id)
+    conn.commit()
+    return True
+
+
+def list_deleted(conn: sqlite3.Connection, *, limit: int = 100, offset: int = 0) -> list[dict[str, Any]]:
     rows = conn.execute(
-        "SELECT tag, COUNT(*) AS count FROM item_tags GROUP BY tag ORDER BY count DESC, tag LIMIT ?",
-        (max(1, min(int(limit), 1000)),),
+        "SELECT * FROM items WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC LIMIT ? OFFSET ?",
+        (max(1, min(int(limit), 200)), max(0, int(offset))),
     ).fetchall()
-    return [dict(row) for row in rows]
+    return [_item(row, _tags(conn, row["id"])) | {"blobs": _blobs(conn, row["id"])} for row in rows]
+
+
+def purge_deleted(conn: sqlite3.Connection, *, blob_dir: Path | None = None) -> int:
+    ids = [row["id"] for row in conn.execute(
+        "SELECT id FROM items WHERE deleted_at IS NOT NULL").fetchall()]
+    for item_id in ids:
+        delete_item(conn, item_id, hard=True, blob_dir=blob_dir)
+    return len(ids)
+
+
+def list_tags(conn: sqlite3.Connection, *, limit: int = 100, app: str = "") -> list[dict[str, Any]]:
+    sql = ("SELECT item_tags.tag, COUNT(*) AS count FROM item_tags "
+           "JOIN items ON items.id=item_tags.item_id "
+           "WHERE items.deleted_at IS NULL")
+    params: list[Any] = []
+    if app:
+        sql += " AND items.app=?"
+        params.append(app)
+    sql += " GROUP BY item_tags.tag ORDER BY count DESC, item_tags.tag LIMIT ?"
+    params.append(max(1, min(int(limit), 1000)))
+    return [dict(row) for row in conn.execute(sql, params).fetchall()]
 
 
 def search(conn: sqlite3.Connection, q: str, *, limit: int = 50, app: str = "") -> list[dict[str, Any]]:
