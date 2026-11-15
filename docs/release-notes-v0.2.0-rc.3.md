@@ -30,9 +30,11 @@ as an explicit exception to release Gate 0. No new product domain was added.
 
 ## Gates
 
-- [ ] source checks and full unit tests
-- [ ] macOS fresh-venv acceptance
-- [ ] macOS real-browser UI acceptance
-- [ ] Windows fresh-venv acceptance
-- [ ] release package SHA256
+- [x] source checks and full unit tests
+- [x] macOS fresh-venv acceptance
+- [x] macOS real-browser UI acceptance
+- [x] Windows fresh-venv acceptance
+- [x] release package SHA256
 - [ ] tag and push after both machines pass
+
+Evidence: [release evidence](release-evidence-v0.2.0-rc.3.md).
