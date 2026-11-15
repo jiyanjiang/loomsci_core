@@ -12,6 +12,7 @@ const I18N = {
     tagsTitle: "标签", tagSearch: "筛选标签", trashTitle: "回收站", trashHint: "删除的内容会保留 30 天，可恢复。", allTags: "全部标签", restore: "恢复", hardDelete: "彻底删除", delete: "删除", confirmDelete: "确定删除这条内容？", attachment: "附件",
     toolsTitle: "工具", toolsHint: "输入 catalog JSON 地址或本地路径，检测可安装工具。", catalogSource: "Catalog 地址或路径", detect: "检测", install: "安装", siteTitle: "站点", siteName: "站点名称", siteLogo: "Logo 地址",
     siteLogoHint: "不填则不显示 Logo。", backupTitle: "数据备份", backupHint: "备份包含 items、附件和 App 数据，不包含 token、代码、venv。恢复必须填入一个不存在的新目录。", refresh: "刷新", createBackup: "创建备份", restoreTarget: "恢复到空目录", verify: "验证", restore: "恢复", backupVerified: "备份验证通过", backupCreated: "备份已创建", backupRestored: "已恢复", selectItem: "选择一条内容",
+    updateTitle: "Core 更新", updateMode: "更新模式", updateManifest: "更新清单地址", checkUpdate: "检查更新", downloadUpdate: "下载", installUpdate: "安装并重启", saveUpdate: "保存设置", updateChecking: "检查中…", updateCurrent: "已是最新版本", updateAvailable: "有新版本可用", updateDownloaded: "已下载，等待安装", updateApplying: "安装中，Core 会短暂重启…", updateFailed: "更新失败", updateInstallConfirm: "安装更新并重启 Core？", updateStarted: "已开始安装，Core 将短暂重启", updateSaved: "更新设置已保存", updateNoPackage: "请先检查并下载更新",
     username: "用户名", deepseekKey: "DeepSeek API Key", fingerprint: "本机软指纹",
     save: "保存", rotate: "轮换软指纹", noMore: "没有更多了", deleted: "已删除",
     updated: "已更新", created: "已创建", saved: "已保存", tags: "标签", attachments: "附件",
@@ -27,6 +28,7 @@ const I18N = {
     tagsTitle: "Tags", tagSearch: "Filter tags", trashTitle: "Trash", trashHint: "Deleted items are kept for 30 days and can be restored.", allTags: "All tags", restore: "Restore", hardDelete: "Delete forever", delete: "Delete", confirmDelete: "Delete this item?", attachment: "Attachment",
     toolsTitle: "Tools", toolsHint: "Enter a catalog JSON URL or local path to detect installable tools.", catalogSource: "Catalog URL or path", detect: "Detect", install: "Install", siteTitle: "Site", siteName: "Site name", siteLogo: "Logo URL",
     siteLogoHint: "Leave blank to hide the logo.", backupTitle: "Backups", backupHint: "Backups contain items, attachments, and app data. They exclude tokens, code, and venvs. Restore requires a new, non-existing directory.", refresh: "Refresh", createBackup: "Create backup", restoreTarget: "Restore to empty directory", verify: "Verify", restore: "Restore", backupVerified: "Backup verified", backupCreated: "Backup created", backupRestored: "Restored", selectItem: "Select an item",
+    updateTitle: "Core updates", updateMode: "Update mode", updateManifest: "Manifest URL", checkUpdate: "Check for updates", downloadUpdate: "Download", installUpdate: "Install and restart", saveUpdate: "Save settings", updateChecking: "Checking…", updateCurrent: "Up to date", updateAvailable: "Update available", updateDownloaded: "Downloaded, ready to install", updateApplying: "Installing; Core will restart briefly…", updateFailed: "Update failed", updateInstallConfirm: "Install the update and restart Core?", updateStarted: "Install started; Core will restart briefly", updateSaved: "Update settings saved", updateNoPackage: "Check and download an update first",
     username: "Username", deepseekKey: "DeepSeek API Key", fingerprint: "Local fingerprint",
     save: "Save", rotate: "Rotate fingerprint", noMore: "No more items", deleted: "Deleted",
     updated: "Updated", created: "Created", saved: "Saved", tags: "Tags", attachments: "Attachments",
@@ -714,12 +716,94 @@ function currentFingerprint() {
   return localStorage.getItem("loomsci.fingerprint");
 }
 
+function updateStateText(data) {
+  if (!data.enabled) return "更新已关闭";
+  if (data.state === "current") return t("updateCurrent");
+  if (data.state === "available") return t("updateAvailable") + (data.latest ? " · " + data.latest : "");
+  if (data.state === "downloaded") return t("updateDownloaded") + (data.downloaded_version ? " · " + data.downloaded_version : "");
+  if (data.state === "applying") return t("updateApplying");
+  if (data.state === "failed") return t("updateFailed") + (data.last_error ? " · " + data.last_error : "");
+  if (data.state === "unchecked") return "尚未检查";
+  return data.state || "";
+}
+
+async function loadUpdateStatus() {
+  try {
+    const data = await api("/v1/update/status");
+    $("#update-current").textContent = "当前版本：" + data.current + (data.latest ? " · 最新：" + data.latest : "");
+    $("#update-state").textContent = updateStateText(data) + (data.last_check_at ? " · 检查于 " + data.last_check_at : "");
+    $("#update-mode").value = data.mode || "download";
+    $("#update-manifest").value = data.manifest_url || "";
+    $("#update-install").disabled = !data.downloaded;
+    if (data.last_error) $("#update-message").textContent = data.last_error;
+    return data;
+  } catch (error) {
+    $("#update-state").textContent = t("error") + ": " + error.message;
+    return null;
+  }
+}
+
+async function checkUpdate() {
+  $("#update-message").textContent = t("updateChecking");
+  try {
+    const data = await api("/v1/update/check", { method: "POST", body: "{}" });
+    $("#update-message").textContent = data.ok
+      ? (data.available ? t("updateAvailable") + " · " + data.latest : t("updateCurrent"))
+      : (data.error || t("updateFailed"));
+    await loadUpdateStatus();
+  } catch (error) {
+    $("#update-message").textContent = error.message;
+  }
+}
+
+async function downloadUpdate() {
+  $("#update-message").textContent = t("updateChecking");
+  try {
+    const data = await api("/v1/update/download", { method: "POST", body: JSON.stringify({ force: true }) });
+    $("#update-message").textContent = data.ok ? t("updateDownloaded") : (data.error || t("updateFailed"));
+    await loadUpdateStatus();
+  } catch (error) {
+    $("#update-message").textContent = error.message;
+  }
+}
+
+async function installUpdate() {
+  if (!window.confirm(t("updateInstallConfirm"))) return;
+  try {
+    const data = await api("/v1/update/apply", { method: "POST", body: "{}" });
+    $("#update-message").textContent = data.ok ? t("updateStarted") : (data.error || t("updateNoPackage"));
+    if (data.ok) {
+      setTimeout(() => loadUpdateStatus(), 4000);
+      setTimeout(() => loadUpdateStatus(), 12000);
+    }
+  } catch (error) {
+    $("#update-message").textContent = error.message;
+  }
+}
+
+async function saveUpdateSettings() {
+  try {
+    const data = await api("/v1/update/settings", {
+      method: "POST",
+      body: JSON.stringify({
+        mode: $("#update-mode").value,
+        manifest_url: $("#update-manifest").value.trim(),
+      }),
+    });
+    $("#update-message").textContent = data.ok ? t("updateSaved") : (data.error || t("updateFailed"));
+    await loadUpdateStatus();
+  } catch (error) {
+    $("#update-message").textContent = error.message;
+  }
+}
+
 function showSettings() {
   $("#setting-username").value = localStorage.getItem("loomsci.username") || "";
   $("#setting-api-key").value = localStorage.getItem("loomsci.apiKey") || "";
   $("#setting-fingerprint").value = currentFingerprint();
   $("#settings-message").textContent = "";
   loadBackups();
+  loadUpdateStatus();
 }
 
 async function loadBackups() {
@@ -986,6 +1070,13 @@ $("#backup").addEventListener("click", async () => {
   }
 });
 
+async function loadVersion() {
+  try {
+    const data = await api("/v1/version");
+    $("#core-version").textContent = data.version || "";
+  } catch { /* version is optional */ }
+}
+
 async function loadInstalledApps() {
   const nav = $("#app-nav");
   nav.replaceChildren();
@@ -1077,6 +1168,10 @@ $("#settings-form").addEventListener("submit", saveSettings);
 $("#site-form").addEventListener("submit", saveSite);
 $("#backup-refresh").addEventListener("click", loadBackups);
 $("#backup-create-settings").addEventListener("click", createBackupFromSettings);
+$("#update-check").addEventListener("click", checkUpdate);
+$("#update-download").addEventListener("click", downloadUpdate);
+$("#update-install").addEventListener("click", installUpdate);
+$("#update-save").addEventListener("click", saveUpdateSettings);
 $("#rotate-fingerprint").addEventListener("click", () => {
   $("#setting-fingerprint").value = generateFingerprint();
   $("#settings-message").textContent = t("saved");
@@ -1102,6 +1197,7 @@ document.addEventListener("keydown", (event) => {
 window.addEventListener("hashchange", () => route().catch((error) => showMessage(error.message, true)));
 
 applyI18n();
+loadVersion();
 loadInstalledApps();
 applySite();
 currentFingerprint();

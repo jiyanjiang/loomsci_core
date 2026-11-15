@@ -22,6 +22,7 @@ from . import backup as backup_store
 from .version import __version__
 from . import store
 from . import catalog as catalog_store
+from . import update as update_store
 from .app_host import AppHost, AppHostError
 
 WEB = Path(__file__).resolve().parent / "web"
@@ -144,6 +145,49 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
     @app.get("/v1/version")
     def version():
         return jsonify({"ok": True, "product": "loomsci_core", "version": __version__, "api": "core/1"})
+
+    def update_home() -> Path:
+        return Path(app.config["HOME"])
+
+    @app.get("/v1/update/status")
+    def update_status():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        return jsonify(update_store.status(update_home()))
+
+    @app.post("/v1/update/check")
+    def update_check():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True) or {}
+        source = str(body.get("source") or "").strip() or None
+        return jsonify(update_store.check(update_home(), source, force=bool(body.get("force"))))
+
+    @app.post("/v1/update/download")
+    def update_download():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True) or {}
+        return jsonify(update_store.download(update_home(), force=bool(body.get("force"))))
+
+    @app.post("/v1/update/apply")
+    def update_apply():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        host = request.host or ""
+        port = int(host.rsplit(":", 1)[1]) if ":" in host else 80
+        return jsonify(update_store.apply_async(update_home(), port))
+
+    @app.post("/v1/update/settings")
+    def update_settings():
+        if getattr(g, "app_slug", None):
+            return jsonify({"ok": False, "error": "forbidden"}), 403
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"ok": False, "error": "json_required"}), 400
+        return jsonify(update_store.settings(update_home(), **{
+            key: body[key] for key in ("enabled", "mode", "channel", "manifest_url") if key in body
+        }))
 
     @app.post("/v1/items")
     def items_create():
@@ -406,9 +450,11 @@ def main() -> int:
     parser.add_argument("--home", default=str(Path.home() / ".loomsci-core-v0"))
     parser.add_argument("--port", type=int, default=8795)
     args = parser.parse_args()
-    create_app(
+    app = create_app(
         Path(args.home), core_url=f"http://127.0.0.1:{args.port}"
-    ).run(host="127.0.0.1", port=args.port, threaded=True)
+    )
+    update_store.start_scheduler(Path(args.home), args.port)
+    app.run(host="127.0.0.1", port=args.port, threaded=True)
     return 0
 
 

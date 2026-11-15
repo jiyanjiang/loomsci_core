@@ -26,6 +26,7 @@
       <div class="rail-footer">
         <button id="lang-toggle" class="lang-toggle">EN</button>
         <span id="status" class="muted">loading</span>
+        <span id="core-version" class="muted"></span>
       </div>
     </aside>
 
@@ -142,6 +143,26 @@
             </div>
             <label><span data-i18n="restoreTarget">恢复到空目录</span><input id="backup-target" placeholder="/path/to/new-home"></label>
             <p id="backup-message" class="message"></p>
+          </section>
+
+          <section class="data-block" id="update-block">
+            <h3 data-i18n="updateTitle">Core 更新</h3>
+            <p id="update-current" class="muted">版本：—</p>
+            <p id="update-state" class="muted"></p>
+            <label><span data-i18n="updateMode">更新模式</span>
+              <select id="update-mode">
+                <option value="notify">notify · 只提示</option>
+                <option value="download">download · 自动下载，手动安装</option>
+              </select>
+            </label>
+            <label><span data-i18n="updateManifest">更新清单地址</span><input id="update-manifest" placeholder="https://.../latest.json"></label>
+            <div class="actions">
+              <button type="button" id="update-check" data-i18n="checkUpdate">检查更新</button>
+              <button type="button" id="update-download" data-i18n="downloadUpdate">下载</button>
+              <button type="button" id="update-install" class="primary" data-i18n="installUpdate">安装并重启</button>
+              <button type="button" id="update-save" data-i18n="saveUpdate">保存设置</button>
+            </div>
+            <p id="update-message" class="message"></p>
           </section>
         </section>
       </section>

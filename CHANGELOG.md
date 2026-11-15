@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0-rc.5 — version and safe update
+
+- Added `/v1/version`, a rail version label, and a Settings update card.
+- Added signed update check/download with persistent `updates/update.json`.
+- Added automatic background check/download; manual install is the default.
+- Added update journal phases (`PREFLIGHT` through `COMMITTED`/`ROLLED_BACK`).
+- Failed versions are blocked from automatic retry; manual retry is possible.
+- Update rollback now restores both code **and data** from the pre-update backup.
+- Added `update status|check|download|install|settings` CLI commands.
+- Added `/v1/update/status|check|download|apply|settings` API endpoints.
+
 ## 0.2.0-rc.4 — TAA-style item preview
 
 - Item click now opens a compact preview in the right rail; the center list

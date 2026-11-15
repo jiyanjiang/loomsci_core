@@ -92,6 +92,37 @@
         "responses": {"200": {"description": "OK"}}
       }
     },
+    "/v1/update/status": {
+      "get": {
+        "responses": {
+          "200": {"description": "Update state"},
+          "401": {"description": "Unauthorized", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Error"}}}}
+        }
+      }
+    },
+    "/v1/update/check": {
+      "post": {
+        "requestBody": {"required": false, "content": {"application/json": {"schema": {"type": "object", "properties": {"source": {"type": "string"}, "force": {"type": "boolean"}}}}}},
+        "responses": {"200": {"description": "Checked"}, "401": {"description": "Unauthorized"}}
+      }
+    },
+    "/v1/update/download": {
+      "post": {
+        "requestBody": {"required": false, "content": {"application/json": {"schema": {"type": "object", "properties": {"force": {"type": "boolean"}}}}}},
+        "responses": {"200": {"description": "Downloaded"}, "401": {"description": "Unauthorized"}}
+      }
+    },
+    "/v1/update/apply": {
+      "post": {
+        "responses": {"200": {"description": "Installer started"}, "401": {"description": "Unauthorized"}}
+      }
+    },
+    "/v1/update/settings": {
+      "post": {
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "properties": {"enabled": {"type": "boolean"}, "mode": {"type": "string", "enum": ["notify", "download"]}, "channel": {"type": "string"}, "manifest_url": {"type": "string"}}}}}},
+        "responses": {"200": {"description": "Saved"}, "400": {"description": "Invalid JSON"}, "401": {"description": "Unauthorized"}}
+      }
+    },
     "/v1/items": {
       "get": {
         "parameters": [

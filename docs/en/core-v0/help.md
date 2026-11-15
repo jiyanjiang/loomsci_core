@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.4 — Help
+# LoomSci Core 0.2.0-rc.5 — Help
 
 ## Start
 
@@ -190,15 +190,33 @@ A local `source` path is accepted for development. A `repo` must be an
 the app automatically.
 
 
+The rail shows the running version. Settings shows the update card:
+
+```text
+notify   check only
+download check, download, notify (default)
+```
+
+Core checks in the background after startup and at most every six hours. Updates
+are downloaded and verified automatically; installation stays manual by default.
+
 ```bash
-python -m loomsci_core update check <manifest.json>
+python -m loomsci_core update status
+python -m loomsci_core update check [manifest.json]
+python -m loomsci_core update download [manifest.json]
+python -m loomsci_core update install
+python -m loomsci_core update settings --mode download
 python -m loomsci_core update apply <manifest.json> --package <payload.zip>
 ```
 
 The manifest must be HTTPS (or local in tests), signed with Ed25519, and include
-`product`, `version`, `min_core`, `sha256`, and `signature`. Apply backs up data,
-snapshots the code, stops Core, swaps the package, starts Core, and rolls back
-on failure. The public key is `loomsci_core/update_public_key.pem`.
+`product`, `version`, `min_core`, `sha256`, `url`, and `signature`. Apply stops
+Core, creates a data backup and code snapshot, swaps the package, starts Core,
+and restores both code and data on failure. Update state is persisted in
+`<home>/updates/update.json`; the phase journal is
+`<home>/updates/journal.json`. A failed version is blocked from automatic
+retry; a manual retry is allowed. The public key is
+`loomsci_core/update_public_key.pem`.
 
 ## API / SDK
 
@@ -215,7 +233,8 @@ on failure. The public key is `loomsci_core/update_public_key.pem`.
 
 ## Current limitations
 
-- Core self-update is implemented through CLI; it is not yet surfaced in Settings.
+- Automatic installation is not enabled by default; downloaded updates require
+  a manual **Install and restart** click.
 - No GitHub app installer yet.
 - No Report app yet.
 - No load/stress test yet.

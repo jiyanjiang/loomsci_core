@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.4 帮助
+# LoomSci Core 0.2.0-rc.5 帮助
 
 ## 启动
 
@@ -186,14 +186,29 @@ Core 把 `/apps/<slug>/` 代理到 App 的内部 loopback 端口。内部端口�
 安装使用现有 App Host，不会自动运行 App。
 
 
+左侧栏显示当前版本；设置页有更新卡片：
+
+```text
+notify   只检查
+download 检查、自动下载并提示（默认）
+```
+
+Core 启动后后台检查，之后每 6 小时最多一次；更新包自动下载和校验，默认手动安装。
+
 ```bash
-python -m loomsci_core update check <manifest.json>
+python -m loomsci_core update status
+python -m loomsci_core update check [manifest.json]
+python -m loomsci_core update download [manifest.json]
+python -m loomsci_core update install
+python -m loomsci_core update settings --mode download
 python -m loomsci_core update apply <manifest.json> --package <payload.zip>
 ```
 
 manifest 必须使用 HTTPS（测试可用本地文件），使用 Ed25519 签名，包含
-`product`、`version`、`min_core`、`sha256`、`signature`。apply 会备份数据、保存代码快照、
-停止 Core、替换包、启动 Core，失败时回滚。公钥位于
+`product`、`version`、`min_core`、`sha256`、`url`、`signature`。apply 会停止 Core、
+创建数据备份和代码快照、替换包、启动 Core；失败时同时恢复代码和数据。更新状态保存在
+`<home>/updates/update.json`，阶段日志在 `<home>/updates/journal.json`。
+失败版本会暂停自动重试，允许手动重试。公钥位于
 `loomsci_core/update_public_key.pem`。
 
 ## API / SDK
@@ -211,8 +226,8 @@ manifest 必须使用 HTTPS（测试可用本地文件），使用 Ed25519 签�
 
 ## 当前限制
 
-- Core 自更新已实现 CLI，但尚未在设置页提供入口。
 - 尚无从 GitHub 安装 App。
 - 尚无 Report App。
 - 尚未做压力测试。
+- 自动安装默认关闭；下载后需要手动点击「安装并重启」。
 - Windows 已完成测试、截图和鼠标点击，但尚未由独立外部用户按文档走查。

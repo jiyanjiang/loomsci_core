@@ -162,13 +162,22 @@ def main() -> int:
     for name in ("start", "stop", "status"):
         cmd = sub.add_parser(name)
         cmd.add_argument("--json", action="store_true", default=argparse.SUPPRESS)
-    update = sub.add_parser("update")
-    update_sub = update.add_subparsers(dest="update_command", required=True)
+    update_parser = sub.add_parser("update")
+    update_sub = update_parser.add_subparsers(dest="update_command", required=True)
     check_cmd = update_sub.add_parser("check")
-    check_cmd.add_argument("manifest")
+    check_cmd.add_argument("manifest", nargs="?")
+    download_cmd = update_sub.add_parser("download")
+    download_cmd.add_argument("manifest", nargs="?")
+    update_sub.add_parser("status")
+    update_sub.add_parser("install")
     apply_cmd = update_sub.add_parser("apply")
     apply_cmd.add_argument("manifest")
     apply_cmd.add_argument("--package", required=True)
+    settings_cmd = update_sub.add_parser("settings")
+    settings_cmd.add_argument("--enabled", choices=("on", "off"))
+    settings_cmd.add_argument("--mode", choices=("notify", "download"))
+    settings_cmd.add_argument("--channel")
+    settings_cmd.add_argument("--manifest-url")
     args = parser.parse_args()
     home = Path(args.home)
     if args.command == "start":
@@ -177,10 +186,31 @@ def main() -> int:
         result = stop(home)
     elif args.command == "update":
         from . import update
-        manifest = update.load_manifest(args.manifest)
-        if args.update_command == "check":
-            result = {"ok": True, "update": update.check_manifest(manifest)}
+        if args.update_command == "status":
+            result = update.status(home)
+        elif args.update_command == "check":
+            result = update.check(home, args.manifest)
+        elif args.update_command == "download":
+            if args.manifest:
+                checked = update.check(home, args.manifest)
+                result = update.download(home) if checked.get("ok") else checked
+            else:
+                result = update.download(home)
+        elif args.update_command == "install":
+            result = update.apply_pending(home, args.port)
+        elif args.update_command == "settings":
+            changes = {}
+            if args.enabled is not None:
+                changes["enabled"] = args.enabled == "on"
+            if args.mode is not None:
+                changes["mode"] = args.mode
+            if args.channel is not None:
+                changes["channel"] = args.channel
+            if args.manifest_url is not None:
+                changes["manifest_url"] = args.manifest_url
+            result = update.settings(home, **changes)
         else:
+            manifest = update.load_manifest(args.manifest)
             result = update.apply_package(
                 Path(args.package).expanduser(), manifest, home=home, port=args.port
             )

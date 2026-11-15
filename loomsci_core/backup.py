@@ -133,6 +133,52 @@ def restore(backup: Path, target: Path) -> dict:
         raise
 
 
+def restore_in_place(home: Path, backup: Path) -> dict:
+    """Restore backup data over a stopped home, preserving token and app code."""
+    verify(backup)
+    home = home.expanduser()
+    data = home / "data"
+    data.mkdir(parents=True, exist_ok=True)
+    source_db = backup / "data" / "core.db"
+    if not source_db.is_file():
+        raise ValueError("backup_db_missing")
+    tmp_db = data / f"core.db.restore-{os.getpid()}"
+    for suffix in ("", "-wal", "-shm"):
+        Path(str(tmp_db) + suffix).unlink(missing_ok=True)
+    src = sqlite3.connect(str(source_db))
+    dst = sqlite3.connect(str(tmp_db))
+    try:
+        with dst:
+            src.backup(dst)
+    finally:
+        src.close(); dst.close()
+    for suffix in ("-wal", "-shm"):
+        Path(str(data / "core.db") + suffix).unlink(missing_ok=True)
+    os.replace(tmp_db, data / "core.db")
+
+    blobs = data / "blobs"
+    if blobs.exists():
+        shutil.rmtree(blobs)
+    source_blobs = backup / "data" / "blobs"
+    if source_blobs.is_dir():
+        shutil.copytree(source_blobs, blobs)
+
+    if (backup / "apps").is_dir():
+        for app in sorted((backup / "apps").iterdir()):
+            if not app.is_dir():
+                continue
+            target = home / "apps" / app.name / "data"
+            if target.exists():
+                shutil.rmtree(target)
+            if (app / "data").is_dir():
+                shutil.copytree(app / "data", target)
+        installed = backup / "apps" / "installed.json"
+        if installed.is_file():
+            (home / "apps").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(installed, home / "apps" / "installed.json")
+    return {"restored": True, "backup": str(backup)}
+
+
 def list_backups(home: Path) -> list[dict]:
     base = home.expanduser() / "backups"
     if not base.is_dir():

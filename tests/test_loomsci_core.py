@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT))
 
 from loomsci_core.server import create_app  # noqa: E402
 from loomsci_core import store, update  # noqa: E402
+from loomsci_core.version import __version__  # noqa: E402
 
 
 def free_port() -> int:
@@ -74,6 +75,13 @@ class FormalCoreTest(unittest.TestCase):
         self.assertIn('id="item-view"', html)
         self.assertIn('id="tags-view"', html)
         self.assertIn('id="trash-view"', html)
+        self.assertIn('id="update-block"', html)
+        version = self.client.get("/v1/version")
+        self.assertEqual(version.status_code, 200)
+        self.assertEqual(version.json["version"], __version__)
+        update_status = self.client.get("/v1/update/status")
+        self.assertEqual(update_status.status_code, 200)
+        self.assertEqual(update_status.json["current"], __version__)
 
     def test_item_includes_blobs(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={
@@ -206,6 +214,50 @@ class FormalCoreTest(unittest.TestCase):
         bad = self.client.get("/v1/catalog?source=" + str(Path(self.tmp.name) / "missing.json"), headers=self.headers)
         self.assertEqual(bad.status_code, 400)
 
+    def test_update_check_download_and_state(self) -> None:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        key = Ed25519PrivateKey.generate()
+        private = Path(self.tmp.name) / "private.pem"
+        public = Path(self.tmp.name) / "public.pem"
+        private.write_bytes(key.private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        ))
+        public.write_bytes(key.public_key().public_bytes(
+            serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo,
+        ))
+        package = Path(self.tmp.name) / "release.zip"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("loomsci_core/__init__.py", "")
+        manifest = {
+            "product": "loomsci_core", "version": "9.9.9", "channel": "stable",
+            "min_core": "0.2.0", "url": str(package),
+            "sha256": update.sha256_file(package),
+        }
+        manifest["signature"] = update.sign_manifest(manifest, private)
+        manifest_path = Path(self.tmp.name) / "latest.json"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        old = os.environ.get("LOOMSCI_UPDATE_PUBLIC_KEY")
+        os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = str(public)
+        try:
+            update.settings(self.home, manifest_url=str(manifest_path), mode="download")
+            checked = update.check(self.home)
+            self.assertTrue(checked["ok"], checked)
+            self.assertTrue(checked["available"], checked)
+            downloaded = update.download(self.home)
+            self.assertTrue(downloaded["ok"], downloaded)
+            self.assertEqual(downloaded["state"], "downloaded")
+            self.assertTrue(Path(downloaded["downloaded"]).is_file())
+            status = update.status(self.home)
+            self.assertEqual(status["current"], __version__)
+            self.assertEqual(status["downloaded_version"], "9.9.9")
+        finally:
+            if old is None:
+                os.environ.pop("LOOMSCI_UPDATE_PUBLIC_KEY", None)
+            else:
+                os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = old
+
     def test_signed_update_manifest(self) -> None:
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -268,6 +320,11 @@ class FormalCoreTest(unittest.TestCase):
             "sha256": update.sha256_file(package),
         }
         manifest["signature"] = update.sign_manifest(manifest, private)
+        created = self.client.post("/v1/items", headers=self.headers, json={
+            "app": "report", "type": "report.note", "title": "rollback data",
+            "body": "must survive code rollback",
+        })
+        self.assertEqual(created.status_code, 201, created.get_data(as_text=True))
         old = os.environ.get("LOOMSCI_UPDATE_PUBLIC_KEY")
         os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = str(public)
         try:
@@ -276,6 +333,12 @@ class FormalCoreTest(unittest.TestCase):
                 with self.assertRaises(update.UpdateError):
                     update.apply_package(package, manifest, home=self.home, port=8795, install_root=install)
             self.assertTrue((target / "old.txt").is_file())
+            conn = sqlite3.connect(self.home / "data" / "core.db")
+            try:
+                title = conn.execute("SELECT title FROM items WHERE id=?", (created.json["item"]["id"],)).fetchone()
+            finally:
+                conn.close()
+            self.assertEqual(title[0], "rollback data")
         finally:
             if old is None:
                 os.environ.pop("LOOMSCI_UPDATE_PUBLIC_KEY", None)
