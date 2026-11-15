@@ -17,8 +17,10 @@ Status: pre-release candidate. Not a public-beta declaration.
 
 ## Gates
 
-- [ ] source checks and full unit tests
-- [ ] macOS real-browser preview/full/back regression
-- [ ] Windows fresh-venv tests and UI acceptance
-- [ ] release package SHA256
+- [x] source checks and full unit tests
+- [x] macOS real-browser preview/full/back regression
+- [x] Windows fresh-venv tests and UI acceptance
+- [x] release package SHA256
 - [ ] tag and push (only if requested)
+
+Evidence: [release evidence](release-evidence-v0.2.0-rc.4.md).
