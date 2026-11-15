@@ -25,7 +25,7 @@ The goal is to keep the clean Core substrate, not restore the whole 8790 product
 - full i18n
 - legacy `/v1/posts` API
 - legacy Core server and add-on framework
-- installer, updater, marketplace
+- installer, marketplace
 
 ## Intentional difference
 
