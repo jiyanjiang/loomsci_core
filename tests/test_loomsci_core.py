@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -17,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from loomsci_core.server import create_app  # noqa: E402
-from loomsci_core import update  # noqa: E402
+from loomsci_core import store, update  # noqa: E402
 
 
 def free_port() -> int:
@@ -61,8 +62,16 @@ class FormalCoreTest(unittest.TestCase):
         self.assertEqual(self.client.get("/v1/items").status_code, 200)
         asset = self.client.get("/assets/app.js")
         self.assertEqual(asset.status_code, 200)
-        self.assertIn("create-form", asset.get_data(as_text=True))
+        source = asset.get_data(as_text=True)
+        self.assertIn("create-form", source)
+        self.assertIn("loadTagsPage", source)
+        self.assertIn("loadTrash", source)
+        self.assertIn("item-open", source)
         asset.close()
+        html = page.get_data(as_text=True)
+        self.assertIn('id="item-view"', html)
+        self.assertIn('id="tags-view"', html)
+        self.assertIn('id="trash-view"', html)
 
     def test_item_includes_blobs(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={
@@ -79,6 +88,22 @@ class FormalCoreTest(unittest.TestCase):
         fetched = self.client.get("/v1/items/" + item["id"], headers=self.headers)
         self.assertEqual(fetched.json["item"]["blobs"][0]["filename"], "note.txt")
         self.assertTrue(fetched.json["item"]["blobs"][0]["hash_name"].endswith(".txt"))
+
+    def test_tag_counts_are_app_scoped(self) -> None:
+        for app in ("report", "other"):
+            created = self.client.post("/v1/items", headers=self.headers, json={
+                "app": app, "type": app + ".note", "title": app,
+                "body": "shared tag", "tags": ["shared"],
+            })
+            self.assertEqual(created.status_code, 201, created.get_data(as_text=True))
+        tags = {row["tag"]: row["count"] for row in self.client.get("/v1/tags", headers=self.headers).json["tags"]}
+        self.assertEqual(tags["shared"], 2)
+        conn = store.connect(self.home / "data" / "core.db")
+        try:
+            scoped = {row["tag"]: row["count"] for row in store.list_tags(conn, app="report")}
+        finally:
+            conn.close()
+        self.assertEqual(scoped["shared"], 1)
 
     def test_soft_delete_trash_restore_and_blob_cleanup(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={
@@ -98,12 +123,18 @@ class FormalCoreTest(unittest.TestCase):
         self.assertFalse(deleted.json["hard"])
         listed = self.client.get("/v1/items", headers=self.headers).json["items"]
         self.assertNotIn(item["id"], [row["id"] for row in listed])
+        self.assertEqual(self.client.get("/v1/search?q=delete%20safety", headers=self.headers).json["items"], [])
+        tags = {row["tag"]: row["count"] for row in self.client.get("/v1/tags", headers=self.headers).json["tags"]}
+        self.assertNotIn("trash", tags)
         trash = self.client.get("/v1/trash", headers=self.headers).json["items"]
         self.assertEqual([row["id"] for row in trash], [item["id"]])
         self.assertTrue(blob_path.is_file())
         restored = self.client.post("/v1/items/" + item["id"] + "/restore", headers=self.headers)
         self.assertEqual(restored.status_code, 200, restored.get_data(as_text=True))
         self.assertIn(item["id"], [row["id"] for row in self.client.get("/v1/items", headers=self.headers).json["items"]])
+        self.assertEqual([row["id"] for row in self.client.get("/v1/search?q=delete%20safety", headers=self.headers).json["items"]], [item["id"]])
+        tags = {row["tag"]: row["count"] for row in self.client.get("/v1/tags", headers=self.headers).json["tags"]}
+        self.assertEqual(tags["trash"], 1)
         hard = self.client.delete("/v1/items/" + item["id"] + "?hard=1", headers=self.headers)
         self.assertEqual(hard.status_code, 200, hard.get_data(as_text=True))
         self.assertTrue(hard.json["hard"])
@@ -132,6 +163,12 @@ class FormalCoreTest(unittest.TestCase):
         headers = {"Authorization": "Bearer " + restored_app.config["TOKEN"]}
         found = restored_client.get("/v1/search?q=portable", headers=headers)
         self.assertEqual([row["title"] for row in found.json["items"]], ["backup"])
+
+    def test_release_version_consistency(self) -> None:
+        from loomsci_core.version import __version__
+        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), __version__)
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertEqual(project["project"]["version"], __version__.replace("-rc.", "rc"))
 
     def test_schema_version_and_migration_backup(self) -> None:
         db = self.home / "data" / "core.db"

@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.2 — Help
+# LoomSci Core 0.2.0-rc.3 — Help
 
 ## Start
 
@@ -24,9 +24,9 @@ token in `core-home/local.token`.
 ## Layout
 
 ```text
-left rail: content / site / settings / CN-EN
-center:    composer, search, tag cloud, item list
-right:     selected item detail
+left rail: content / tags / trash / site / tools / settings / CN-EN
+center:    composer, search, tag cloud, item list, item detail
+right:     optional item rail; hidden when an item opens in the center
 ```
 
 ## Content
@@ -36,16 +36,22 @@ right:     selected item detail
   render.
 - Paste an image from the clipboard or choose files. A thumbnail is shown
   before publishing.
-- Attachments are displayed with their SHA-256 short name.
-- Click an item to open it in the right pane.
-- Markdown attachments are rendered nested in the detail pane.
+- Attachments use file cards with type icon, MIME, size, open, and download.
+  PDFs preview inline; Markdown attachments render nested in the detail view.
+- Click an item to open it in the main center area. The right rail is hidden
+  and the workspace becomes one column.
 - Click an image thumbnail to open the gallery. Previous/next wraps around;
   Escape closes.
+- Delete moves an item to Trash. Restore returns it; permanent delete removes
+  its blobs from disk.
 
 ## Search and tags
 
-- Search the body.
-- The tag cloud shows the top 1000 tags with counts.
+- Search the body and titles; trashed items are excluded.
+- The tag cloud shows the top 20 tags with counts; **All tags** opens a
+  searchable tag page.
+- Item cards show at most 3 tags plus `+N`; the full list is on the item detail
+  and tag page.
 - Click a tag to filter; click it again to clear.
 - The list loads 20 items at a time.
 
@@ -139,8 +145,9 @@ core-home/backups/
 core-home/local.token
 ```
 
-Schema version is `PRAGMA user_version = 1`. A pre-migration copy is created
-before an older database is upgraded. A newer schema is rejected.
+Schema version is `PRAGMA user_version = 2`. A pre-migration copy is created
+as `core.db.pre-v2-*` before an older database is upgraded. A newer schema is
+rejected.
 
 ## Update
 

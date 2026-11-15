@@ -24,10 +24,11 @@ docs/                minimal platform, API, app, maintainer guides
 
 ## 2. Schema
 
-`PRAGMA user_version` is the schema version (`SCHEMA_VERSION = 1`).
+`PRAGMA user_version` is the schema version (`SCHEMA_VERSION = 2`).
 
-- fresh DB: create schema and set version 1
-- older DB: copy to `core.db.pre-v1-<timestamp>` before migration
+- fresh DB: create schema and set version 2
+- older DB: copy to `core.db.pre-v2-<timestamp>` before migration
+- v1 -> v2: add `items.deleted_at`, then create the `items_deleted` index
 - newer DB: refuse to start
 
 ## 3. Data

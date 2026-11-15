@@ -45,7 +45,7 @@ memory, it belongs to a future App, not this Core UI.
 |---|---|---|
 | item detail route | `app.js` | open one item instead of one long column |
 | gallery lightbox | `app.js` | looped next/previous image viewing |
-| tag cloud | `app.js` | Top 1000 tags by count |
+| tag cloud | `app.js` | Top 20 tags by count plus full tag page |
 | pagination | `app.js` | 20 items per load |
 | settings page | `app.js` | username, API key, language, local fingerprint |
 | i18n dictionary | `app.js` | Chinese / English |

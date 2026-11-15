@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.2 帮助
+# LoomSci Core 0.2.0-rc.3 帮助
 
 ## 启动
 
@@ -24,9 +24,9 @@ Web UI 使用 HttpOnly SameSite=Strict cookie。CLI 与 SDK 使用
 ## 布局
 
 ```text
-左侧：内容 / 站点 / 设置 / CN-EN
-中间：发布器、搜索、标签云、item 列表
-右侧：当前 item 详情
+左侧：内容 / 标签 / 回收站 / 站点 / 工具 / 设置 / CN-EN
+中间：发布器、搜索、标签云、item 列表、item 详情
+右侧：可选详情栏；item 在主区域打开时隐藏
 ```
 
 ## 内容
@@ -35,15 +35,17 @@ Web UI 使用 HttpOnly SameSite=Strict cookie。CLI 与 SDK 使用
 - 支持标题、粗体、代码、表格、链接。
 - 支持 `$...$` 与 `$$...$$` LaTeX。
 - 可粘贴图片或选择文件，发布前显示缩略图。
-- 附件显示 SHA-256 短名。
-- 点击 item 在右侧打开详情。
-- Markdown 附件在详情中嵌套渲染。
+- 附件使用文件卡片，显示类型图标、MIME、大小、打开和下载。
+- PDF 内嵌预览；Markdown 附件在详情中嵌套渲染。
+- 点击 item 在主区域打开详情；右侧详情栏隐藏，工作区变为单列。
 - 点击图片缩略图打开画廊；上一张/下一张循环，Esc 关闭。
+- 删除会移入回收站；可恢复；永久删除会清理磁盘上的 Blob。
 
 ## 搜索与标签
 
-- 搜索正文。
-- 标签云显示 Top 1000 标签及数量。
+- 搜索正文和标题；回收站中的 item 不参与搜索。
+- 标签云显示 Top 20 标签及数量；「全部标签」进入可搜索的标签页。
+- item 卡片最多显示 3 个标签和 `+N`；完整标签在详情和标签页。
 - 点击标签过滤，再次点击取消。
 - 列表每次加载 20 个 item。
 
@@ -142,7 +144,8 @@ core-home/backups/
 core-home/local.token
 ```
 
-schema 版本为 `PRAGMA user_version = 1`。旧库升级前会先复制备份；未来版本会拒绝启动。
+schema 版本为 `PRAGMA user_version = 2`。旧库升级前会先复制为
+`core.db.pre-v2-*`；未来版本会拒绝启动。
 
 ## 更新
 

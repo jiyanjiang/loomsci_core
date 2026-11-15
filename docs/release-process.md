@@ -9,6 +9,10 @@ released. A local test run is not a dual-machine test.
 - [ ] only bug, docs, or release fixes since the candidate
 - [ ] known exclusions are written down
 
+Exception: a user-authorized P0 scope closure may be released when the release
+notes name the exception, the change is required by `PRODUCT.md`, and no new
+product domain is added. Record the authorization and the exact commit.
+
 ## Gate 1: source checks
 
 ```bash

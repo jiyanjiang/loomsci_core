@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0-rc.3 — P0 content lifecycle and main-area UI
+
+- Added soft delete, trash, restore, and hard delete with blob cleanup.
+- Added schema v2 migration for `items.deleted_at`; existing databases are
+  copied to `core.db.pre-v2-*` before migration.
+- Excluded trashed items from lists, search, tag counts, and tag pages.
+- Added app-scoped tag counts in SQL, removing the N+1 filter.
+- Open item detail in the main center panel; the right rail is hidden and the
+  workspace becomes one column.
+- Tag cloud shows the top 20 tags plus a full, searchable tag page; item cards
+  show at most 3 tags plus `+N`.
+- Added unified attachment cards with type icon, MIME, size, open/download, and
+  inline PDF preview.
+- Blob downloads now stream through `send_file`; uploads are capped at 50 MB.
+- Added `GET /v1/trash`, `POST /v1/trash/purge`, and item restore/delete routes.
+
 ## 0.2.0-rc.2 — signed update mechanism
 
 - Added Ed25519-signed update manifest verification.

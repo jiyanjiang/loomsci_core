@@ -1,10 +1,10 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.2.0-rc.2` release candidate. The Core Web UI is available at
-`http://127.0.0.1:8795/`. P0 hardening is complete: macOS browser acceptance,
-Windows runtime/UI checks, Windows mouse-click tests, gallery, tag filter, token
-cookie, schema migration, and backup/restore UI passed. This is a pre-release,
-not a public-beta release.**
+**Status: `0.2.0-rc.3` release candidate. The Core Web UI is available at
+`http://127.0.0.1:8795/`. P0 content lifecycle is complete: soft delete, trash,
+restore, hard delete with blob cleanup, main-area item detail, app-scoped tags,
+and attachment cards with PDF preview. Schema `v2` migrates existing databases
+with a pre-migration backup. This is a pre-release, not a public-beta release.**
 
 A local-first minimal core product for one owner. The authoritative product
 definition is [PRODUCT.md](PRODUCT.md). Apps extend Core; they are not a
@@ -130,6 +130,7 @@ legacy LoomSci beta features
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
+- [0.2.0-rc.3 release notes](docs/release-notes-v0.2.0-rc.3.md)
 - [Release evidence](docs/release-evidence-v0.2.0.md)
 - [UI asset migration](docs/ui-assets.md)
 - [Pre-shrink backup](docs/backup.md)
