@@ -35,7 +35,7 @@ Status: pre-release candidate. Not a public-beta declaration.
 - [x] source checks and full unit tests
 - [x] macOS update end-to-end with a signed test release
 - [x] Windows update end-to-end with a signed test release
-- [x] browser version/update card acceptance on both machines
+- [x] browser Version page acceptance on both machines
 - [x] release package SHA256
 - [ ] tag and push (only if requested)
 
