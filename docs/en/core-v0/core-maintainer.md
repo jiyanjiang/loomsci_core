@@ -123,7 +123,7 @@ Target platforms: macOS and Windows.
 
 Not part of this version:
 
-- installer, updater, signed packages
+- installer, app package signing
 - app update/remove commands
 - migration tools
 - app marketplace

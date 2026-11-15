@@ -24,7 +24,8 @@ consumer installer and does not bundle Python.
 - One AI IDE or terminal
 - macOS or Windows
 
-No installer, updater, Python bundle, or account is required.
+No installer or Python bundle is required. Core includes a signed self-update
+path; an account is not required.
 
 ## Run
 
@@ -111,6 +112,7 @@ local token and scoped app token
 items/search/blob API
 App Host install/start/stop
 backup/restore
+signed Core version/update channel
 SDK
 one example app
 ```
@@ -118,7 +120,7 @@ one example app
 Out of scope for this version:
 
 ```text
-installer, app auto-update, signed distribution
+installer, app auto-update
 migration
 app update/remove CLI
 marketplace, accounts, federation

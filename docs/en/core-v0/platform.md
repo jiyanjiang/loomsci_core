@@ -155,7 +155,7 @@ This is a **preview**:
 - no multi-user/auth
 - no cross-app reads
 - app CLI helpers are not complete
-- no package signing or updater
+- App packages are not signed; the Core updater is signed
 - no cloud sync
 
 Do not promise production stability to end users.

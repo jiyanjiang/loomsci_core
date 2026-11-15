@@ -149,7 +149,7 @@ Core 维护者指南：[core-maintainer](core-maintainer.md)。
 - 没有多用户/账号
 - 没有跨 App 读
 - App CLI 辅助命令未完整
-- 没有签名/updater
+- App 包未签名；Core 更新器已签名
 - 没有云同步
 
 不要向最终用户承诺生产稳定性。

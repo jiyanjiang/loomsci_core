@@ -112,7 +112,7 @@ python -m unittest tests.test_loomsci_core_sdk -v
 
 ## 9. 不在本版本范围
 
-- installer、updater、签名包
+- installer、App 包签名
 - App update/remove 命令
 - 迁移工具
 - App 市场
