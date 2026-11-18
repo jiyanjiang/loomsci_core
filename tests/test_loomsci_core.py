@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import http.server
 import json
 import os
 import zipfile
@@ -10,6 +11,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import tomllib
 import unittest
 from pathlib import Path
@@ -88,6 +90,44 @@ class FormalCoreTest(unittest.TestCase):
             route_page = self.client.get(path)
             self.assertEqual(route_page.status_code, 200, path)
             self.assertIn("LoomSci Core", route_page.get_data(as_text=True))
+
+    def test_app_proxy_strips_owner_credentials(self) -> None:
+        seen = {}
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                seen.update({key.lower(): value for key, value in self.headers.items()})
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.send_header("Set-Cookie", "loomsci_ui=evil; Path=/")
+                self.send_header("Set-Cookie", "app_session=ok; Path=/")
+                self.end_headers()
+                self.wfile.write(b"ok")
+
+            def log_message(self, *_args):
+                pass
+
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            port = server.server_address[1]
+            self.app.config["HOST"].port = lambda _slug: port
+            response = self.client.get("/apps/x/page", headers={
+                "Cookie": "loomsci_ui=owner; app_session=ok",
+                "Authorization": "Bearer owner-token",
+                "X-LoomSci-Token": "owner-token",
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertNotIn("loomsci_ui=owner", seen.get("cookie", ""))
+            self.assertNotIn("authorization", seen)
+            self.assertNotIn("x-loomsci-token", seen)
+            cookies = response.headers.getlist("Set-Cookie")
+            self.assertFalse(any("loomsci_ui=evil" in value for value in cookies))
+            self.assertTrue(any("app_session=ok" in value for value in cookies))
+        finally:
+            server.shutdown()
+            server.server_close()
 
     def test_item_includes_blobs(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={

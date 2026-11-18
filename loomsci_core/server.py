@@ -119,8 +119,24 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         if request.query_string:
             path += "?" + request.query_string.decode("latin-1")
         hop = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
-               "te", "trailers", "transfer-encoding", "upgrade", "host"}
-        headers = {key: value for key, value in request.headers.items() if key.lower() not in hop}
+               "te", "trailers", "transfer-encoding", "upgrade", "host",
+               "authorization", "x-loomsci-token"}
+        headers = {}
+        for key, value in request.headers.items():
+            lower = key.lower()
+            if lower in hop:
+                continue
+            if lower == "cookie":
+                # App code runs on the Core origin. Never let it receive the
+                # owner's UI session; preserve only app-owned cookies.
+                kept = [
+                    part for part in value.split(";")
+                    if part.strip() and not part.strip().startswith("loomsci_ui=")
+                ]
+                if kept:
+                    headers[key] = "; ".join(kept)
+                continue
+            headers[key] = value
         body = request.get_data()
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=60)
         try:
@@ -129,8 +145,11 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
             payload = upstream.read()
             response = Response(payload, status=upstream.status)
             for key, value in upstream.getheaders():
-                if key.lower() not in {"content-length", "connection", "transfer-encoding"}:
-                    response.headers[key] = value
+                if key.lower() in {"content-length", "connection", "transfer-encoding"}:
+                    continue
+                if key.lower() == "set-cookie" and value.lower().startswith("loomsci_ui="):
+                    continue
+                response.headers[key] = value
             response.headers["Content-Length"] = str(len(payload))
             response.set_cookie(
                 "loomsci_ui", ui_session, httponly=True, samesite="Strict", path="/"
