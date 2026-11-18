@@ -806,15 +806,18 @@ async function downloadUpdate() {
 
 async function installUpdate() {
   if (!window.confirm(t("updateInstallConfirm"))) return;
+  $("#update-install").disabled = true;
   try {
     const data = await api("/v1/update/apply", { method: "POST", body: "{}" });
     $("#update-message").textContent = data.ok ? t("updateStarted") : (data.error || t("updateNoPackage"));
+    if (!data.ok) $("#update-install").disabled = false;
     if (data.ok) {
       setTimeout(() => loadUpdateStatus(), 4000);
       setTimeout(() => loadUpdateStatus(), 12000);
     }
   } catch (error) {
     $("#update-message").textContent = error.message;
+    $("#update-install").disabled = false;
   }
 }
 
@@ -1127,7 +1130,11 @@ async function loadInstalledApps() {
       button.onclick = async () => {
         try {
           await api("/v1/apps/" + encodeURIComponent(row.slug) + "/start", { method: "POST", body: "{}" });
-          window.location.href = "/apps/" + encodeURIComponent(row.slug) + "/";
+          const host = location.hostname === "127.0.0.1" || location.hostname === "localhost"
+            ? "app-" + row.slug + ".localhost"
+            : location.hostname;
+          const port = location.port ? ":" + location.port : "";
+          window.location.href = location.protocol + "//" + host + port + "/apps/" + encodeURIComponent(row.slug) + "/";
         } catch (error) {
           showMessage(error.message, true);
         }

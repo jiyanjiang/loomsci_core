@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.7 帮助
+# LoomSci Core 0.2.0-rc.8 帮助
 
 ## 启动
 
@@ -155,14 +155,14 @@ schema 版本为 `PRAGMA user_version = 2`。旧库升级前会先复制为
 
 ## App 地址与单端口访问
 
-App 仍然在独立进程中运行，但浏览器只使用 Core 的来源：
+App 在独立进程中运行，并使用独立的浏览器来源：
 
 ```text
-http://127.0.0.1:8795/apps/<slug>/
+http://app-<slug>.localhost:8795/apps/<slug>/
 ```
 
-Core 把 `/apps/<slug>/` 代理到 App 的内部 loopback 端口。内部端口只是实现细节，
-不在 UI 中暴露。
+Core 会把旧的核心来源 `/apps/<slug>/` 重定向到 App 来源。App 的内部 loopback
+端口仍是实现细节；App 来源不会收到 Core UI 会话 cookie 或 Core localStorage。
 
 
 打开 `/tools`，输入 catalog JSON 地址或本地路径，点「检测」。

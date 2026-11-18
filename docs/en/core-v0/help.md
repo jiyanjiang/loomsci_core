@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.7 — Help
+# LoomSci Core 0.2.0-rc.8 — Help
 
 ## Start
 
@@ -158,14 +158,15 @@ rejected.
 
 ## App URLs and one-port access
 
-Apps run in isolated processes, but the browser uses the Core origin:
+Apps run in isolated processes and are opened on an isolated browser origin:
 
 ```text
-http://127.0.0.1:8795/apps/<slug>/
+http://app-<slug>.localhost:8795/apps/<slug>/
 ```
 
-Core proxies `/apps/<slug>/` to the app's internal loopback port. The internal
-port is implementation detail and is not shown in the UI.
+Core redirects the old Core-origin `/apps/<slug>/` path to this app origin.
+The app's internal loopback port remains an implementation detail. The app
+origin does not receive the Core UI session cookie or Core localStorage.
 
 
 Open `/tools`, enter a catalog JSON URL or local path, then click Detect.

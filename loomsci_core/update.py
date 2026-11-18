@@ -319,6 +319,35 @@ def _write_journal(home: Path, phase: str, **extra: Any) -> None:
     os.replace(tmp, path)
 
 
+def _install_lock_path(home: Path) -> Path:
+    return home.expanduser() / "updates" / "install.lock"
+
+
+def _acquire_install_lock(home: Path) -> Path:
+    path = _install_lock_path(home)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        try:
+            age = time.time() - path.stat().st_mtime
+        except OSError:
+            age = 0
+        if age > 30 * 60:
+            path.unlink(missing_ok=True)
+            return _acquire_install_lock(home)
+        raise UpdateError("update already running")
+    try:
+        os.write(fd, f"{os.getpid()} {time.time():.0f}\n".encode())
+    finally:
+        os.close(fd)
+    return path
+
+
+def _release_install_lock(path: Path) -> None:
+    path.unlink(missing_ok=True)
+
+
 def _blocked(state: dict[str, Any], version: str) -> bool:
     return bool(version) and version in (state.get("failed_versions") or {})
 
@@ -482,7 +511,7 @@ def _restore_code(target: Path, old: Path) -> None:
         old.rename(target)
 
 
-def apply_package(
+def _apply_package_locked(
     package: Path,
     manifest: dict[str, Any],
     *,
@@ -557,6 +586,23 @@ def apply_package(
         raise UpdateError(f"update failed and was rolled back: {exc}") from exc
 
 
+def apply_package(
+    package: Path,
+    manifest: dict[str, Any],
+    *,
+    home: Path,
+    port: int,
+    install_root: Path | None = None,
+) -> dict[str, Any]:
+    lock = _acquire_install_lock(home)
+    try:
+        return _apply_package_locked(
+            package, manifest, home=home, port=port, install_root=install_root
+        )
+    finally:
+        _release_install_lock(lock)
+
+
 def _record_failure(home: Path, state: dict[str, Any], version: str, error: str) -> None:
     failed = dict(state.get("failed_versions") or {})
     record = dict(failed.get(version) or {})
@@ -588,6 +634,11 @@ def apply_pending(home: Path, port: int) -> dict[str, Any]:
     _save_state(home, state)
     try:
         result = apply_package(package, manifest, home=home, port=port)
+    except UpdateError as exc:
+        if "already running" in str(exc):
+            return {**status(home), "ok": False, "error": str(exc)}
+        _record_failure(home, _load_state(home), version, str(exc))
+        return {**status(home), "ok": False, "error": str(exc)}
     except Exception as exc:  # noqa: BLE001 - update boundary
         _record_failure(home, _load_state(home), version, str(exc))
         return {**status(home), "ok": False, "error": str(exc)}
@@ -602,6 +653,8 @@ def apply_pending(home: Path, port: int) -> dict[str, Any]:
 
 def apply_async(home: Path, port: int) -> dict[str, Any]:
     state = _load_state(home)
+    if state.get("last_result") == "applying" or state.get("pending_version"):
+        return {**status(home), "ok": False, "error": "update already running"}
     downloaded = state.get("downloaded") or {}
     if not downloaded.get("path") or not Path(str(downloaded["path"])).is_file():
         return {**status(home), "ok": False, "error": "no_downloaded_package"}

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-rc.8 — app origin isolation and update lock
+
+- Apps open on isolated `app-<slug>.localhost` origins; Core-origin app paths redirect there.
+- App proxy strips owner cookies/Authorization and no longer mints the UI session.
+- Update install uses a cross-process lock; duplicate apply requests are rejected.
+- Full item view is left-aligned with a 16px gutter instead of centered.
+
 ## 0.2.0-rc.7 — resilient package download
 
 - Update package download retries raw GitHub failures and falls back to the

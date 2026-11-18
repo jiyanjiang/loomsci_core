@@ -16,7 +16,7 @@ import subprocess
 import urllib.parse
 from pathlib import Path
 
-from flask import Flask, Response, g, jsonify, request, send_file, send_from_directory
+from flask import Flask, Response, g, jsonify, redirect, request, send_file, send_from_directory
 
 from . import backup as backup_store
 from .version import __version__
@@ -115,6 +115,15 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         port = app.config["HOST"].port(slug)
         if not port:
             return jsonify({"ok": False, "error": "app_not_running"}), 404
+        host = request.host.split(":", 1)[0].lower()
+        if host in {"127.0.0.1", "localhost"}:
+            core_port = request.host.rsplit(":", 1)[1] if ":" in request.host else "80"
+            target = f"http://app-{slug}.localhost:{core_port}/apps/{slug}/"
+            if subpath:
+                target += subpath
+            if request.query_string:
+                target += "?" + request.query_string.decode("latin-1")
+            return redirect(target, code=307)
         path = "/" + subpath
         if request.query_string:
             path += "?" + request.query_string.decode("latin-1")
@@ -151,9 +160,8 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
                     continue
                 response.headers[key] = value
             response.headers["Content-Length"] = str(len(payload))
-            response.set_cookie(
-                "loomsci_ui", ui_session, httponly=True, samesite="Strict", path="/"
-            )
+            # Apps live on a separate *.localhost origin; never mint the owner
+            # UI session on that origin.
             return response
         except OSError as exc:
             return jsonify({"ok": False, "error": f"app_proxy: {exc}"}), 502

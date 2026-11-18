@@ -114,6 +114,7 @@ class FormalCoreTest(unittest.TestCase):
             port = server.server_address[1]
             self.app.config["HOST"].port = lambda _slug: port
             response = self.client.get("/apps/x/page", headers={
+                "Host": "app-x.localhost",
                 "Cookie": "loomsci_ui=owner; app_session=ok",
                 "Authorization": "Bearer owner-token",
                 "X-LoomSci-Token": "owner-token",
@@ -125,6 +126,9 @@ class FormalCoreTest(unittest.TestCase):
             cookies = response.headers.getlist("Set-Cookie")
             self.assertFalse(any("loomsci_ui=evil" in value for value in cookies))
             self.assertTrue(any("app_session=ok" in value for value in cookies))
+            redirected = self.client.get("/apps/x/page", headers={"Host": "127.0.0.1:8795"})
+            self.assertEqual(redirected.status_code, 307)
+            self.assertIn("app-x.localhost", redirected.headers["Location"])
         finally:
             server.shutdown()
             server.server_close()
@@ -303,6 +307,16 @@ class FormalCoreTest(unittest.TestCase):
                 os.environ.pop("LOOMSCI_UPDATE_PUBLIC_KEY", None)
             else:
                 os.environ["LOOMSCI_UPDATE_PUBLIC_KEY"] = old
+
+    def test_update_install_lock(self) -> None:
+        lock = update._acquire_install_lock(self.home)
+        try:
+            with self.assertRaises(update.UpdateError):
+                update._acquire_install_lock(self.home)
+        finally:
+            update._release_install_lock(lock)
+        second = update._acquire_install_lock(self.home)
+        update._release_install_lock(second)
 
     def test_signed_update_manifest(self) -> None:
         from cryptography.hazmat.primitives import serialization
