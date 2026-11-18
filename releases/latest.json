@@ -1,12 +1,12 @@
 {
   "product": "loomsci_core",
-  "version": "0.2.0-rc.5",
+  "version": "0.2.0-rc.6",
   "channel": "stable",
   "min_core": "0.2.0",
-  "url": "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.5-final2.zip",
-  "sha256": "5e36944df25057e44dc925358e7fdb46ebd97c8b39d3e2b0e7f5b77998c7f276",
-  "bytes": 389588,
-  "notes_url": "https://github.com/jiyanjiang/loomsci_core/blob/minimal-v0/docs/release-notes-v0.2.0-rc.5.md",
-  "published_at": "2026-11-15T00:00:00Z",
-  "signature": "NhnGjzw/ArXxT9Knhw2Y1ufSyt7mjyxio5525eESUhF6NwpXuz2jJjCZMmMStXIM08MYD1M/9JdULrnvI3hECw=="
+  "url": "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/loomsci_core-0.2.0-rc.6.zip",
+  "sha256": "4e75a556d344c7277d4ed38d5b6d6ebdde9dfe1a65a8aedb638fe692670640a5",
+  "bytes": 390423,
+  "notes_url": "https://github.com/jiyanjiang/loomsci_core/blob/minimal-v0/docs/release-notes-v0.2.0-rc.6.md",
+  "published_at": "2026-11-18T00:00:00Z",
+  "signature": "/dGjzN3LaM5QNN+Bj6nRKCyVcE0JdqQWNq5+1DTdHzjIKMcAIDmKfXmzMt9x4oWJJt0fTazyi6n1fwxRduBMCA=="
 }
