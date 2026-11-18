@@ -19,9 +19,11 @@ Not adopted: collaboration rooms, agent coordination, executors.
 
 ## Gates
 
-- [ ] source checks and full unit tests
-- [ ] live update check via Contents API
-- [ ] package download/verify through raw or API fallback
-- [ ] macOS browser path/update regression
-- [ ] release package SHA256
-- [ ] tag and push (only if requested)
+- [x] source checks and full unit tests
+- [x] live update check via Contents API
+- [x] package build/signature/SHA256 verified locally
+- [x] macOS browser path/update regression
+- [x] release package SHA256
+- [ ] tag and push (pending this release step)
+
+Evidence: [release evidence](release-evidence-v0.2.0-rc.7.md).
