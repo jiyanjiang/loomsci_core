@@ -24,6 +24,6 @@ Not adopted: collaboration rooms, agent coordination, executors.
 - [x] package build/signature/SHA256 verified locally
 - [x] macOS browser path/update regression
 - [x] release package SHA256
-- [ ] tag and push (pending this release step)
+- [x] tag and push: `v0.2.0-rc.7`
 
 Evidence: [release evidence](release-evidence-v0.2.0-rc.7.md).
