@@ -139,6 +139,7 @@ legacy LoomSci beta features
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
 - [0.2.0-rc.8 release notes](docs/release-notes-v0.2.0-rc.8.md)
+- [0.2.0-rc.8 release evidence](docs/release-evidence-v0.2.0-rc.8.md)
 - [0.2.0-rc.5 release notes](docs/release-notes-v0.2.0-rc.5.md)
 - [0.2.0-rc.5 release evidence](docs/release-evidence-v0.2.0-rc.5.md)
 - [0.2.0-rc.4 release evidence](docs/release-evidence-v0.2.0-rc.4.md)

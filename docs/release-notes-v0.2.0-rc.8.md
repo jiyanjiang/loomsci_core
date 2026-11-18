@@ -15,9 +15,11 @@ Status: pre-release candidate. Not a public-beta declaration.
 
 ## Gates
 
-- [ ] source checks and full unit tests
-- [ ] app origin cookie/localStorage isolation
-- [ ] update lock
-- [ ] macOS browser layout/path/update regression
-- [ ] package SHA256
-- [ ] tag and push
+- [x] source checks and full unit tests
+- [x] app origin cookie/localStorage isolation
+- [x] update lock
+- [x] macOS browser layout/path/update regression
+- [x] package SHA256
+- [x] tag and push: v0.2.0-rc.8
+
+Evidence: [release evidence](release-evidence-v0.2.0-rc.8.md).
