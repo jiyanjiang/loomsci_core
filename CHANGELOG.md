@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0-rc.7 — resilient package download
+
+- Update package download retries raw GitHub failures and falls back to the
+  GitHub Contents API for versioned release files.
+- Partial packages are removed before retry/fallback.
+- Keeps path routes, API-first manifest checks, built-in signed updates, and
+  code+data rollback.
+
 ## 0.2.0-rc.6 — path routes and robust updates
 
 - Replaced `#/...` SPA routes with normal history paths.

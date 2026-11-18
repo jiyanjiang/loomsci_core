@@ -1,6 +1,6 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.2.0-rc.6` release candidate. The Core Web UI is available at
+**Status: `0.2.0-rc.7` release candidate. The Core Web UI is available at
 `http://127.0.0.1:8795/`. Item interaction follows the TAA two-stage model:
 click opens a right-rail preview without moving the list; **Open full** expands
 the item into the center, and **Back** restores the prior list position.
@@ -138,7 +138,7 @@ legacy LoomSci beta features
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
-- [0.2.0-rc.6 release notes](docs/release-notes-v0.2.0-rc.6.md)
+- [0.2.0-rc.7 release notes](docs/release-notes-v0.2.0-rc.7.md)
 - [0.2.0-rc.5 release notes](docs/release-notes-v0.2.0-rc.5.md)
 - [0.2.0-rc.5 release evidence](docs/release-evidence-v0.2.0-rc.5.md)
 - [0.2.0-rc.4 release evidence](docs/release-evidence-v0.2.0-rc.4.md)

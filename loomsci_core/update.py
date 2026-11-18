@@ -203,6 +203,17 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _api_contents_url(raw_url: str) -> str | None:
+    match = re.match(
+        r"^https://raw\.githubusercontent\.com/([^/]+)/([^/]+)/([^/]+)/(.+)$",
+        raw_url,
+    )
+    if not match:
+        return None
+    owner, repo, branch, path = match.groups()
+    return f"https://api.github.com/repos/{owner}/{repo}/contents/{path}?ref={branch}"
+
+
 def download_package(source: str, destination: Path) -> Path:
     if source.startswith(("http://", "https://")):
         if not source.startswith("https://") and os.environ.get("LOOMSCI_UPDATE_ALLOW_HTTP") != "1":
@@ -221,6 +232,17 @@ def download_package(source: str, destination: Path) -> Path:
                 destination.unlink(missing_ok=True)
                 if attempt < 2:
                     time.sleep(1.0 * (attempt + 1))
+        # raw.githubusercontent.com can reset connections. GitHub Contents API
+        # serves the same versioned file as base64; use it as a bounded fallback.
+        api_url = _api_contents_url(source)
+        if api_url:
+            try:
+                data = _http_json(api_url)
+                if data.get("encoding") == "base64" and data.get("content"):
+                    destination.write_bytes(base64.b64decode(data["content"]))
+                    return destination
+            except Exception as exc:  # noqa: BLE001 - fallback boundary
+                last = exc
         raise UpdateError(f"package download failed: {last}") from last
     shutil.copy2(Path(source).expanduser(), destination)
     return destination

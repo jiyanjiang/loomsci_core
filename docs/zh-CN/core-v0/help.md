@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.6 帮助
+# LoomSci Core 0.2.0-rc.7 帮助
 
 ## 启动
 

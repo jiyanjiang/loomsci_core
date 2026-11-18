@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.6 — Help
+# LoomSci Core 0.2.0-rc.7 — Help
 
 ## Start
 
