@@ -25,6 +25,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -37,10 +38,15 @@ from .version import __version__
 
 PRODUCT = "loomsci_core"
 PUBLIC_KEY_PATH = Path(__file__).resolve().parent / "update_public_key.pem"
-DEFAULT_MANIFEST_URL = os.environ.get(
-    "LOOMSCI_UPDATE_URL",
-    "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/minimal-v0/releases/latest.json",
+API_MANIFEST_URL = (
+    "https://api.github.com/repos/jiyanjiang/loomsci_core/contents/"
+    "releases/latest.json?ref=minimal-v0"
 )
+RAW_MANIFEST_URL = (
+    "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/"
+    "minimal-v0/releases/latest.json"
+)
+DEFAULT_MANIFEST_URL = os.environ.get("LOOMSCI_UPDATE_URL", API_MANIFEST_URL)
 LEGACY_DEFAULT_MANIFEST_URL = (
     "https://raw.githubusercontent.com/jiyanjiang/loomsci_core/main/releases/latest.json"
 )
@@ -141,12 +147,51 @@ def check_manifest(manifest: dict[str, Any], current: str = __version__) -> dict
     return manifest
 
 
+def _http_json(url: str) -> dict[str, Any]:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": f"loomsci-core/{__version__}",
+            "Accept": "application/vnd.github+json, application/json",
+            "Cache-Control": "no-cache",
+        },
+    )
+    last: Exception | None = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError, ValueError) as exc:
+            last = exc
+            if attempt < 2:
+                time.sleep(0.6 * (attempt + 1))
+    raise UpdateError(f"manifest fetch failed: {last}") from last
+
+
+def _decode_manifest(data: dict[str, Any]) -> dict[str, Any]:
+    # GitHub Contents API wraps the file as base64; raw URLs return it directly.
+    if data.get("encoding") == "base64" and isinstance(data.get("content"), str):
+        raw = base64.b64decode(data["content"]).decode("utf-8")
+        return json.loads(raw)
+    return data
+
+
 def load_manifest(source: str) -> dict[str, Any]:
     if source.startswith(("http://", "https://")):
         if not source.startswith("https://") and os.environ.get("LOOMSCI_UPDATE_ALLOW_HTTP") != "1":
             raise UpdateError("update manifest must use HTTPS")
-        with urllib.request.urlopen(source, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
+        urls = [source]
+        if source == DEFAULT_MANIFEST_URL:
+            urls.append(RAW_MANIFEST_URL)
+        elif source == RAW_MANIFEST_URL:
+            urls.append(API_MANIFEST_URL)
+        last: Exception | None = None
+        for url in dict.fromkeys(urls):
+            try:
+                return _decode_manifest(_http_json(url))
+            except Exception as exc:  # noqa: BLE001 - network boundary
+                last = exc
+        raise UpdateError(f"manifest fetch failed: {last}") from last
     return json.loads(Path(source).expanduser().read_text(encoding="utf-8"))
 
 
@@ -162,10 +207,22 @@ def download_package(source: str, destination: Path) -> Path:
     if source.startswith(("http://", "https://")):
         if not source.startswith("https://") and os.environ.get("LOOMSCI_UPDATE_ALLOW_HTTP") != "1":
             raise UpdateError("update package must use HTTPS")
-        with urllib.request.urlopen(source, timeout=120) as response, destination.open("wb") as out:
-            shutil.copyfileobj(response, out)
-    else:
-        shutil.copy2(Path(source).expanduser(), destination)
+        request = urllib.request.Request(
+            source, headers={"User-Agent": f"loomsci-core/{__version__}"}
+        )
+        last: Exception | None = None
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(request, timeout=120) as response, destination.open("wb") as out:
+                    shutil.copyfileobj(response, out)
+                return destination
+            except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
+                last = exc
+                destination.unlink(missing_ok=True)
+                if attempt < 2:
+                    time.sleep(1.0 * (attempt + 1))
+        raise UpdateError(f"package download failed: {last}") from last
+    shutil.copy2(Path(source).expanduser(), destination)
     return destination
 
 
@@ -204,7 +261,7 @@ def _load_state(home: Path) -> dict[str, Any]:
         pass
     if not isinstance(data.get("failed_versions"), dict):
         data["failed_versions"] = {}
-    if data.get("manifest_url") == LEGACY_DEFAULT_MANIFEST_URL:
+    if data.get("manifest_url") in {LEGACY_DEFAULT_MANIFEST_URL, RAW_MANIFEST_URL}:
         data["manifest_url"] = DEFAULT_MANIFEST_URL
     if not data.get("manifest_url"):
         data["manifest_url"] = DEFAULT_MANIFEST_URL

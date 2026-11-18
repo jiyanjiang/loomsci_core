@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.5 帮助
+# LoomSci Core 0.2.0-rc.6 帮助
 
 ## 启动
 
@@ -165,7 +165,7 @@ Core 把 `/apps/<slug>/` 代理到 App 的内部 loopback 端口。内部端口�
 不在 UI 中暴露。
 
 
-打开 `#/tools`，输入 catalog JSON 地址或本地路径，点「检测」。
+打开 `/tools`，输入 catalog JSON 地址或本地路径，点「检测」。
 
 ```json
 {

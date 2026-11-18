@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0-rc.6 — path routes and robust updates
+
+- Replaced `#/...` SPA routes with normal history paths.
+- Added server-side SPA path fallbacks and legacy hash migration.
+- Update manifest fetch uses GitHub Contents API first, raw fallback, retries,
+  and a Loomsci user agent.
+- Package download retries transient connection failures.
+- Built-in signed update source remains automatic.
+- Aligned product/docs with signed Core update in scope.
+- Corrected trash wording to actual restore/permanent-delete behavior.
+
 ## 0.2.0-rc.5 — version and safe update
 
 - Added `/v1/version`, a rail version label, and a dedicated Version page.

@@ -1,4 +1,4 @@
-# LoomSci Core 0.2.0-rc.5 — Help
+# LoomSci Core 0.2.0-rc.6 — Help
 
 ## Start
 
@@ -168,7 +168,7 @@ Core proxies `/apps/<slug>/` to the app's internal loopback port. The internal
 port is implementation detail and is not shown in the UI.
 
 
-Open `#/tools`, enter a catalog JSON URL or local path, then click Detect.
+Open `/tools`, enter a catalog JSON URL or local path, then click Detect.
 
 ```json
 {

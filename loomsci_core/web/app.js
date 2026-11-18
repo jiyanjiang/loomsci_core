@@ -43,7 +43,7 @@ const t = (key) => (I18N[lang] || I18N.zh)[key] || key;
 
 const state = {
   items: [], offset: 0, tag: "", query: "", hasMore: false,
-  listScroll: 0, restoreOnRoute: false, lastHash: location.hash || "#/",
+  listScroll: 0, restoreOnRoute: false, lastPath: location.pathname || "/",
 };
 const pendingFiles = [];
 const blobCache = new Map();
@@ -52,8 +52,26 @@ function narrowLayout() {
   return window.matchMedia("(max-width: 980px)").matches;
 }
 
-function itemHash(itemId, full = false) {
-  return "#/item/" + encodeURIComponent(itemId) + (full ? "/full" : "");
+function currentPath() {
+  const path = location.pathname.replace(/\/+$/, "");
+  return path || "/";
+}
+
+function itemPath(itemId, full = false) {
+  return "/item/" + encodeURIComponent(itemId) + (full ? "/full" : "");
+}
+
+function navigate(path) {
+  if (location.pathname === path) return;
+  history.pushState({}, "", path);
+  route().catch((error) => showMessage(error.message, true));
+}
+
+function migrateHashRoute() {
+  if (location.hash.startsWith("#/")) {
+    const path = location.hash.slice(1) || "/";
+    history.replaceState({}, "", path);
+  }
 }
 
 function markSelected(itemId) {
@@ -63,17 +81,17 @@ function markSelected(itemId) {
 }
 
 function openFullItem(itemId) {
-  location.hash = itemHash(itemId, true);
+  navigate(itemPath(itemId, true));
 }
 
 function backToPreview(itemId) {
   state.restoreOnRoute = true;
-  location.hash = itemHash(itemId);
+  navigate(itemPath(itemId));
 }
 
 function backToList() {
   state.restoreOnRoute = true;
-  location.hash = "#/";
+  navigate("/");
 }
 let galleryImages = [];
 let galleryIndex = 0;
@@ -340,7 +358,7 @@ async function loadTags() {
       all.type = "button";
       all.className = "tag-all";
       all.textContent = t("allTags") + " (" + rows.length + ")";
-      all.onclick = () => { location.hash = "#/tags"; };
+      all.onclick = () => navigate("/tags");
       cloud.appendChild(all);
     }
   } catch (error) {
@@ -354,7 +372,7 @@ function itemCard(item) {
   card.dataset.id = item.id;
   card.onclick = () => {
     state.listScroll = window.scrollY;
-    location.hash = itemHash(item.id, narrowLayout());
+    navigate(itemPath(item.id, narrowLayout()));
   };
 
   const summary = document.createElement("div");
@@ -467,7 +485,7 @@ async function renderDetail(item, target = $("#detail"), { mode = "preview" } = 
       await api("/v1/items/" + encodeURIComponent(item.id), { method: "DELETE" });
       state.items = [];
       state.restoreOnRoute = false;
-      location.hash = "#/";
+      navigate("/");
       await loadItems(true);
       await loadTags();
       showMessage(t("deleted"));
@@ -552,7 +570,7 @@ function tagRow(row) {
   count.className = "muted";
   count.textContent = row.count;
   button.append(name, count);
-  button.onclick = () => { location.hash = "#/"; setTag(row.tag); };
+  button.onclick = () => { navigate("/"); setTag(row.tag); };
   return button;
 }
 
@@ -618,23 +636,23 @@ async function loadTrash() {
 
 async function route() {
   if (!$("#gallery").hidden) closeGallery();
-  const hash = location.hash || "#/";
-  const previewMatch = hash.match(/^#\/item\/([^/]+)$/);
-  const fullMatch = hash.match(/^#\/item\/([^/]+)\/full$/);
-  const isSettings = hash === "#/settings";
-  const isSite = hash === "#/site";
-  const isTools = hash === "#/tools";
-  const isVersion = hash === "#/version";
-  const isTags = hash === "#/tags";
-  const isTrash = hash === "#/trash";
+  const path = currentPath();
+  const previewMatch = path.match(/^\/item\/([^/]+)$/);
+  const fullMatch = path.match(/^\/item\/([^/]+)\/full$/);
+  const isSettings = path === "/settings";
+  const isSite = path === "/site";
+  const isTools = path === "/tools";
+  const isVersion = path === "/version";
+  const isTags = path === "/tags";
+  const isTrash = path === "/trash";
   const isPreview = Boolean(previewMatch);
   const isFull = Boolean(fullMatch);
   const isItem = isPreview || isFull;
   const isContent = !isSettings && !isSite && !isTools && !isVersion && !isTags && !isTrash && !isFull;
   const itemId = isItem ? decodeURIComponent((previewMatch || fullMatch)[1]) : "";
 
-  if (isPreview && /\/full$/.test(state.lastHash || "")) state.restoreOnRoute = true;
-  state.lastHash = hash;
+  if (isPreview && /\/full$/.test(state.lastPath || "")) state.restoreOnRoute = true;
+  state.lastPath = path;
 
   $("#compose-panel").hidden = !isContent;
   $("#list-view").hidden = !isContent;
@@ -1170,7 +1188,7 @@ $("#catalog-form").addEventListener("submit", (event) => {
 
 $$(".rail nav button").forEach((button) => {
   button.addEventListener("click", () => {
-    location.hash = button.dataset.view === "content" ? "#/" : "#/" + button.dataset.view;
+    navigate(button.dataset.view === "content" ? "/" : "/" + button.dataset.view);
   });
 });
 $("#lang-toggle").addEventListener("click", async () => {
@@ -1180,7 +1198,7 @@ $("#lang-toggle").addEventListener("click", async () => {
   await route();
 });
 $$("[data-home]").forEach((button) => {
-  button.addEventListener("click", () => { location.hash = "#/"; });
+  button.addEventListener("click", () => navigate("/"));
 });
 $("#settings-form").addEventListener("submit", saveSettings);
 $("#site-form").addEventListener("submit", saveSite);
@@ -1212,8 +1230,9 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight") $("#gallery-next").click();
 });
 
-window.addEventListener("hashchange", () => route().catch((error) => showMessage(error.message, true)));
+window.addEventListener("popstate", () => route().catch((error) => showMessage(error.message, true)));
 
+migrateHashRoute();
 applyI18n();
 loadVersion();
 loadInstalledApps();

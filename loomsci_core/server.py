@@ -64,9 +64,11 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
         if conn is not None:
             conn.close()
 
+    spa_paths = {"/", "/app", "/version", "/tags", "/trash", "/tools", "/settings", "/site"}
+
     @app.before_request
     def auth():
-        if request.path in {"/v1/health", "/v1/version", "/", "/app"}:
+        if request.path in {"/v1/health", "/v1/version"} or request.path in spa_paths or request.path.startswith("/item/"):
             return None
         if request.path.startswith("/assets/"):
             return None
@@ -100,6 +102,11 @@ def create_app(home: Path, core_url: str = "http://127.0.0.1:8795") -> Flask:
             "loomsci_ui", ui_session, httponly=True, samesite="Strict", path="/"
         )
         return response
+
+    for _path in ("/version", "/tags", "/trash", "/tools", "/settings", "/site"):
+        app.add_url_rule(_path, endpoint="ui_" + _path.strip("/"), view_func=ui_index)
+    app.add_url_rule("/item/<item_id>", endpoint="ui_item", view_func=lambda item_id: ui_index())
+    app.add_url_rule("/item/<item_id>/full", endpoint="ui_item_full", view_func=lambda item_id: ui_index())
 
     @app.route("/apps/<slug>", defaults={"subpath": ""}, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     @app.route("/apps/<slug>/", defaults={"subpath": ""}, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])

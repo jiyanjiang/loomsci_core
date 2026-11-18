@@ -84,6 +84,10 @@ class FormalCoreTest(unittest.TestCase):
         update_status = self.client.get("/v1/update/status")
         self.assertEqual(update_status.status_code, 200)
         self.assertEqual(update_status.json["current"], __version__)
+        for path in ("/version", "/tags", "/trash", "/tools", "/settings", "/site", "/item/i-test", "/item/i-test/full"):
+            route_page = self.client.get(path)
+            self.assertEqual(route_page.status_code, 200, path)
+            self.assertIn("LoomSci Core", route_page.get_data(as_text=True))
 
     def test_item_includes_blobs(self) -> None:
         created = self.client.post("/v1/items", headers=self.headers, json={

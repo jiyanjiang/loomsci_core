@@ -1,15 +1,16 @@
 # LoomSci Core · Minimal v0
 
-**Status: `0.2.0-rc.5` release candidate. The Core Web UI is available at
+**Status: `0.2.0-rc.6` release candidate. The Core Web UI is available at
 `http://127.0.0.1:8795/`. Item interaction follows the TAA two-stage model:
 click opens a right-rail preview without moving the list; **Open full** expands
 the item into the center, and **Back** restores the prior list position.
-Core now has a dedicated Version page: current version, latest version, signed
-manifest check,
-automatic check/download (manual install), persistent journal, failed-version
-blocking, and code+data rollback. P0 content lifecycle remains complete. Schema
-`v2` migrates existing databases with a pre-migration backup. This is a
-pre-release, not a public-beta release.**
+Routes use normal paths (`/version`, `/item/<id>`) instead of `#` fragments.
+Core has a dedicated Version page: current version, latest version, built-in
+signed manifest channel, automatic check/download (manual install), persistent
+journal, failed-version blocking, and code+data rollback. The update client
+uses the GitHub Contents API with raw fallback and retries. P0 content
+lifecycle remains complete. Schema `v2` migrates existing databases with a
+pre-migration backup. This is a pre-release, not a public-beta release.**
 
 A local-first minimal core product for one owner. The authoritative product
 definition is [PRODUCT.md](PRODUCT.md). Apps extend Core; they are not a
@@ -137,6 +138,7 @@ legacy LoomSci beta features
 - [Core maintainer](docs/en/core-v0/core-maintainer.md)
 - [OpenAPI](docs/openapi/core-v0.json)
 - [Release process](docs/release-process.md)
+- [0.2.0-rc.6 release notes](docs/release-notes-v0.2.0-rc.6.md)
 - [0.2.0-rc.5 release notes](docs/release-notes-v0.2.0-rc.5.md)
 - [0.2.0-rc.5 release evidence](docs/release-evidence-v0.2.0-rc.5.md)
 - [0.2.0-rc.4 release evidence](docs/release-evidence-v0.2.0-rc.4.md)
